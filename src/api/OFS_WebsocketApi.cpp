@@ -1,27 +1,32 @@
 #include "OFS_WebsocketApi.h"
 #include "OFS_WebsocketApiClient.h"
-#include "OFS_FileLogging.h"
-#include "OFS_EventSystem.h"
-
-#include "OpenFunscripter.h"
-#include "OFS_VideoplayerEvents.h"
 #include "OFS_WebsocketApiEvents.h"
 #include "state/WebsocketApiState.h"
+#include "UI/OFS_FunscriptMetadataEditor.h"
+#include "OpenFunscripter.h"
+#include "OFS_Project.h"
+
+#include "OFS_Util.h"
+#include "OFS_FileLogging.h"
+#include "Funscript/Funscript.h"
+#include "event/OFS_EventSystem.h"
+#include "state/OFS_StateHandle.h"
 #include "state/states/ChapterState.h"
+#include "localization/OFS_Localization.h"
+#include "videoplayer/OFS_VideoplayerEvents.h"
 
-#include "civetweb.h"
+#include <civetweb.h>
+#include <SDL3/SDL_thread.h>
+#include <SDL3/SDL_atomic.h>
+#include <imgui.h>
+#include <misc/cpp/imgui_stdlib.h>
 
-#include "imgui.h"
-#include "imgui_stdlib.h"
-
-#include "SDL_thread.h"
-#include "SDL_atomic.h"
 
 struct CivetwebContext
 {
     mg_context* web = nullptr;
 	char errtxtbuf[256] = {0};
-	SDL_atomic_t clientsConnected = {0};
+	SDL_AtomicInt clientsConnected = {0};
 };
 
 #define CTX static_cast<CivetwebContext*>(ctx)
@@ -130,20 +135,21 @@ static int EventSerializationThread(void* user) noexcept
 	SDL_LockMutex(waitMut);
 	while(!ctx->shouldExit)
 	{
-		if(SDL_CondWait(ctx->processCond, waitMut) == 0)
+		if(SDL_WaitConditionTimeout(ctx->processCond, waitMut, -1) == 0)
 		{
-			SDL_AtomicLock(&ctx->eventLock);
+			SDL_LockSpinlock(&ctx->eventLock);
 			for(auto& ev : ctx->events)
 			{
 				auto toJson = dynamic_cast<ToJsonInterface*>(ev.get());
-				nlohmann::json json;
-				toJson->Serialize(json);
-				auto jsonText = Util::SerializeJson(json);
+				// QQQ
+				//nlohmann::json json;
+				//toJson->Serialize(json);
+				auto jsonText = Util::SerializeJson(/*json*/);
 				EV::Queue().directDispatch(WsSerializedEvent::EventType, 
 					std::move(EV::Make<WsSerializedEvent>(std::move(jsonText))));
 			}
 			ctx->events.clear();
-			SDL_AtomicUnlock(&ctx->eventLock);
+			SDL_UnlockSpinlock(&ctx->eventLock);
 		}
 	}
 	SDL_DestroyMutex(waitMut);
@@ -302,7 +308,7 @@ OFS_WebsocketApi::OFS_WebsocketApi() noexcept
 
 int OFS_WebsocketApi::ClientsConnected() const noexcept
 {
-	return SDL_AtomicGet(&CTX->clientsConnected);
+	return SDL_GetAtomicInt(&CTX->clientsConnected);
 }
 
 bool OFS_WebsocketApi::Init() noexcept
@@ -406,7 +412,7 @@ void OFS_WebsocketApi::ShowWindow(bool* open) noexcept
 	if(!*open) return;
 	auto& state = WebsocketApiState::State(stateHandle);
 
-	ImGui::Begin(TR_ID("WebsocketApi", Tr::WEBSOCKET_API), open, ImGuiWindowFlags_AlwaysAutoResize);
+	ImGui::Begin(TR_ID("WebsocketApi", Tr::WEBSOCKET_API).c_str(), open, ImGuiWindowFlags_AlwaysAutoResize);
 	bool serverRunning = CTX->web != nullptr;
 	if(ImGui::Checkbox(TR(SERVER_ACTIVE), &serverRunning))
 	{

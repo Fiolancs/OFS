@@ -1,17 +1,19 @@
 #include "OFS_DynamicFontAtlas.h"
-#include "OFS_Localization.h"
-#include "OFS_Util.h"
-#include "OFS_Profiling.h"
-#include "OFS_GL.h"
 
-#include "imgui.h"
-#include "SDL_rwops.h"
-#include "SDL_timer.h"
+#include "OFS_GL.h"
+#include "OFS_Util.h"
+#include "UI/OFS_Profiling.h"
+#include "localization/OFS_Localization.h"
+
+#include <imgui.h>
+#include <SDL3/SDL_timer.h>
+#include <SDL3/SDL_IOStream.h>
 
 #include <vector>
+#include <string>
+
 
 OFS_DynFontAtlas* OFS_DynFontAtlas::ptr = nullptr;
-
 
 ImFont* OFS_DynFontAtlas::DefaultFont = nullptr;
 ImFont* OFS_DynFontAtlas::DefaultFont2 = nullptr;
@@ -163,7 +165,7 @@ default_font_end:
         glTexImage2D(GL_TEXTURE_2D, 0, OFS_InternalTexFormat, width, height, 0, OFS_TexFormat, GL_UNSIGNED_BYTE, pixels);
 
         io.Fonts->ClearTexData();
-        io.Fonts->SetTexID((void*)(intptr_t)fontTexture);
+        io.Fonts->SetTexID((ImTextureID)fontTexture);
 
         LOGF_INFO("Font atlas was rebuilt. Took %0.3lf seconds.", fontBuildDuration);
         LOGF_INFO("New font atlas size: %dx%d", width, height);

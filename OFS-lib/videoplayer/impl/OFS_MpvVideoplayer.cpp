@@ -1,21 +1,25 @@
-#include "OFS_Videoplayer.h"
-#include "OFS_Util.h"
+#include "videoplayer/OFS_Videoplayer.h"
 
-#include "OFS_EventSystem.h"
-#include "OFS_VideoplayerEvents.h"
+#include "OFS_GL.h"
+#include "OFS_Util.h"
+#include "event/OFS_EventSystem.h"
+#include "videoplayer/OFS_VideoplayerEvents.h"
 
 #define OFS_MPV_LOADER_MACROS
 #include "OFS_MpvLoader.h"
 
-#include "OFS_Localization.h"
-#include "OFS_GL.h"
+#include <SDL3/SDL_timer.h>
+#include <SDL3/SDL_atomic.h>
 
+#include <array>
+#include <string>
+#include <format>
 #include <sstream>
+#include <cstdint>
 
-#include "SDL_timer.h"
-#include "SDL_atomic.h"
 
-enum MpvPropertyGet : uint64_t {
+enum MpvPropertyGet : std::uint64_t
+{
     MpvDuration,
     MpvPosition,
     MpvTotalFrames,
@@ -28,7 +32,8 @@ enum MpvPropertyGet : uint64_t {
     MpvFramesPerSecond,
 };
 
-struct MpvDataCache {
+struct MpvDataCache
+{
     double duration = 1.0;
     double percentPos = 0.0;
     double currentSpeed = 1.0;
@@ -38,10 +43,10 @@ struct MpvDataCache {
     double abLoopA = 0;
     double abLoopB = 0;
 
-    int64_t totalNumFrames = 0;
-    int64_t paused = false;
-    int64_t videoWidth = 0;
-    int64_t videoHeight = 0;
+    std::int64_t totalNumFrames = 0;
+    std::int64_t paused = false;
+    std::int64_t videoWidth = 0;
+    std::int64_t videoHeight = 0;
 
     float currentVolume = .5f;
 
@@ -53,17 +58,17 @@ struct MpvPlayerContext
 {
     mpv_handle* mpv = nullptr;
     mpv_render_context* mpvGL = nullptr;
-    uint32_t framebuffer = 0;
+    std::uint32_t framebuffer = 0;
     MpvDataCache data = MpvDataCache();
 
     std::array<char, 32> tmpBuf;
-    SDL_atomic_t renderUpdate = {0};
-    SDL_atomic_t hasEvents = {0};
+    SDL_AtomicInt renderUpdate = {0};
+    SDL_AtomicInt hasEvents = {0};
 
-    uint32_t* frameTexture = nullptr;
+    std::uint32_t* frameTexture = nullptr;
     float* logicalPosition = nullptr;
 
-    uint64_t smoothTimer = 0;
+    std::uint64_t smoothTimer = 0;
     VideoplayerType playerType;
 };
 
@@ -169,7 +174,7 @@ bool OFS_Videoplayer::Init(bool hwAccel) noexcept
     if(!CTX->mpv) {
         return false;
     }
-    auto confPath = Util::Prefpath();
+    auto confPath = std::filesystem::path(Util::Prefpath()).string();
 
     int error = 0;
     error = mpv_set_option_string(CTX->mpv, "config", "yes");
@@ -219,7 +224,7 @@ bool OFS_Videoplayer::Init(bool hwAccel) noexcept
         return SDL_GL_GetProcAddress(fnName);
     };
     
-    uint32_t enable = 1;
+    std::uint32_t enable = 1;
 	mpv_render_param renderParams[] = {
 		mpv_render_param{MPV_RENDER_PARAM_API_TYPE, (void*)MPV_RENDER_API_TYPE_OPENGL},
 		mpv_render_param{MPV_RENDER_PARAM_OPENGL_INIT_PARAMS, &init_params},
@@ -261,7 +266,7 @@ inline static void ProcessEvents(MpvPlayerContext* ctx) noexcept
             {
                 mpv_event_log_message* msg = (mpv_event_log_message*)mp_event->data;
                 char MpvLogPrefix[48];
-                int len = stbsp_snprintf(MpvLogPrefix, sizeof(MpvLogPrefix), "[%s][MPV] (%s): ", msg->level, msg->prefix);
+                int len = std::format_to_n(MpvLogPrefix, sizeof(MpvLogPrefix), "[{:s}][MPV] ({:s}): ", msg->level, msg->prefix).size;
                 FUN_ASSERT(len <= sizeof(MpvLogPrefix), "buffer to small");
                 OFS_FileLogger::LogToFileR(MpvLogPrefix, msg->text);
                 continue;
@@ -289,7 +294,7 @@ inline static void ProcessEvents(MpvPlayerContext* ctx) noexcept
                     }
                     case MpvVideoWidth:
                     {
-                        ctx->data.videoWidth = *(int64_t*)prop->data;
+                        ctx->data.videoWidth = *(std::int64_t*)prop->data;
                         if (ctx->data.videoHeight > 0.f) {
                             updateRenderTexture(ctx);
                             ctx->data.videoLoaded = true;
@@ -298,7 +303,7 @@ inline static void ProcessEvents(MpvPlayerContext* ctx) noexcept
                     }
                     case MpvVideoHeight:
                     {
-                        ctx->data.videoHeight = *(int64_t*)prop->data;
+                        ctx->data.videoHeight = *(std::int64_t*)prop->data;
                         if (ctx->data.videoWidth > 0.f) {
                             updateRenderTexture(ctx);
                             ctx->data.videoLoaded = true;
@@ -314,13 +319,13 @@ inline static void ProcessEvents(MpvPlayerContext* ctx) noexcept
                         notifyDuration(ctx);
                         break;
                     case MpvTotalFrames:
-                        ctx->data.totalNumFrames = *(int64_t*)prop->data;
+                        ctx->data.totalNumFrames = *(std::int64_t*)prop->data;
                         break;
                     case MpvPosition:
                     {
                         auto newPercentPos = (*(double*)prop->data) / 100.0;
                         ctx->data.percentPos = newPercentPos;
-                        ctx->smoothTimer = SDL_GetTicks64();
+                        ctx->smoothTimer = SDL_GetTicks();
                         if(!ctx->data.paused) {
                             *ctx->logicalPosition = newPercentPos;
                         }
@@ -333,13 +338,13 @@ inline static void ProcessEvents(MpvPlayerContext* ctx) noexcept
                         break;
                     case MpvPauseState:
                     {
-                        bool paused = *(int64_t*)prop->data;
+                        bool paused = *(std::int64_t*)prop->data;
                         if (paused) {
-                            float timeSinceLastUpdate = (SDL_GetTicks64() - CTX->smoothTimer) / 1000.f;
+                            float timeSinceLastUpdate = (SDL_GetTicks() - CTX->smoothTimer) / 1000.f;
                             float positionOffset = (timeSinceLastUpdate * CTX->data.currentSpeed) / CTX->data.duration;
                             *ctx->logicalPosition += positionOffset;
                         }
-                        ctx->smoothTimer = SDL_GetTicks64();
+                        ctx->smoothTimer = SDL_GetTicks();
                         ctx->data.paused = paused;
                         notifyPaused(ctx);
                         break;
@@ -363,7 +368,7 @@ inline static void RenderFrameToTexture(MpvPlayerContext* ctx) noexcept
 	fbo.h = ctx->data.videoHeight;
 	fbo.internal_format = OFS_InternalTexFormat;
 
-	uint32_t disable = 0;
+	std::uint32_t disable = 0;
 	mpv_render_param params[] = {
 		{MPV_RENDER_PARAM_OPENGL_FBO, &fbo},
 		{MPV_RENDER_PARAM_BLOCK_FOR_TARGET_TIME, &disable}, 
@@ -374,14 +379,14 @@ inline static void RenderFrameToTexture(MpvPlayerContext* ctx) noexcept
 
 void OFS_Videoplayer::Update(float delta) noexcept
 {
-    while(SDL_AtomicGet(&CTX->hasEvents) > 0) {
+    while(SDL_GetAtomicInt(&CTX->hasEvents) > 0) {
         ProcessEvents(CTX);
         SDL_AtomicDecRef(&CTX->hasEvents);
     }
 
-    while(SDL_AtomicGet(&CTX->renderUpdate) > 0)
+    while(SDL_GetAtomicInt(&CTX->renderUpdate) > 0)
     {
-        uint64_t flags = mpv_render_context_update(CTX->mpvGL);
+        std::uint64_t flags = mpv_render_context_update(CTX->mpvGL);
 	    if (flags & MPV_RENDER_UPDATE_FRAME) {
             RenderFrameToTexture(CTX);
         }
@@ -392,7 +397,7 @@ void OFS_Videoplayer::Update(float delta) noexcept
 void OFS_Videoplayer::SetVolume(float volume) noexcept
 {
     CTX->data.currentVolume = volume;
-    stbsp_snprintf(CTX->tmpBuf.data(), CTX->tmpBuf.size(), "%.2f", (float)(volume*100.f));
+    std::format_to_n(CTX->tmpBuf.data(), CTX->tmpBuf.size(), "{:.2f}", (float)(volume*100.f));
     const char* cmd[]{"set", "volume", CTX->tmpBuf.data(), NULL};
     mpv_command_async(CTX->mpv, 0, cmd);
 }
@@ -442,7 +447,7 @@ void OFS_Videoplayer::SetSpeed(float speed) noexcept
 {
     speed = Util::Clamp<float>(speed, MinPlaybackSpeed, MaxPlaybackSpeed);
     if (CurrentSpeed() != speed) {
-        stbsp_snprintf(CTX->tmpBuf.data(), CTX->tmpBuf.size(), "%.3f", speed);
+        std::format_to_n(CTX->tmpBuf.data(), CTX->tmpBuf.size(), "{:.3f}", speed);
         const char* cmd[]{ "set", "speed", CTX->tmpBuf.data(), NULL };
         mpv_command_async(CTX->mpv, 0, cmd);
     }
@@ -459,7 +464,7 @@ void OFS_Videoplayer::SetPositionPercent(float percentPos, bool pausesVideo) noe
 {
     logicalPosition = percentPos;
     CTX->data.percentPos = percentPos;
-    stbsp_snprintf(CTX->tmpBuf.data(), CTX->tmpBuf.size(), "%.08f", (float)(percentPos * 100.0f));
+    std::format_to_n(CTX->tmpBuf.data(), CTX->tmpBuf.size(), "{:.08f}", (float)(percentPos * 100.0f));
     const char* cmd[]{ "seek", CTX->tmpBuf.data(), "absolute-percent+exact", NULL };
     if (pausesVideo) {
         SetPaused(true);
@@ -483,7 +488,7 @@ void OFS_Videoplayer::SeekRelative(float timeSeconds) noexcept
     SetPositionExact(seekTo);
 }
 
-void OFS_Videoplayer::SeekFrames(int32_t offset) noexcept
+void OFS_Videoplayer::SeekFrames(std::int32_t offset) noexcept
 {
     // this updates logicalPosition in SetPositionPercent
     if (IsPaused()) {
@@ -497,7 +502,7 @@ void OFS_Videoplayer::SeekFrames(int32_t offset) noexcept
 void OFS_Videoplayer::SetPaused(bool paused) noexcept
 {
     if ((bool)CTX->data.paused == paused) return;
-    int64_t setPaused = paused;
+    std::int64_t setPaused = paused;
     mpv_set_property_async(CTX->mpv, 0, "pause", MPV_FORMAT_FLAG, &setPaused);
 }
 
@@ -542,12 +547,12 @@ void OFS_Videoplayer::SaveFrameToImage(const std::string& directory) noexcept
 
 // ==================== Getter ==================== 
 
-uint16_t OFS_Videoplayer::VideoWidth() const noexcept
+std::uint16_t OFS_Videoplayer::VideoWidth() const noexcept
 {
     return CTX->data.videoWidth;
 }
 
-uint16_t OFS_Videoplayer::VideoHeight() const noexcept
+std::uint16_t OFS_Videoplayer::VideoHeight() const noexcept
 {
     return CTX->data.videoHeight;
 }
@@ -600,7 +605,7 @@ double OFS_Videoplayer::CurrentTime() const noexcept
     }
     else 
     {
-        float timeSinceLastUpdate = (SDL_GetTicks64() - CTX->smoothTimer) / 1000.f;
+        float timeSinceLastUpdate = (SDL_GetTicks() - CTX->smoothTimer) / 1000.f;
         float positionOffset = (timeSinceLastUpdate * CTX->data.currentSpeed) / Duration();
         return (logicalPosition + positionOffset) * CTX->data.duration;
     }

@@ -1,5 +1,5 @@
 #pragma once
-#include "OFS_StateHandle.h"
+#include "state/OFS_StateHandle.h"
 
 struct ScriptingModeState
 {
@@ -13,6 +13,6 @@ struct ScriptingModeState
     }
 };
 
-REFL_TYPE(ScriptingModeState)
-    REFL_FIELD(actionInsertDelayMs)
-REFL_END
+//REFL_TYPE(ScriptingModeState)
+//    REFL_FIELD(actionInsertDelayMs)
+//REFL_END

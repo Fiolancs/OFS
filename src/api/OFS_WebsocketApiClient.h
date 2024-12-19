@@ -1,7 +1,8 @@
 #pragma once
-#include "OFS_EventSystem.h"
 #include "OFS_WebsocketApiEvents.h"
 #include "OFS_WebsocketApiCommands.h"
+
+#include "event/OFS_Event.h"
 
 #include <string>
 

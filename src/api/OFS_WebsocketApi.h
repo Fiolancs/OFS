@@ -1,20 +1,19 @@
 #pragma once
+#include "event/OFS_Event.h"
 
-#include <cstdint>
+#include <SDL3/SDL_thread.h>
+#include <SDL3/SDL_atomic.h>
+#include <SDL3/SDL_timer.h>
+
 #include <vector>
 #include <memory>
 #include <vector>
 #include <atomic>
-
-#include "SDL_thread.h"
-#include "SDL_atomic.h"
-#include "SDL_timer.h"
-
-#include "OFS_Event.h"
+#include <cstdint>
 
 struct EventSerializationContext
 {
-    SDL_cond* processCond = nullptr;
+    SDL_Condition* processCond = nullptr;
     
     std::atomic<bool> shouldExit = false;
     std::atomic<bool> hasExited = false;
@@ -24,28 +23,28 @@ struct EventSerializationContext
 
     EventSerializationContext() noexcept
     {
-        processCond = SDL_CreateCond();
+        processCond = SDL_CreateCondition();
     }
 
     template<typename T, typename... Args>
     inline void Push(Args&&... args) noexcept
     {
-        SDL_AtomicLock(&eventLock);
+        SDL_LockSpinlock(&eventLock);
         events.emplace_back(std::move(std::make_shared<T>(std::forward<Args>(args)...)));
-        SDL_AtomicUnlock(&eventLock);
+        SDL_UnlockSpinlock(&eventLock);
     }
 
     inline bool EventsEmpty() noexcept
     {
-        SDL_AtomicLock(&eventLock);
+        SDL_LockSpinlock(&eventLock);
         bool empty = events.empty();
-        SDL_AtomicUnlock(&eventLock);
+        SDL_UnlockSpinlock(&eventLock);
         return empty;
     }
 
-    inline int StartProcessing() noexcept
+    inline void StartProcessing() noexcept
     {
-        return SDL_CondSignal(processCond);
+        SDL_SignalCondition(processCond);
     }
 
     inline void Shutdown() noexcept
@@ -55,7 +54,7 @@ struct EventSerializationContext
         while(!hasExited) { 
             SDL_Delay(1); 
         }
-        SDL_DestroyCond(processCond);
+        SDL_DestroyCondition(processCond);
     }
 };
 

@@ -1,6 +1,6 @@
-#include "OpenFunscripter.h"
-#include "SDL_main.h"
+#include <SDL3/SDL_main.h>
 
+#include "OpenFunscripter.h"
 #include "state/OpenFunscripterState.h"
 #include "state/OFS_LibState.h"
 

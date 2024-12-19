@@ -1,34 +1,39 @@
 #include "OFS_LuaScriptAPI.h"
 #include "OpenFunscripter.h"
 
-OFS_ScriptAPI::OFS_ScriptAPI(sol::usertype<class OFS_ExtensionAPI>& ofs) noexcept
+// QQQ
+
+using lua_Integer = int;
+using lua_Number  = double;
+
+OFS_ScriptAPI::OFS_ScriptAPI(/*sol::usertype<class OFS_ExtensionAPI>& ofs*/) noexcept
 {
-    auto L = sol::state_view(ofs.lua_state());
-    auto script = L.new_usertype<LuaFunscript>("Funscript");
-    script["hasSelection"] = &LuaFunscript::HasSelection;
-    script["actions"] = sol::readonly_property(&LuaFunscript::Actions);
-    script["commit"] = &LuaFunscript::Commit;
-    script["sort"] = &LuaFunscript::Sort;
-    script["closestAction"] = &LuaFunscript::ClosestAction;
-    script["closestActionAfter"] = &LuaFunscript::ClosestActionAfter;
-    script["closestActionBefore"] = &LuaFunscript::ClosestActionBefore;
-    script["selectedIndices"] = &LuaFunscript::SelectedIndices;
-    script["markForRemoval"] = &LuaFunscript::MarkForRemoval;
-    script["removeMarked"] = &LuaFunscript::RemoveMarked;
-    
-    script["path"] = sol::readonly_property(&LuaFunscript::Path);
-    script["name"] = sol::readonly_property(&LuaFunscript::Name);
-
-    auto action = L.new_usertype<LuaFunscriptAction>("Action",
-        sol::constructors<LuaFunscriptAction(lua_Number, lua_Integer), LuaFunscriptAction(lua_Number, lua_Integer, bool)>());
-    action["at"] = sol::property(&LuaFunscriptAction::at, &LuaFunscriptAction::set_at);
-    action["pos"] = sol::property(&LuaFunscriptAction::pos, &LuaFunscriptAction::set_pos);
-    action["selected"] = &LuaFunscriptAction::selected;
-
-    ofs["ActiveIdx"] = OFS_ScriptAPI::ActiveIdx;
-    ofs["Script"] = OFS_ScriptAPI::Script;
-    ofs["Clipboard"] = OFS_ScriptAPI::Clipboard;
-    ofs["Undo"] = OFS_ScriptAPI::Undo;
+    //auto L = sol::state_view(ofs.lua_state());
+    //auto script = L.new_usertype<LuaFunscript>("Funscript");
+    //script["hasSelection"] = &LuaFunscript::HasSelection;
+    //script["actions"] = sol::readonly_property(&LuaFunscript::Actions);
+    //script["commit"] = &LuaFunscript::Commit;
+    //script["sort"] = &LuaFunscript::Sort;
+    //script["closestAction"] = &LuaFunscript::ClosestAction;
+    //script["closestActionAfter"] = &LuaFunscript::ClosestActionAfter;
+    //script["closestActionBefore"] = &LuaFunscript::ClosestActionBefore;
+    //script["selectedIndices"] = &LuaFunscript::SelectedIndices;
+    //script["markForRemoval"] = &LuaFunscript::MarkForRemoval;
+    //script["removeMarked"] = &LuaFunscript::RemoveMarked;
+    //
+    //script["path"] = sol::readonly_property(&LuaFunscript::Path);
+    //script["name"] = sol::readonly_property(&LuaFunscript::Name);
+    //
+    //auto action = L.new_usertype<LuaFunscriptAction>("Action",
+    //    sol::constructors<LuaFunscriptAction(lua_Number, lua_Integer), LuaFunscriptAction(lua_Number, lua_Integer, bool)>());
+    //action["at"] = sol::property(&LuaFunscriptAction::at, &LuaFunscriptAction::set_at);
+    //action["pos"] = sol::property(&LuaFunscriptAction::pos, &LuaFunscriptAction::set_pos);
+    //action["selected"] = &LuaFunscriptAction::selected;
+    //
+    //ofs["ActiveIdx"] = OFS_ScriptAPI::ActiveIdx;
+    //ofs["Script"] = OFS_ScriptAPI::Script;
+    //ofs["Clipboard"] = OFS_ScriptAPI::Clipboard;
+    //ofs["Undo"] = OFS_ScriptAPI::Undo;
 }
 
 lua_Integer OFS_ScriptAPI::ActiveIdx() noexcept
@@ -78,29 +83,29 @@ LuaFunscript::LuaFunscript(const FunscriptArray& actions) noexcept
     }
 }
 
-void LuaFunscript::Commit(sol::this_state L) noexcept
+void LuaFunscript::Commit(/*sol::this_state L*/) noexcept
 {
-    FUN_ASSERT(Util::InMainThread(), "Not in main thread.");
-    auto app = OpenFunscripter::ptr;
-    auto ref = script.lock();
-    if(ref) {
-        FunscriptArray commit;
-        FunscriptArray selection;
-        commit.reserve(actions.size());
-        for(auto action : actions) {
-            auto succ = commit.emplace(action.o);
-            if(!succ) {
-                luaL_error(L.lua_state(), "Tried adding multiple actions with the same timestamp.");
-                return;
-            }
-            if(action.selected) {
-                selection.emplace(action.o);
-            }
-        }
-        app->undoSystem->Snapshot(StateType::CUSTOM_LUA, script);
-        ref->SetActions(commit);
-        ref->SetSelection(selection);
-    }
+    //FUN_ASSERT(Util::InMainThread(), "Not in main thread.");
+    //auto app = OpenFunscripter::ptr;
+    //auto ref = script.lock();
+    //if(ref) {
+    //    FunscriptArray commit;
+    //    FunscriptArray selection;
+    //    commit.reserve(actions.size());
+    //    for(auto action : actions) {
+    //        auto succ = commit.emplace(action.o);
+    //        if(!succ) {
+    //            luaL_error(L.lua_state(), "Tried adding multiple actions with the same timestamp.");
+    //            return;
+    //        }
+    //        if(action.selected) {
+    //            selection.emplace(action.o);
+    //        }
+    //    }
+    //    app->undoSystem->Snapshot(StateType::CUSTOM_LUA, script);
+    //    ref->SetActions(commit);
+    //    ref->SetSelection(selection);
+    //}
 }
 
 std::string LuaFunscript::Path() const noexcept
@@ -114,7 +119,7 @@ std::string LuaFunscript::Path() const noexcept
         if(ptr == app->LoadedFunscripts()[scriptIdx])
         {
             auto relPath = app->LoadedFunscripts()[scriptIdx]->RelativePath();
-            return app->LoadedProject->MakePathAbsolute(relPath);
+            return app->LoadedProject->MakePathAbsolute(relPath.string());
         }
     }
     return {};
@@ -134,7 +139,7 @@ bool LuaFunscript::HasSelection() const noexcept
     return std::any_of(actions.begin(), actions.end(), [](auto a) { return a.selected; });
 }
 
-sol::optional<std::tuple<LuaFunscriptAction, lua_Integer>> LuaFunscript::ClosestAction(lua_Number time) noexcept
+std::optional<std::tuple<LuaFunscriptAction, lua_Integer>> LuaFunscript::ClosestAction(lua_Number time) noexcept
 {
     float closestDelta = std::numeric_limits<float>::max();
     int closestIdx = -1;
@@ -150,12 +155,12 @@ sol::optional<std::tuple<LuaFunscriptAction, lua_Integer>> LuaFunscript::Closest
         }
     }
     if(closestDelta != std::numeric_limits<float>::max()) {
-        return sol::make_optional(std::make_tuple(closestAction, closestIdx + 1));
+        return std::make_optional(std::make_tuple(closestAction, closestIdx + 1));
     }
-    return sol::optional<std::tuple<LuaFunscriptAction, lua_Integer>>();
+    return std::optional<std::tuple<LuaFunscriptAction, lua_Integer>>();
 }
 
-sol::optional<std::tuple<LuaFunscriptAction, lua_Integer>> LuaFunscript::ClosestActionAfter(lua_Number time) noexcept
+std::optional<std::tuple<LuaFunscriptAction, lua_Integer>> LuaFunscript::ClosestActionAfter(lua_Number time) noexcept
 {
     float closestDelta = std::numeric_limits<float>::max();
     int closestIdx = -1;
@@ -172,12 +177,12 @@ sol::optional<std::tuple<LuaFunscriptAction, lua_Integer>> LuaFunscript::Closest
         }
     }
     if(closestDelta != std::numeric_limits<float>::max()) {
-        return sol::make_optional(std::make_tuple(closestAction, closestIdx + 1));
+        return std::make_optional(std::make_tuple(closestAction, closestIdx + 1));
     }
-    return sol::optional<std::tuple<LuaFunscriptAction, lua_Integer>>();
+    return std::optional<std::tuple<LuaFunscriptAction, lua_Integer>>();
 }
 
-sol::optional<std::tuple<LuaFunscriptAction, lua_Integer>> LuaFunscript::ClosestActionBefore(lua_Number time) noexcept
+std::optional<std::tuple<LuaFunscriptAction, lua_Integer>> LuaFunscript::ClosestActionBefore(lua_Number time) noexcept
 {
     float closestDelta = std::numeric_limits<float>::max();
     int closestIdx = -1;
@@ -194,9 +199,9 @@ sol::optional<std::tuple<LuaFunscriptAction, lua_Integer>> LuaFunscript::Closest
         }
     }
     if(closestDelta != std::numeric_limits<float>::max()) {
-        return sol::make_optional(std::make_tuple(closestAction, closestIdx + 1));
+        return std::make_optional(std::make_tuple(closestAction, closestIdx + 1));
     }
-    return sol::optional<std::tuple<LuaFunscriptAction, lua_Integer>>();
+    return std::optional<std::tuple<LuaFunscriptAction, lua_Integer>>();
 }
 
 std::vector<lua_Integer> LuaFunscript::SelectedIndices() const noexcept
@@ -210,14 +215,15 @@ std::vector<lua_Integer> LuaFunscript::SelectedIndices() const noexcept
     return selectedIndices;
 }
 
-void LuaFunscript::MarkForRemoval(lua_Integer idx, sol::this_state L) noexcept
+void LuaFunscript::MarkForRemoval(lua_Integer idx/*, sol::this_state L*/) noexcept
 {
     idx -= 1;
     if(idx >= 0 && idx < actions.size()) {
         markedIndices.insert(idx);
     }
     else {
-        luaL_error(L.lua_state(), "Out of bounds index.");
+        // QQQ
+        //luaL_error(L.lua_state(), "Out of bounds index.");
     }
 }
 

@@ -1,15 +1,17 @@
 #pragma once
-#include <string>
 #include "OFS_Lua.h"
 #include "OFS_LuaExtensionAPI.h"
+
 #include "OFS_Util.h"
 
 #include <memory>
+#include <string>
+
 
 class OFS_LuaExtension
 {
 	private:
-		sol::state L;
+		//sol::state L;
 		std::unique_ptr<OFS_ExtensionAPI> api = nullptr;
     public:
 		static constexpr const char* MainFile = "main.lua";
@@ -42,10 +44,10 @@ class OFS_LuaExtension
 		void Execute(const std::string& function) noexcept;
 };
 
-REFL_TYPE(OFS_LuaExtension)
-	REFL_FIELD(Name)
-	REFL_FIELD(NameId)
-	REFL_FIELD(Directory)
-	REFL_FIELD(Active)
-	REFL_FIELD(WindowOpen)
-REFL_END
+//REFL_TYPE(OFS_LuaExtension)
+//	REFL_FIELD(Name)
+//	REFL_FIELD(NameId)
+//	REFL_FIELD(Directory)
+//	REFL_FIELD(Active)
+//	REFL_FIELD(WindowOpen)
+//REFL_END

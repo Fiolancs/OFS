@@ -1,8 +1,14 @@
 #include "OFS_Localization.h"
 #include "OFS_Util.h"
-#include "rapidcsv.h"
 
+#include <glaze/csv.hpp>
+
+#include <array>
+#include <fstream>
+#include <iterator>
 #include <optional>
+#include <filesystem>
+
 
 OFS_Translator* OFS_Translator::ptr = nullptr;
 
@@ -16,25 +22,69 @@ OFS_Translator::OFS_Translator() noexcept
 void OFS_Translator::LoadDefaults() noexcept
 {
     StringData = std::vector<char>();
-    memcpy(Translation.data(), OFS_DefaultStrings::Default.data(), Translation.size() * sizeof(const char*));
+    std::memcpy(Translation.data(), OFS_DefaultStrings::Default.data(), Translation.size() * sizeof(const char*));
 }
 
-static std::optional<rapidcsv::Document> OpenDocument(const char* path) noexcept
+struct LanguageDoc
 {
-    try
+    std::vector<std::string> Key;
+    std::vector<std::string> Default;
+    std::vector<std::string> Translation;
+
+    auto GetRow(std::size_t n) { return std::forward_as_tuple(Key[n], Default[n], Translation[n]); }
+    auto GetRowCount(void) const { return Key.size(); }
+};
+
+template <>
+struct glz::meta<LanguageDoc>
+{
+    using T = LanguageDoc;
+    static constexpr auto value = glz::object(
+        "Key (do not touch)", &T::Key,
+        "Default", &T::Default,
+        "Translation", &T::Translation
+    );
+};
+
+static std::optional<LanguageDoc> OpenDocument(const char* path) noexcept
+{
+    if (std::ifstream file{ std::filesystem::path(path), std::ios::binary })
     {
-        return rapidcsv::Document(path, 
-            rapidcsv::LabelParams(),
-            rapidcsv::SeparatorParams(',', false, true, true),
-            rapidcsv::ConverterParams(),
-            rapidcsv::LineReaderParams()
-        );
+        std::string file_contents{ std::istreambuf_iterator<char>{file}, std::istreambuf_iterator<char>{} };
+
+        LanguageDoc doc{};
+        if (auto const err = glz::read_csv<glz::colwise>(doc, file_contents); !err)
+        {
+            return doc;
+        }
+        else
+        {
+            //QQQ
+            //LOG_ERROR(err.custom_error_message);
+        }
     }
-    catch(const std::exception& e)
+
+    return {};
+}
+static std::optional<LanguageDoc> OpenDocument(const char8_t* path) noexcept
+{
+    if (std::ifstream file{ std::filesystem::path(path), std::ios::binary })
     {
-        LOG_ERROR(e.what());
-        return std::optional<rapidcsv::Document>();
+        std::string file_contents{ std::istreambuf_iterator<char>{file}, std::istreambuf_iterator<char>{} };
+
+        LanguageDoc doc{};
+        if (auto const err = glz::read_csv<glz::colwise>(doc, file_contents); !err)
+        {
+            return doc;
+        }
+        else
+        {
+            //QQQ
+            //LOG_ERROR(err.custom_error_message);
+        }
     }
+
+    return {};
 }
 
 bool OFS_Translator::LoadTranslation(const char* name) noexcept
@@ -55,21 +105,12 @@ bool OFS_Translator::LoadTranslation(const char* name) noexcept
     std::vector<int> tmpTrIndices;
     tmpTrIndices.resize(OFS_DefaultStrings::Default.size(), -1);
 
-    auto row = doc.GetRow<std::string>(0);
-    if(row.size() != 3) {        
-        LOG_ERROR("Translation column count mismatch.");
-        return false;
-    }
-
-    for(size_t i=1; i < doc.GetRowCount(); i += 1)
+    for(size_t i = 0; i < doc.GetRowCount(); ++i)
     {
-        row = doc.GetRow<std::string>(i);
-        if(row.size() != 3) {
-            continue;
-        }
+        auto row = doc.GetRow(i);
 
-        auto key = std::move(row[0]);
-        auto value = std::move(row[2]);
+        auto& key   = std::get<0>(row);
+        auto  value = std::get<2>(row);
         value = Util::trim(value);
 
         if(value.empty()) {
@@ -117,14 +158,7 @@ bool OFS_Translator::MergeIntoOne(const char* inputPath1, const char* inputPath2
     if(!inputOpt1.has_value() || !inputOpt2.has_value()) return false;
     auto input1 = std::move(inputOpt1.value());
     auto input2 = std::move(inputOpt2.value());
-
-    auto output = rapidcsv::Document(std::string(),
-        rapidcsv::LabelParams(),
-        rapidcsv::SeparatorParams(',', false, true, true),
-        rapidcsv::ConverterParams(),
-        rapidcsv::LineReaderParams()
-    );
-    
+        
     std::array<const char*, static_cast<int>(Tr::MAX_STRING_COUNT)> lut;
     for(auto& mapping : OFS_DefaultStrings::KeyMapping) {
         lut[static_cast<int>(mapping.second)] = mapping.first.c_str();
@@ -132,48 +166,38 @@ bool OFS_Translator::MergeIntoOne(const char* inputPath1, const char* inputPath2
 
     std::array<std::string, static_cast<int>(Tr::MAX_STRING_COUNT)> input1Lut;
     for(size_t i=0, size=input1.GetRowCount(); i < size; i += 1) {
-        auto row = input1.GetRow<std::string>(i);
-        if(row.size() < 3) return false;
-        auto it = OFS_DefaultStrings::KeyMapping.find(row[0]);
+        auto row = input1.GetRow(i);
+        auto it = OFS_DefaultStrings::KeyMapping.find(std::get<0>(row));
         if(it != OFS_DefaultStrings::KeyMapping.end()) {
-            input1Lut[static_cast<int>(it->second)] = row[2];
+            input1Lut[static_cast<int>(it->second)] = std::get<2>(row);
         }
     }
 
     std::array<std::string, static_cast<int>(Tr::MAX_STRING_COUNT)> input2Lut;
     for(size_t i=0, size=input2.GetRowCount(); i < size; i += 1) {
-        auto row = input2.GetRow<std::string>(i);
-        if(row.size() < 3) return false;
-        auto it = OFS_DefaultStrings::KeyMapping.find(row[0]);
+        auto row = input2.GetRow(i);
+        auto it = OFS_DefaultStrings::KeyMapping.find(std::get<0>(row));
         if(it != OFS_DefaultStrings::KeyMapping.end()) {
-            input2Lut[static_cast<int>(it->second)] = row[2];
+            input2Lut[static_cast<int>(it->second)] = std::get<2>(row);
         }
     }
 
-    std::vector<std::string> row = {
-        "Key (do not touch)",
-        "Default",
-        "Translation",
-    };
-    output.SetColumnName(0, row[0]);
-    output.SetColumnName(1, row[1]);
-    output.SetColumnName(2, row[2]);
+    LanguageDoc out{};
+    out.Key.resize(static_cast<int>(Tr::MAX_STRING_COUNT));
+    out.Default.resize(static_cast<int>(Tr::MAX_STRING_COUNT));
+    out.Translation.resize(static_cast<int>(Tr::MAX_STRING_COUNT));
 
-    for(int idx = 0; idx < static_cast<int>(Tr::MAX_STRING_COUNT); idx += 1) {
+    for(int idx = 0; idx < static_cast<int>(Tr::MAX_STRING_COUNT); ++idx) {
         Tr current = static_cast<Tr>(idx);
-        row[0] = lut[idx];
-        row[1] = TRD(current);
-        row[2] = input1Lut[idx].empty() ? input2Lut[idx] : input1Lut[idx];
-        output.InsertRow(output.GetRowCount(), row);
+        out.Key[idx]         = lut[idx];
+        out.Default[idx]     = TRD(current);
+        out.Translation[idx] = input1Lut[idx].empty() ? input2Lut[idx] : input1Lut[idx];
     }
 
-    try 
+    if (auto err = glz::write_file_csv(out, outputPath, std::string{}); err)
     {
-        output.Save(outputPath);
-    }
-    catch(std::exception ex) 
-    {
-        LOG_ERROR(ex.what());
+        // QQQ
+        //LOG_ERROR(err.custom_error_message);
         return false;
     }
     return true;

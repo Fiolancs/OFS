@@ -1,7 +1,10 @@
+#define IMGUI_DEFINE_MATH_OPERATORS
 #include "OFS_ImGui.h"
-
 #include "OFS_Util.h"
-#include "imgui_internal.h"
+
+#include <imgui.h>
+#include <imgui_internal.h>
+#undef  IMGUI_DEFINE_MATH_OPERATORS
 
 #include <cmath>
 

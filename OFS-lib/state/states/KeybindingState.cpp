@@ -1,13 +1,13 @@
 #include "KeybindingState.h"
 
-#include <array>
+#include <cstdint>
 #include <unordered_map>
 
 /*
     This code ensures that if ImGuiKey enum values change everything still works correctly...
 */
 
-enum OFS_Key : int32_t
+enum OFS_Key : std::int32_t
 {
     OFS_Key_None = 0,
     OFS_Key_Tab = 512,
@@ -88,14 +88,14 @@ enum OFS_Key : int32_t
     OFS_Key_MouseLeft, OFS_Key_MouseRight, OFS_Key_MouseMiddle, OFS_Key_MouseX1, OFS_Key_MouseX2, OFS_Key_MouseWheelX, OFS_Key_MouseWheelY,
 };
 
-enum OFS_KeyMod : int32_t
+enum OFS_KeyMod : std::int32_t
 {
     OFS_KeyMod_None  = 0,
     OFS_KeyMod_Ctrl  = 1 << 12,
     OFS_KeyMod_Shift = 1 << 13,
     OFS_KeyMod_Alt   = 1 << 14,
     OFS_KeyMod_Super = 1 << 15,
-    OFS_KeyMod_Mask_ = 0xF800,
+    OFS_KeyMod_Mask_ = 0xF000,
 };
 
 static std::unordered_map<OFS_Key, ImGuiKey> GetOfsToImGuiMap() noexcept
@@ -254,9 +254,9 @@ static std::unordered_map<ImGuiKey, OFS_Key> GetImGuiToOfsMap() noexcept
     return mapping;
 }
 
-static int32_t ConvertModsToOfs(int32_t mods) noexcept
+static std::int32_t ConvertModsToOfs(std::int32_t mods) noexcept
 {
-    int32_t ofsMods = 0;
+    std::int32_t ofsMods = 0;
     if(mods & ImGuiMod_Ctrl)
         ofsMods |= OFS_KeyMod_Ctrl;
     if(mods & ImGuiMod_Shift) 
@@ -272,9 +272,9 @@ static int32_t ConvertModsToOfs(int32_t mods) noexcept
     return ofsMods;
 }
 
-static int32_t ConvertModsToImGui(int32_t mods) noexcept
+static std::int32_t ConvertModsToImGui(std::int32_t mods) noexcept
 {
-    int32_t imMods = 0;
+    std::int32_t imMods = 0;
     if(mods & OFS_KeyMod_Ctrl)
         imMods |= ImGuiMod_Ctrl;
     if(mods & OFS_KeyMod_Shift) 

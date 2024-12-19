@@ -1,10 +1,12 @@
 #pragma once
+#include "Funscript/FunscriptUndoSystem.h"
+
 #include <vector>
 #include <memory>
+#include <cstdint>
 
-#include "FunscriptUndoSystem.h"
 
-enum StateType : int32_t {
+enum StateType : std::int32_t {
     ADD_EDIT_ACTIONS = 0,
     ADD_EDIT_ACTION = 1,
     ADD_ACTION = 2,

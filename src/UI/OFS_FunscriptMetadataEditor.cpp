@@ -1,12 +1,17 @@
 #include "OFS_FunscriptMetadataEditor.h"
-#include "OFS_Profiling.h"
-#include "OFS_Localization.h"
-
-#include "OFS_ImGui.h"
-#include "imgui.h"
-#include "imgui_stdlib.h"
-
 #include "state/MetadataEditorState.h"
+#include "UI/OFS_ImGui.h"
+
+#include "UI/OFS_Profiling.h"
+#include "localization/OFS_Localization.h"
+
+#include <imgui.h>
+#include <imgui_internal.h>
+#include <misc/cpp/imgui_stdlib.h>
+
+#include <string>
+#include <format>
+
 
 OFS_FunscriptMetadataEditor::OFS_FunscriptMetadataEditor() noexcept
 {
@@ -15,14 +20,15 @@ OFS_FunscriptMetadataEditor::OFS_FunscriptMetadataEditor() noexcept
 
 bool OFS_FunscriptMetadataEditor::ShowMetadataEditor(bool* open, Funscript::Metadata& metadata) noexcept
 {
-    if(*open) ImGui::OpenPopup(TR_ID("METADATA_EDITOR", Tr::METADATA_EDITOR));
+    if(*open) ImGui::OpenPopup(TR_ID("METADATA_EDITOR", Tr::METADATA_EDITOR).c_str());
     OFS_PROFILE(__FUNCTION__);
     bool metaDataChanged = false;
 
-    if (ImGui::BeginPopupModal(TR_ID("METADATA_EDITOR", Tr::METADATA_EDITOR), open, ImGuiWindowFlags_NoDocking)) {
+    char buffer[128]{};
+    if (ImGui::BeginPopupModal(TR_ID("METADATA_EDITOR", Tr::METADATA_EDITOR).c_str(), open, ImGuiWindowFlags_NoDocking)) {
         metaDataChanged |= ImGui::InputText(TR(TITLE), &metadata.title);
-        Util::FormatTime(Util::FormatBuffer, sizeof(Util::FormatBuffer), (float)metadata.duration, false);
-        ImGui::LabelText(TR(DURATION), "%s", Util::FormatBuffer);
+        Util::FormatTime(buffer, sizeof(buffer), (float)metadata.duration, false);
+        ImGui::LabelText(TR(DURATION), "%s", buffer);
 
         metaDataChanged |= ImGui::InputText(TR(CREATOR), &metadata.creator);
         metaDataChanged |= ImGui::InputText(TR(URL), &metadata.script_url);
@@ -109,7 +115,7 @@ bool OFS_FunscriptMetadataEditor::ShowMetadataEditor(bool* open, Funscript::Meta
             if (!newTag.empty()) {
                 metadata.tags.emplace_back(newTag); newTag.clear();
             }
-            ImGui::ActivateItem(ImGui::GetID(tagIdString));
+            ImGui::ActivateItemByID(ImGui::GetID(tagIdString));
             metaDataChanged = true;
         };
 
@@ -135,14 +141,14 @@ bool OFS_FunscriptMetadataEditor::ShowMetadataEditor(bool* open, Funscript::Meta
                 metadata.performers.emplace_back(newPerformer); newPerformer.clear(); 
             }
             auto performerID = ImGui::GetID(performerIdString);
-            ImGui::ActivateItem(performerID);
+            ImGui::ActivateItemByID(performerID);
             metaDataChanged = true;
         };
         if (ImGui::InputText(performerIdString, &newPerformer, ImGuiInputTextFlags_EnterReturnsTrue)) {
             addPerformer(newPerformer);
         }
         ImGui::SameLine();
-        if (ImGui::Button(TR_ID("ADD_PERFORMER", Tr::ADD), ImVec2(-1.f, 0.f))) {
+        if (ImGui::Button(TR_ID("ADD_PERFORMER", Tr::ADD).c_str(), ImVec2(-1.f, 0.f))) {
             addPerformer(newPerformer);
         }
 
@@ -150,7 +156,7 @@ bool OFS_FunscriptMetadataEditor::ShowMetadataEditor(bool* open, Funscript::Meta
         ImGui::NewLine();
         ImGui::Separator();
         float availWidth = ImGui::GetContentRegionAvail().x;
-        if (ImGui::Button(FMT("%s " ICON_COPY, TR(SAVE_TEMPLATE)), ImVec2(availWidth, 0.f))) {
+        if (ImGui::Button(std::format("{:s} " ICON_COPY, TR(SAVE_TEMPLATE)).c_str(), ImVec2(availWidth, 0.f))) {
             auto& state = FunscriptMetadataState::State(stateHandle);
             state.defaultMetadata = metadata;
         }

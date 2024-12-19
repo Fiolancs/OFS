@@ -1,6 +1,6 @@
 #pragma once
 
-#include "OFS_StateHandle.h"
+#include "state/OFS_StateHandle.h"
 
 struct BaseOverlayState
 {
@@ -23,10 +23,10 @@ struct BaseOverlayState
     }
 };
 
-REFL_TYPE(BaseOverlayState)
-    REFL_FIELD(MaxSpeedColor)
-    REFL_FIELD(MaxSpeedPerSecond)
-    REFL_FIELD(ShowMaxSpeedHighlight)
-    REFL_FIELD(SyncLineEnable)
-    REFL_FIELD(SplineMode)
-REFL_END
+//REFL_TYPE(BaseOverlayState)
+//    REFL_FIELD(MaxSpeedColor)
+//    REFL_FIELD(MaxSpeedPerSecond)
+//    REFL_FIELD(ShowMaxSpeedHighlight)
+//    REFL_FIELD(SyncLineEnable)
+//    REFL_FIELD(SplineMode)
+//REFL_END

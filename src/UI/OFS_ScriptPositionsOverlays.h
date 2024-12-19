@@ -1,6 +1,7 @@
 #pragma once
-#include "ScriptPositionsOverlayMode.h"
-#include "OFS_Localization.h"
+#include "UI/ScriptPositionsOverlayMode.h"
+#include "localization/OFS_Localization.h"
+
 #include <cstdint>
 
 

@@ -1,13 +1,15 @@
 #pragma once
-#include "OFS_Lua.h"
+#include "lua/OFS_Lua.h"
 
-#include <string>
 #include <tuple>
+#include <string>
 
 class OFS_ImGuiAPI
 {
-    private:
-    uint32_t BeginEndDisableCounter = 0;
+    using lua_Number  = double;
+    using lua_Integer = int;
+private:
+    std::uint32_t BeginEndDisableCounter = 0;
     std::string ErrorStr; 
 
     static void Text(const char* txt) noexcept;
@@ -41,11 +43,11 @@ class OFS_ImGuiAPI
     static std::tuple<lua_Integer, bool> SliderInt(const char* txt, lua_Integer current, lua_Integer min, lua_Integer max) noexcept;
 
     static std::tuple<bool, bool> Checkbox(const char* txt, bool current) noexcept;
-    static std::tuple<lua_Integer, bool> Combo(const char* txt, lua_Integer currentSelection, sol::table items) noexcept;
+    static std::tuple<lua_Integer, bool> Combo(const char* txt, lua_Integer currentSelection/*, sol::table items*/) noexcept;
     static bool CollapsingHeader(const char* txt) noexcept;
 
-    public:
-    OFS_ImGuiAPI(sol::usertype<class OFS_ExtensionAPI>& ofs) noexcept;
+public:
+    OFS_ImGuiAPI(/*sol::usertype<class OFS_ExtensionAPI>& ofs*/) noexcept;
     ~OFS_ImGuiAPI() noexcept;
 
     bool Validate() noexcept;

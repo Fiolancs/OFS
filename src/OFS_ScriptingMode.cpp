@@ -1,15 +1,14 @@
 #include "OpenFunscripter.h"
 #include "OFS_ScriptingMode.h"
-#include "OFS_Util.h"
-#include "OFS_Profiling.h"
-#include "OFS_Localization.h"
-
-#include "imgui.h"
-#include "imgui_internal.h"
-
-#include "OFS_ImGui.h"
-
 #include "state/ScriptModeState.h"
+
+#include "OFS_Util.h"
+#include "UI/OFS_ImGui.h"
+#include "UI/OFS_Profiling.h"
+#include "localization/OFS_Localization.h"
+
+#include <imgui.h>
+#include <imgui_internal.h>
 
 
 void ScriptingModeBase::AddEditAction(FunscriptAction action) noexcept
@@ -63,20 +62,20 @@ void ScriptingMode::DrawScriptingMode(bool* open) noexcept
     OFS_PROFILE(__FUNCTION__);
     auto& state = ScriptingModeState::State(stateHandle);
     auto app = OpenFunscripter::ptr;
-    ImGui::Begin(TR_ID(WindowId, Tr::MODE), open);
+    ImGui::Begin(TR_ID(WindowId, Tr::MODE).c_str(), open);
     ImGui::PushItemWidth(-1);
 
     if (ImGui::BeginCombo("##Mode", ScriptingModeToString(activeMode), ImGuiComboFlags_None)) {
-        if (ImGui::Selectable(TR_ID("DEFAULT", Tr::DEFAULT_MODE), activeMode == ScriptingModeEnum::DEFAULT_MODE)) {
+        if (ImGui::Selectable(TR_ID("DEFAULT", Tr::DEFAULT_MODE).c_str(), activeMode == ScriptingModeEnum::DEFAULT_MODE)) {
             SetMode(ScriptingModeEnum::DEFAULT_MODE);
         }
-        if (ImGui::Selectable(TR_ID("ALTERNATING", Tr::ALTERNATING_MODE), activeMode == ScriptingModeEnum::ALTERNATING)) {
+        if (ImGui::Selectable(TR_ID("ALTERNATING", Tr::ALTERNATING_MODE).c_str(), activeMode == ScriptingModeEnum::ALTERNATING)) {
             SetMode(ScriptingModeEnum::ALTERNATING);
         }
-        if (ImGui::Selectable(TR_ID("DYNAMIC_INJECTION", Tr::DYNAMIC_INJECTION_MODE), activeMode == ScriptingModeEnum::DYNAMIC_INJECTION)) {
+        if (ImGui::Selectable(TR_ID("DYNAMIC_INJECTION", Tr::DYNAMIC_INJECTION_MODE).c_str(), activeMode == ScriptingModeEnum::DYNAMIC_INJECTION)) {
             SetMode(ScriptingModeEnum::DYNAMIC_INJECTION);
         }
-        if (ImGui::Selectable(TR_ID("RECORDING", Tr::RECORDING_MODE), activeMode == ScriptingModeEnum::RECORDING)) {
+        if (ImGui::Selectable(TR_ID("RECORDING", Tr::RECORDING_MODE).c_str(), activeMode == ScriptingModeEnum::RECORDING)) {
             SetMode(ScriptingModeEnum::RECORDING);
         }
         ImGui::EndCombo();
@@ -89,13 +88,13 @@ void ScriptingMode::DrawScriptingMode(bool* open) noexcept
     ImGui::Spacing();
 
     if (ImGui::BeginCombo("##OverlayMode", OverlayModeToString(activeOverlay), ImGuiComboFlags_None)) {
-        if (ImGui::Selectable(TR_ID("FRAME_OVERLAY", Tr::FRAME_OVERLAY), activeOverlay == ScriptingOverlayModes::FRAME)) {
+        if (ImGui::Selectable(TR_ID("FRAME_OVERLAY", Tr::FRAME_OVERLAY).c_str(), activeOverlay == ScriptingOverlayModes::FRAME)) {
             SetOverlay(ScriptingOverlayModes::FRAME);
         }
-        if (ImGui::Selectable(TR_ID("TEMPO_OVERLAY", Tr::TEMPO_OVERLAY), activeOverlay == ScriptingOverlayModes::TEMPO)) {
+        if (ImGui::Selectable(TR_ID("TEMPO_OVERLAY", Tr::TEMPO_OVERLAY).c_str(), activeOverlay == ScriptingOverlayModes::TEMPO)) {
             SetOverlay(ScriptingOverlayModes::TEMPO);
         }
-        if (ImGui::Selectable(TR_ID("EMPTY_OVERLAY", Tr::EMPTY_OVERLAY), activeOverlay == ScriptingOverlayModes::EMPTY)) {
+        if (ImGui::Selectable(TR_ID("EMPTY_OVERLAY", Tr::EMPTY_OVERLAY).c_str(), activeOverlay == ScriptingOverlayModes::EMPTY)) {
             SetOverlay(ScriptingOverlayModes::EMPTY);
         }
         ImGui::EndCombo();
@@ -361,8 +360,8 @@ inline void RecordingMode::twoAxisRecording() noexcept
 // recording
 RecordingMode::RecordingMode() noexcept
 {
-    eventUnsub = EV::MakeUnsubscibeFn(SDL_CONTROLLERAXISMOTION,
-        EV::Queue().appendListener(SDL_CONTROLLERAXISMOTION,
+    eventUnsub = EV::MakeUnsubscibeFn(SDL_EVENT_GAMEPAD_AXIS_MOTION,
+        EV::Queue().appendListener(SDL_EVENT_GAMEPAD_AXIS_MOTION,
             OFS_SDL_Event::HandleEvent(EVENT_SYSTEM_BIND(this, &RecordingMode::ControllerAxisMotion))));
 }
 
@@ -375,7 +374,7 @@ void RecordingMode::ControllerAxisMotion(const OFS_SDL_Event* ev) noexcept
 {
     OFS_PROFILE(__FUNCTION__);
     if (activeType != RecordingType::Controller) return;
-    auto& axis = ev->sdl.caxis;
+    auto& axis = ev->sdl.gaxis;
     const float range = (float)std::numeric_limits<int16_t>::max() - ControllerDeadzone;
     int16_t axisValue = axis.value;
 
@@ -389,22 +388,22 @@ void RecordingMode::ControllerAxisMotion(const OFS_SDL_Event* ev) noexcept
         axisValue += ControllerDeadzone;
 
     switch (axis.axis) {
-        case SDL_CONTROLLER_AXIS_LEFTX:
+        case SDL_GAMEPAD_AXIS_LEFTX:
             leftX = Util::Clamp(axisValue / range, -1.f, 1.f);
             break;
-        case SDL_CONTROLLER_AXIS_LEFTY:
+        case SDL_GAMEPAD_AXIS_LEFTY:
             leftY = Util::Clamp(axisValue / range, -1.f, 1.f);
             break;
-        case SDL_CONTROLLER_AXIS_RIGHTX:
+        case SDL_GAMEPAD_AXIS_RIGHTX:
             rightX = Util::Clamp(axisValue / range, -1.f, 1.f);
             break;
-        case SDL_CONTROLLER_AXIS_RIGHTY:
+        case SDL_GAMEPAD_AXIS_RIGHTY:
             rightY = Util::Clamp(axisValue / range, -1.f, 1.f);
             break;
-        case SDL_CONTROLLER_AXIS_TRIGGERLEFT:
+        case SDL_GAMEPAD_AXIS_LEFT_TRIGGER:
             leftTrigger = Util::Clamp(axisValue / range, -1.f, 1.f);
             break;
-        case SDL_CONTROLLER_AXIS_TRIGGERRIGHT:
+        case SDL_GAMEPAD_AXIS_RIGHT_TRIGGER:
             rightTrigger = Util::Clamp(axisValue / range, -1.f, 1.f);
             break;
     }
@@ -439,7 +438,7 @@ void RecordingMode::DrawModeSettings() noexcept
     OFS_PROFILE(__FUNCTION__);
     auto app = OpenFunscripter::ptr;
 
-    if (ImGui::BeginCombo(TR_ID("MODE", Tr::MODE), RecordingModeToString(activeType), ImGuiComboFlags_None)) {
+    if (ImGui::BeginCombo(TR_ID("MODE", Tr::MODE).c_str(), RecordingModeToString(activeType), ImGuiComboFlags_None)) {
         if (ImGui::Selectable(TR(MOUSE), activeType == RecordingType::Mouse)) {
             activeType = RecordingType::Mouse;
         }

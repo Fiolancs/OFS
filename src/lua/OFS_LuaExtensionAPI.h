@@ -20,6 +20,6 @@ class OFS_ExtensionAPI
     std::unique_ptr<OFS_PlayerAPI> playerAPI;
     std::unique_ptr<OFS_ScriptAPI> scriptAPI;
 
-    OFS_ExtensionAPI(sol::usertype<class OFS_ExtensionAPI>& ofs) noexcept;
+    OFS_ExtensionAPI(/*sol::usertype<class OFS_ExtensionAPI>& ofs*/) noexcept;
     ~OFS_ExtensionAPI() noexcept;
 };

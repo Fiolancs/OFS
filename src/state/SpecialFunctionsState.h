@@ -1,6 +1,5 @@
 #pragma once
-
-#include "OFS_StateHandle.h"
+#include "state/OFS_StateHandle.h"
 
 // ATTENTION: no reordering
 enum class SpecialFunctionType : int32_t
@@ -22,6 +21,6 @@ struct SpecialFunctionState
     }
 };
 
-REFL_TYPE(SpecialFunctionState)
-    REFL_FIELD(selectedFunction, serializeEnum{})
-REFL_END
+//REFL_TYPE(SpecialFunctionState)
+//    REFL_FIELD(selectedFunction, serializeEnum{})
+//REFL_END

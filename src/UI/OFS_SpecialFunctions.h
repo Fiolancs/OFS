@@ -1,9 +1,10 @@
 #pragma once
+#include "state/SpecialFunctionsState.h"
+
+#include "Funscript/Funscript.h"
 
 #include <memory>
-#include "Funscript.h"
 
-#include "state/SpecialFunctionsState.h"
 
 class FunctionBase {
 protected:

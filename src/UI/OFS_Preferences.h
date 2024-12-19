@@ -1,20 +1,17 @@
 #pragma once
+#include "OFS_ScriptSimulator.h"
+#include "state/PreferenceState.h"
+#include "UI/OFS_ScriptPositionsOverlays.h"
 
-#include "nlohmann/json.hpp"
+#include "OFS_Util.h"
+#include "OFS_Reflection.h"
 
-#include <sstream>
+#include <imgui.h>
+
 #include <vector>
 #include <string>
+#include <sstream>
 
-#include "OFS_ScriptSimulator.h"
-
-#include "OFS_Reflection.h"
-#include "OFS_Util.h"
-#include "imgui.h"
-
-#include "OFS_ScriptPositionsOverlays.h"
-
-#include "state/PreferenceState.h"
 
 class OFS_Preferences
 {

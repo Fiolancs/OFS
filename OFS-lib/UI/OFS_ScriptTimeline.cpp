@@ -1,22 +1,22 @@
-#include "OFS_ScriptTimeline.h"
-#include "OFS_Profiling.h"
-#include "OFS_VideoplayerEvents.h"
+#include "UI/OFS_ScriptTimeline.h"
 
-#include "stb_sprintf.h"
-
-#include "imgui.h"
-#include "imgui_stdlib.h"
-
-#include "OFS_ImGui.h"
-#include "OFS_Shader.h"
 #include "OFS_GL.h"
-#include "OFS_EventSystem.h"
-
-#include "state/states/BaseOverlayState.h"
+#include "OFS_ImGui.h"
+#include "OFS_Waveform.h"
+#include "gl/OFS_Shader.h"
+#include "UI/OFS_Profiling.h"
+#include "UI/ScriptPositionsOverlayMode.h"
+#include "event/OFS_EventSystem.h"
+#include "videoplayer/OFS_VideoplayerEvents.h"
 #include "state/states/WaveformState.h"
+#include "state/states/BaseOverlayState.h"
+#include "Funscript/FunscriptAction.h"
 
-#include "SDL_events.h"
-#include "SDL_timer.h"
+#include <SDL3/SDL_timer.h>
+#include <SDL3/SDL_events.h>
+#include <imgui.h>
+#include <misc/cpp/imgui_stdlib.h>
+
 
 inline static FunscriptAction getActionForPoint(const OverlayDrawingCtx& ctx, ImVec2 point) noexcept
 {
@@ -61,7 +61,7 @@ void ScriptTimeline::Init()
 {
 	overlayStateHandle = BaseOverlayState::RegisterStatic();
 
-	EV::Queue().appendListener(SDL_MOUSEWHEEL,
+	EV::Queue().appendListener(SDL_EVENT_MOUSE_WHEEL,
 		OFS_SDL_Event::HandleEvent(EVENT_SYSTEM_BIND(this, &ScriptTimeline::mouseScroll)));
 	EV::Queue().appendListener(WaveformProcessingFinishedEvent::EventType,
 		WaveformProcessingFinishedEvent::HandleEvent(EVENT_SYSTEM_BIND(this, &ScriptTimeline::FfmpegAudioProcessingFinished)));
@@ -244,7 +244,7 @@ void ScriptTimeline::ShowScriptPositions(
 
 	if(IsSelecting) handleSelectionScrolling(drawingCtx);
 	
-	ImGui::Begin(TR_ID(WindowId, Tr::POSITIONS));
+	ImGui::Begin(TR_ID(WindowId, Tr::POSITIONS).c_str());
 	drawingCtx.drawList = ImGui::GetWindowDrawList();
 	PositionsItemHovered = ImGui::IsWindowHovered();
 
@@ -413,7 +413,7 @@ void ScriptTimeline::ShowScriptPositions(
 		else if(IsSelecting && ImGui::IsMouseReleased(ImGuiMouseButton_Left))
 		{
 			IsSelecting = false;
-			bool clearSelection = !(SDL_GetModState() & KMOD_CTRL);
+			bool clearSelection = !(SDL_GetModState() & SDL_KMOD_CTRL);
 			updateSelection(drawingCtx, clearSelection);
 		}
 		else if(IsMovingIdx < 0 && ItemIsHovered)
@@ -427,7 +427,7 @@ void ScriptTimeline::ShowScriptPositions(
 		// right click context menu
 		if (ImGui::BeginPopupContextItem(script->Title().c_str()))
 		{
-			if (ImGui::BeginMenu(TR_ID("SCRIPTS", Tr::SCRIPTS))) {
+			if (ImGui::BeginMenu(TR_ID("SCRIPTS", Tr::SCRIPTS).c_str())) {
 				for (auto& script : scripts) {
 					if(script->Title().empty()) {
 						ImGui::TextDisabled(TR(NONE));
@@ -449,7 +449,7 @@ void ScriptTimeline::ShowScriptPositions(
 				}
 				ImGui::EndMenu();
 			}
-			if (ImGui::BeginMenu(TR_ID("RENDERING", Tr::RENDERING))) {
+			if (ImGui::BeginMenu(TR_ID("RENDERING", Tr::RENDERING).c_str())) {
 				auto& overlayState = BaseOverlayState::State(overlayStateHandle);
 				ImGui::MenuItem(TR(SHOW_ACTION_LINES), 0, &BaseOverlay::ShowLines);
 				ImGui::MenuItem(TR(SHOW_ACTION_POINTS), 0, &BaseOverlay::ShowPoints);
@@ -469,12 +469,12 @@ void ScriptTimeline::ShowScriptPositions(
 				}
 				
 				outputPath = (Util::PathFromString(outputPath) / "audio.flac").u8string();
-				bool succ = ctx.Wave.data.GenerateAndLoadFlac(ffmpegPath.u8string(), ctx.videoPath, outputPath);
+				bool succ = ctx.Wave.data.GenerateAndLoadFlac(ffmpegPath.string(), ctx.videoPath, std::filesystem::path(outputPath).string().c_str());
 				EV::Enqueue<WaveformProcessingFinishedEvent>();
 				return 0;
 			};
-			if (ImGui::BeginMenu(TR_ID("WAVEFORM", Tr::WAVEFORM))) {
-				if(ImGui::BeginMenu(TR_ID("SETTINGS", Tr::SETTINGS))) {
+			if (ImGui::BeginMenu(TR_ID("WAVEFORM", Tr::WAVEFORM).c_str())) {
+				if(ImGui::BeginMenu(TR_ID("SETTINGS", Tr::SETTINGS).c_str())) {
 					ImGui::SetNextItemWidth(ImGui::GetFontSize()*5.f);
 					ImGui::DragFloat(TR(SCALE), &ScaleAudio, 0.01f, 0.01f, 10.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
 					ImGui::ColorEdit3(TR(COLOR), &Wave.WaveformColor.Value.x, ImGuiColorEditFlags_NoInputs);
@@ -485,7 +485,7 @@ void ScriptTimeline::ShowScriptPositions(
 				if(Wave.data.BusyGenerating()) {
 					ImGui::MenuItem(TR(PROCESSING_AUDIO), NULL, false, false);
 					ImGui::SameLine();
-					OFS::Spinner("##AudioSpin", ImGui::GetFontSize() / 3.f, 4.f, ImGui::GetColorU32(ImGuiCol_TabActive));
+					OFS::Spinner("##AudioSpin", ImGui::GetFontSize() / 3.f, 4.f, ImGui::GetColorU32(ImGuiCol_TabSelected));
 				}
 				else if(ImGui::MenuItem(TR(UPDATE_WAVEFORM), NULL, false, !Wave.data.BusyGenerating() && !videoPath.empty())) {
 					if (!Wave.data.BusyGenerating()) {

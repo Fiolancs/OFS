@@ -1,6 +1,6 @@
 #pragma once
-
 #include "Funscript.h"
+
 #include <vector>
 
 class ScriptState {

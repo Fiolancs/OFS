@@ -1,6 +1,6 @@
 #pragma once
-#include "Funscript.h"
-#include "OFS_StateHandle.h"
+#include "Funscript/Funscript.h"
+#include "state/OFS_StateHandle.h"
 
 struct FunscriptMetadataState
 {
@@ -14,6 +14,6 @@ struct FunscriptMetadataState
     }
 };
 
-REFL_TYPE(FunscriptMetadataState)
-    REFL_FIELD(defaultMetadata)
-REFL_END
+//REFL_TYPE(FunscriptMetadataState)
+//    REFL_FIELD(defaultMetadata)
+//REFL_END

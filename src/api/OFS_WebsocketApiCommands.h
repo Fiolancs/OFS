@@ -1,11 +1,12 @@
 #pragma once
+#include "OFS_Util.h"
+
+#include <SDL3/SDL_atomic.h>
 
 #include <vector>
 #include <variant>
 #include <memory>
 
-#include "SDL_atomic.h"
-#include "OFS_Util.h"
 
 class WsCmd 
 {
@@ -51,6 +52,6 @@ class WsCommandBuffer
     public:
 
     WsCommandBuffer() noexcept;
-    bool AddCmd(const nlohmann::json& jsonCmd) noexcept;
+    bool AddCmd(/*const nlohmann::json& jsonCmd*/) noexcept;
     void ProcessCommands() noexcept;
 };

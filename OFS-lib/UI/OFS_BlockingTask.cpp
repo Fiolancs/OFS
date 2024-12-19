@@ -1,7 +1,10 @@
 #include "OFS_BlockingTask.h"
-#include "OFS_ImGui.h"
-#include "OFS_Localization.h"
-#include "imgui.h"
+
+#include "UI/OFS_ImGui.h"
+#include "localization/OFS_Localization.h"
+#include "localization/OFS_StringsGenerated.h"
+
+#include <imgui.h>
 
 static int BlockingTaskThread(void* data) noexcept
 {
@@ -15,7 +18,7 @@ static int BlockingTaskThread(void* data) noexcept
 void OFS_BlockingTask::ShowBlockingTask() noexcept
 {
 	if (currentTask) {
-		ImGui::OpenPopup(TR_ID("RUNNING_TASK", Tr::RUNNING_TASK), ImGuiPopupFlags_None);
+		ImGui::OpenPopup(TR_ID("RUNNING_TASK", Tr::RUNNING_TASK).c_str(), ImGuiPopupFlags_None);
 	}
 	else { return; }
 
@@ -33,7 +36,7 @@ void OFS_BlockingTask::ShowBlockingTask() noexcept
 		ImGui::PushStyleVar(ImGuiStyleVar_Alpha, Util::Clamp(a*a, 0.f, 1.f));
 		ImGui::PushStyleColor(ImGuiCol_ModalWindowDimBg, IM_COL32(0, 0, 0, 0));
 	}
-	ImGui::BeginPopupModal(TR_ID("RUNNING_TASK", Tr::RUNNING_TASK), NULL, ImGuiWindowFlags_AlwaysAutoResize);
+	ImGui::BeginPopupModal(TR_ID("RUNNING_TASK", Tr::RUNNING_TASK).c_str(), NULL, ImGuiWindowFlags_AlwaysAutoResize);
 	if (a >= 0.1f) {
 		const bool ShowProgress = currentTask->MaxProgress > 0;
 		if (ShowProgress) {

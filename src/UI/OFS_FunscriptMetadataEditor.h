@@ -1,12 +1,11 @@
 #pragma once
+#include "OFS_Reflection.h"
+#include "event/OFS_Event.h"
+#include "Funscript/Funscript.h"
+#include "state/OFS_StateHandle.h"
+
 #include <cstdint>
 
-#include "OFS_Reflection.h"
-#include "OFS_StateHandle.h"
-
-#include "Funscript.h"
-
-#include "OFS_Event.h"
 
 class MetadataChanged : public OFS_Event<MetadataChanged>
 {
@@ -17,11 +16,11 @@ class MetadataChanged : public OFS_Event<MetadataChanged>
 class OFS_FunscriptMetadataEditor
 {
 public:
-    inline uint32_t StateHandle() const noexcept { return stateHandle; }
+    inline std::uint32_t StateHandle() const noexcept { return stateHandle; }
 
     OFS_FunscriptMetadataEditor() noexcept;
     bool ShowMetadataEditor(bool* open, Funscript::Metadata& metadata) noexcept;
-private:
-    uint32_t stateHandle = 0xFFFF'FFFF;
-};
 
+private:
+    std::uint32_t stateHandle = 0xFFFF'FFFF;
+};

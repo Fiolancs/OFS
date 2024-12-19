@@ -1,14 +1,20 @@
+#define IMGUI_DEFINE_MATH_OPERATORS
 #include "OFS_ScriptSimulator.h"
-#include "OFS_ImGui.h"
-
-#include "OFS_EventSystem.h"
-#include "Funscript.h"
-#include "OFS_DynamicFontAtlas.h"
-
-#include "imgui.h"
-#include "stb_sprintf.h"
-
 #include "state/SimulatorState.h"
+
+#include "OFS_Util.h"
+#include "UI/OFS_ImGui.h"
+#include "Funscript/Funscript.h"
+#include "OFS_DynamicFontAtlas.h"
+#include "event/OFS_EventSystem.h"
+
+#include <imgui.h>
+#include <SDL3/SDL_events.h>
+#undef IMGUI_DEFINE_MATH_OPERATORS
+
+#include <format>
+#include <numbers>
+
 
 inline static float Distance(const ImVec2& p1, const ImVec2& p2) noexcept
 {
@@ -32,7 +38,7 @@ inline static uint32_t GetColor(const ImColor& col, float opacity) noexcept
 void ScriptSimulator::Init() noexcept
 {
     stateHandle = OFS_ProjectState<SimulatorState>::Register(SimulatorState::StateName);
-    EV::Queue().appendListener(SDL_MOUSEMOTION,
+    EV::Queue().appendListener(SDL_EVENT_MOUSE_MOTION,
         OFS_SDL_Event::HandleEvent(EVENT_SYSTEM_BIND(this, &ScriptSimulator::MouseMovement)));
 }
 
@@ -40,7 +46,7 @@ inline static float CalcBearing(const ImVec2 p1, const ImVec2 p2) noexcept
 {
     float theta = SDL_atan2f(p2.x - p1.x, p1.y - p2.y);
     if (theta < 0.0)
-        theta += M_PI*2.f;
+        theta += float(std::numbers::pi*2.f);
     return theta;
 }
 
@@ -115,7 +121,7 @@ void ScriptSimulator::ShowSimulator(bool* open, std::shared_ptr<Funscript>& acti
     }
 
     if (EnableVanilla) {
-        ImGui::Begin(TR_ID(WindowId, Tr::SIMULATOR), open, 
+        ImGui::Begin(TR_ID(WindowId, Tr::SIMULATOR).c_str(), open, 
             ImGuiWindowFlags_NoBackground
             | ImGuiWindowFlags_NoDocking);
         ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
@@ -129,7 +135,7 @@ void ScriptSimulator::ShowSimulator(bool* open, std::shared_ptr<Funscript>& acti
         return;
     }
 
-    ImGui::Begin(TR_ID(WindowId, Tr::SIMULATOR), open, ImGuiWindowFlags_None);
+    ImGui::Begin(TR_ID(WindowId, Tr::SIMULATOR).c_str(), open, ImGuiWindowFlags_None);
     char tmp[4];
     auto frontDraw = ImGui::GetForegroundDrawList();
     ImVec2 canvasPos = ImGui::GetCursorScreenPos();
@@ -138,7 +144,7 @@ void ScriptSimulator::ShowSimulator(bool* open, std::shared_ptr<Funscript>& acti
     auto& style = ImGui::GetStyle();
     auto& state = SimulatorState::State(stateHandle);
 
-    ImGui::Checkbox(FMT("%s %s", TR(LOCK), state.LockedPosition ? ICON_LINK : ICON_UNLINK), &state.LockedPosition);
+    ImGui::Checkbox(std::format("{:s} {:s}", TR(LOCK), state.LockedPosition ? ICON_LINK : ICON_UNLINK).c_str(), &state.LockedPosition);
     ImGui::Columns(2, 0, false);
     if (ImGui::Button(TR(CENTER), ImVec2(-1.f, 0.f))) { CenterSimulator(); }
     ImGui::NextColumn();
@@ -187,7 +193,7 @@ void ScriptSimulator::ShowSimulator(bool* open, std::shared_ptr<Funscript>& acti
             state.GlobalOpacity = Util::Clamp<float>(state.GlobalOpacity, 0.f, 1.f);
         }
 
-        if (ImGui::DragFloat(FMT("%s2", TR(LINE)), &state.ExtraLineWidth, 0.5f)) {
+        if (ImGui::DragFloat(std::format("{:s}2", TR(LINE)).c_str(), &state.ExtraLineWidth, 0.5f)) {
             state.ExtraLineWidth = Util::Clamp<float>(state.ExtraLineWidth, 0.5f, 1000.f);
         }
 
@@ -351,7 +357,7 @@ void ScriptSimulator::ShowSimulator(bool* open, std::shared_ptr<Funscript>& acti
                     GetColor(state.Indicator, state.GlobalOpacity),
                     state.LineWidth
                 );
-                stbsp_snprintf(tmp, sizeof(tmp), "%d", previousAction->pos);
+                std::format_to_n(tmp, sizeof(tmp), "{:d}", previousAction->pos);
                 auto textOffset = ImGui::CalcTextSize(tmp);
                 textOffset /= 2.f;
                 frontDraw->AddText(indicatorCenter - textOffset, GetColor(state.Text, state.GlobalOpacity), tmp);
@@ -376,7 +382,7 @@ void ScriptSimulator::ShowSimulator(bool* open, std::shared_ptr<Funscript>& acti
                     GetColor(state.Indicator, state.GlobalOpacity),
                     state.LineWidth
                 );
-                stbsp_snprintf(tmp, sizeof(tmp), "%d", nextAction->pos);
+                std::format_to_n(tmp, sizeof(tmp), "{:d}", nextAction->pos);
                 auto textOffset = ImGui::CalcTextSize(tmp);
                 textOffset /= 2.f;
                 frontDraw->AddText(indicatorCenter - textOffset, GetColor(state.Text, state.GlobalOpacity), tmp);
@@ -386,7 +392,7 @@ void ScriptSimulator::ShowSimulator(bool* open, std::shared_ptr<Funscript>& acti
 
     // TEXT
     if (state.EnablePosition) {
-        stbsp_snprintf(tmp, sizeof(tmp), "%.0f", currentPos);
+        std::format_to_n(tmp, sizeof(tmp), "{:.0f}", currentPos);
         ImGui::PushFont(OFS_DynFontAtlas::DefaultFont2);
         auto textOffset = ImGui::CalcTextSize(tmp);
         textOffset /= 2.f;

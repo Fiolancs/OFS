@@ -1,7 +1,8 @@
 #pragma once
 #include <cstdint>
+
 #include "OFS_StateManager.h"
-#include "OFS_Profiling.h"
+#include "UI/OFS_Profiling.h"
 
 template<typename T>
 class OFS_AppState

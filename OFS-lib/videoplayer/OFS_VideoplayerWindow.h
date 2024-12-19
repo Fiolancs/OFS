@@ -1,21 +1,18 @@
 #pragma once
-#include "imgui.h"
+#include "gl/OFS_Shader.h"
+#include "event/OFS_Event.h"
 
-#include "OFS_Reflection.h"
-#include "OFS_BinarySerialization.h"
-#include "OFS_Util.h"
-#include "OFS_Shader.h"
-#include "OFS_Localization.h"
-#include "OFS_VideoplayerEvents.h"
+#include <imgui.h>
 
-#include <string>
-#include "SDL_events.h"
+#include <memory>
+#include <cstdint>
+
 
 class OFS_VideoplayerWindow
 {
 public:
 	~OFS_VideoplayerWindow() noexcept;
-	uint32_t StateHandle() const noexcept { return stateHandle; }
+	std::uint32_t StateHandle() const noexcept { return stateHandle; }
 private:
 	class OFS_Videoplayer* player = nullptr;
 	std::unique_ptr<VrShader> vrShader;
@@ -25,7 +22,7 @@ private:
 	ImVec2 viewportPos;
 	ImVec2 windowPos;
 
-	uint32_t stateHandle = 0xFFFF'FFFF;
+	std::uint32_t stateHandle = 0xFFFF'FFFF;
 
 	float baseScaleFactor = 1.f;
 

@@ -1,13 +1,12 @@
 #include "OFS_WebsocketApiClient.h"
 #include "OFS_WebsocketApiEvents.h"
 
-#include "OFS_EventSystem.h"
-
-#include "OFS_Profiling.h"
 #include "OFS_Util.h"
-#include "nlohmann/json.hpp"
+#include "UI/OFS_Profiling.h"
+#include "event/OFS_EventSystem.h"
 
-#include "civetweb.h"
+#include <civetweb.h>
+
 #include "OpenFunscripter.h"
 
 WsCommandBuffer OFS_WebsocketClient::CommandBuffer = WsCommandBuffer();
@@ -76,9 +75,10 @@ void OFS_WebsocketClient::UpdateAll() noexcept
 
     auto serializeSend = [this](auto&& event) noexcept
     {
-        nlohmann::json json = event;
-        auto jsonText = Util::SerializeJson(json);
-        sendMessage(jsonText);
+        // QQQ
+        //nlohmann::json json = event;
+        //auto jsonText = Util::SerializeJson(json);
+        //sendMessage(jsonText);
     };
 
     serializeSend(std::move(WsProjectChange()));
@@ -100,7 +100,7 @@ void OFS_WebsocketClient::InitializeConnection(mg_connection* conn) noexcept
     if(this->conn) return;
     this->conn = conn;
     /* Send "hello" message. */
-	const char* hello = "{\"connected\":\"OFS " OFS_LATEST_GIT_TAG "@" OFS_LATEST_GIT_HASH "\"}";
+	const char* hello = "{\"connected\":\"OFS " /*OFS_LATEST_GIT_TAG "@" OFS_LATEST_GIT_HASH*/ "\"}";
 	mg_websocket_write(conn, MG_WEBSOCKET_OPCODE_TEXT, hello, strlen(hello));
     UpdateAll();
 }
@@ -110,13 +110,14 @@ void OFS_WebsocketClient::ReceiveText(char* data, size_t dataLen) noexcept
     // NOTE: Assume this function isn't called on the main thread.
     bool succ;
     std::string_view dataView(data, dataLen);
-    auto json = nlohmann::json::parse(dataView, nullptr, false, true);
-    if(!json.is_discarded())
-    {
-        // Valid json
-        if(CommandBuffer.AddCmd(json))
-        {
-            // Success
-        }
-    }
+    // QQQ
+    //auto json = nlohmann::json::parse(dataView, nullptr, false, true);
+    //if(!json.is_discarded())
+    //{
+    //    // Valid json
+    //    if(CommandBuffer.AddCmd(json))
+    //    {
+    //        // Success
+    //    }
+    //}
 }

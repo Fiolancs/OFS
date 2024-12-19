@@ -1,6 +1,6 @@
 #pragma once
-#include "GradientBar.h"
 #include "Funscript.h"
+#include "UI/GradientBar.h"
 
 class FunscriptHeatmap
 {

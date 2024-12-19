@@ -29,10 +29,6 @@ set(OFS_LIB_SOURCES
 	"state/OFS_StateManager.cpp"
 	"state/OFS_LibState.cpp"
 
-
-	"imgui_impl/imgui_impl_opengl3.cpp"
-	"imgui_impl/imgui_impl_sdl.cpp" 
-
 	"gl/OFS_Shader.cpp"
 
 	"OFS_ControllerInput.cpp"
@@ -49,17 +45,8 @@ set(OFS_LIB_SOURCES
 )
 
 add_library(${PROJECT_NAME} STATIC ${OFS_LIB_SOURCES})
-target_include_directories(${PROJECT_NAME} PUBLIC
-	"${PROJECT_SOURCE_DIR}/event/"
-	"${PROJECT_SOURCE_DIR}/Funscript/"
-	"${PROJECT_SOURCE_DIR}/UI/"
-	"${PROJECT_SOURCE_DIR}/imgui_impl/"
-	"${PROJECT_SOURCE_DIR}/gl/"
+target_include_directories(${PROJECT_NAME} PRIVATE
 	"${PROJECT_SOURCE_DIR}/"
-	"${PROJECT_SOURCE_DIR}/player/"
-	"${PROJECT_SOURCE_DIR}/localization/"
-	"${PROJECT_SOURCE_DIR}/videoplayer/"
-	"${PROJECT_SOURCE_DIR}/state/"
 	"${CMAKE_CURRENT_BINARY_DIR}"
 )
 
@@ -70,17 +57,16 @@ add_custom_command(OUTPUT "OFS_StringsGenerated.cpp" "OFS_StringsGenerated.h"
                    VERBATIM)
 
 target_link_libraries(${PROJECT_NAME} PUBLIC
-	SDL2-static
-	SDL2main
-	nlohmann_json
+	SDL3-static
 	glad2
 	imgui
 	imgui_stdlib
 	tinyfiledialogs
-	glm
-	bitsery
-	refl-cpp
 	eventpp
+	glaze::glaze
+	scn::scn
+	zpp_bits
+	dr_libs
 )
 
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
@@ -113,17 +99,15 @@ target_compile_definitions(${PROJECT_NAME} PUBLIC
 )
 
 if(OFS_PROFILE)
-	target_compile_definitions(${PROJECT_NAME} PUBLIC OFS_PROFILE_ENABLED=1)
+	target_compile_definitions(${PROJECT_NAME} PUBLIC OFS_PROFILE_ENABLED)
 	target_link_libraries(${PROJECT_NAME} PUBLIC tracy)
 	message("== ${PROJECT_NAME} - Profiling enabled.")
-else()
-	target_compile_definitions(${PROJECT_NAME} PUBLIC OFS_PROFILE_ENABLED=0)
 endif()
 
 
 if(WIN32)
 	target_include_directories(${PROJECT_NAME} PUBLIC 
-		"../lib/libmpv/include"
+		"../3rdParty/libmpv/include"
 	)
 	target_compile_definitions(${PROJECT_NAME} PUBLIC
 		"NOMINMAX"

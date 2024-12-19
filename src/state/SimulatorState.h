@@ -1,6 +1,6 @@
 #pragma once
 
-#include "OFS_StateHandle.h"
+#include "state/OFS_StateHandle.h"
 
 
 struct SimulatorState
@@ -47,27 +47,27 @@ struct SimulatorDefaultConfigState
     }
 };
 
-REFL_TYPE(SimulatorDefaultConfigState)
-    REFL_FIELD(defaultState)
-REFL_END
-
-REFL_TYPE(SimulatorState)
-	REFL_FIELD(P1)
-	REFL_FIELD(P2)
-	REFL_FIELD(Width)
-	REFL_FIELD(BorderWidth)
-	REFL_FIELD(LineWidth)
-	REFL_FIELD(ExtraLineWidth)
-	REFL_FIELD(Text)
-	REFL_FIELD(Front)
-	REFL_FIELD(Back)
-	REFL_FIELD(Border)
-	REFL_FIELD(ExtraLines)
-	REFL_FIELD(Indicator)
-	REFL_FIELD(GlobalOpacity)
-	REFL_FIELD(EnableIndicators)
-	REFL_FIELD(EnablePosition)
-	REFL_FIELD(EnableHeightLines)
-	REFL_FIELD(ExtraLinesCount)
-	REFL_FIELD(LockedPosition)
-REFL_END
+//REFL_TYPE(SimulatorDefaultConfigState)
+//    REFL_FIELD(defaultState)
+//REFL_END
+//
+//REFL_TYPE(SimulatorState)
+//	REFL_FIELD(P1)
+//	REFL_FIELD(P2)
+//	REFL_FIELD(Width)
+//	REFL_FIELD(BorderWidth)
+//	REFL_FIELD(LineWidth)
+//	REFL_FIELD(ExtraLineWidth)
+//	REFL_FIELD(Text)
+//	REFL_FIELD(Front)
+//	REFL_FIELD(Back)
+//	REFL_FIELD(Border)
+//	REFL_FIELD(ExtraLines)
+//	REFL_FIELD(Indicator)
+//	REFL_FIELD(GlobalOpacity)
+//	REFL_FIELD(EnableIndicators)
+//	REFL_FIELD(EnablePosition)
+//	REFL_FIELD(EnableHeightLines)
+//	REFL_FIELD(ExtraLinesCount)
+//	REFL_FIELD(LockedPosition)
+//REFL_END

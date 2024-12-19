@@ -1,13 +1,12 @@
 #pragma once
+#include "gl/OFS_Shader.h"
+#include "OFS_BinarySerialization.h"
+
+#include <imgui.h>
 
 #include <vector>
 #include <string>
 #include <memory>
-
-#include "OFS_BinarySerialization.h"
-#include "OFS_Shader.h"
-#include "imgui.h"
-
 
 
 // helper class to render audio waves
@@ -52,6 +51,6 @@ struct OFS_WaveformLOD
 	OFS_Waveform data;
 
 	void Init() noexcept;
-	void Update(const class OverlayDrawingCtx& ctx) noexcept;
+	void Update(const struct OverlayDrawingCtx& ctx) noexcept;
 	void Upload() noexcept;
 };

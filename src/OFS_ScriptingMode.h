@@ -1,14 +1,13 @@
 #pragma once
+#include "UI/OFS_ScriptPositionsOverlays.h"
 
-#include "Funscript.h"
-#include "FunscriptAction.h"
-#include "ScriptPositionsOverlayMode.h"
-#include "OFS_ScriptPositionsOverlays.h"
+#include "event/OFS_Event.h"
+#include "Funscript/Funscript.h"
+#include "Funscript/FunscriptAction.h"
+#include "UI/ScriptPositionsOverlayMode.h"
 
-#include "OFS_Event.h"
-
-#include <memory>
 #include <array>
+#include <memory>
 
 // ATTENTION: no reordering
 enum ScriptingModeEnum : int32_t {

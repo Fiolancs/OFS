@@ -1,42 +1,44 @@
 #include "OFS_Util.h"
 #include "OFS_GL.h"
-#include "OFS_EventSystem.h"
+#include "event/OFS_EventSystem.h"
 
-#include <filesystem>
-#include "SDL_rwops.h"
+#include <imgui.h>
+#include <SDL3/SDL_IOStream.h>
+#include <tinyfiledialogs.h>
 
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
-
-#if defined(WIN32)
+#if defined(_WIN32)
+#define NOMINMAX
 #define STBI_WINDOWS_UTF8
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #include <shellapi.h>
+#undef  WIN32_LEAN_AND_MEAN
+#undef  NOMINMAX
 #endif
 
+#define RND_IMPLEMENTATION
+//#define SINFL_IMPLEMENTATION
+//#define SDEFL_IMPLEMENTATION
+#define STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_WRITE_IMPLEMENTATION
-#include "stb_image_write.h"
+#include <stb_image.h>
+#include <stb_image_write.h>
+//#include <stb/sdefl.h>
+//#include <stb/sinfl.h>
+//#include <stb/rnd.h>
+#undef STB_IMAGE_IMPLEMENTATION
+#undef STB_IMAGE_WRITE_IMPLEMENTATION
+#undef SDEFL_IMPLEMENTATION
+#undef SINFL_IMPLEMENTATION
+#undef RND_IMPLEMENTATION
 
-#include "imgui.h"
-
-#include "tinyfiledialogs.h"
-
-#include <iostream>
 #include <string>
 #include <locale>
 #include <codecvt>
+#include <iostream>
+#include <filesystem>
+#include <algorithm>
 
-#define SDEFL_IMPLEMENTATION
-#include "sdefl.h"
-
-#define SINFL_IMPLEMENTATION
-#include "sinfl.h"
-
-#define RND_IMPLEMENTATION
-#include "rnd.h"
-
-char Util::FormatBuffer[4096];
 
 static void SanitizeString(std::string& str) noexcept
 {
@@ -315,7 +317,7 @@ std::string Util::Resource(const std::string& path) noexcept
 {
     auto base = Util::Basepath() / L"data" / Util::Utf8ToUtf16(path);
     base.make_preferred();
-    return base.u8string();
+    return base.string();
 }
 
 std::wstring Util::Utf8ToUtf16(const std::string& str) noexcept
@@ -332,6 +334,12 @@ std::wstring Util::Utf8ToUtf16(const std::string& str) noexcept
 }
 
 std::filesystem::path Util::PathFromString(const std::string& str) noexcept
+{
+    auto result = std::filesystem::u8path(str);
+    result.make_preferred();
+    return result;
+}
+std::filesystem::path Util::PathFromString(const std::u8string& str) noexcept
 {
     auto result = std::filesystem::u8path(str);
     result.make_preferred();
@@ -354,7 +362,7 @@ bool Util::SavePNG(const std::string& path, void* buffer, int32_t width, int32_t
 
 std::filesystem::path Util::FfmpegPath() noexcept
 {
-#if WIN32
+#if _WIN32
     return Util::PathFromString(Util::Prefpath("ffmpeg.exe"));
 #else
     auto ffmpegPath = std::filesystem::path("ffmpeg");
@@ -362,16 +370,18 @@ std::filesystem::path Util::FfmpegPath() noexcept
 #endif
 }
 
-static rnd_pcg_t pcg;
+// QQQ 
+//static rnd_pcg_t pcg;
 void Util::InitRandom() noexcept
 {
-    time_t t = time(0);
-    rnd_pcg_seed(&pcg, t);
+//    time_t t = time(0);
+//    rnd_pcg_seed(&pcg, t);
 }
-
+//
 float Util::NextFloat() noexcept
 {
-    return rnd_pcg_nextf(&pcg);
+    return 0.f;
+//    return rnd_pcg_nextf(&pcg);
 }
 
 uint32_t Util::RandomColor(float s, float v, float alpha) noexcept

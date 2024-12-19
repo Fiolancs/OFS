@@ -1,12 +1,12 @@
 #pragma once
 #include "state/ProjectState.h"
-#include "Funscript.h"
-#include "OFS_Event.h"
+#include "Funscript/Funscript.h"
+#include "event/OFS_Event.h"
 
 #include <vector>
 #include <memory>
-#include <cstdint>
 #include <string>
+#include <cstdint>
 
 class ProjectLoadedEvent: public OFS_Event<ProjectLoadedEvent> {
 public:
@@ -79,12 +79,12 @@ public:
     template<typename S>
     void serialize(S& s)
     {
-        s.ext(*this, bitsery::ext::Growable{},
-            [](S& s, OFS_Project& o) {
-                s.container(o.Funscripts, 100,
-                    [](S& s, std::shared_ptr<Funscript>& script) {
-                        s.ext(script, bitsery::ext::StdSmartPtr{});
-                    });
-            });
+        //s.ext(*this, bitsery::ext::Growable{},
+        //    [](S& s, OFS_Project& o) {
+        //        s.container(o.Funscripts, 100,
+        //            [](S& s, std::shared_ptr<Funscript>& script) {
+        //                s.ext(script, bitsery::ext::StdSmartPtr{});
+        //            });
+        //    });
     }
 };

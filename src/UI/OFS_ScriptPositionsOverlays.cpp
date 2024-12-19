@@ -3,6 +3,9 @@
 
 #include "state/ProjectState.h"
 
+#include <format>
+
+
 void FrameOverlay::DrawScriptPositionContent(const OverlayDrawingCtx& ctx) noexcept
 {
     auto app = OpenFunscripter::ptr;
@@ -102,12 +105,12 @@ float FrameOverlay::logicalFrameTime(float realFrameTime) noexcept
 
 void FrameOverlay::DrawSettings() noexcept
 {
-    if(ImGui::Checkbox(TR_ID("FPS_OVERRIDE_ENABLE", Tr::FPS_OVERRIDE), &enableFpsOverride))
+    if(ImGui::Checkbox(TR_ID("FPS_OVERRIDE_ENABLE", Tr::FPS_OVERRIDE).c_str(), &enableFpsOverride))
     {
         fpsOverride = OpenFunscripter::ptr->player->Fps();
     }
     if(enableFpsOverride) {
-        if(ImGui::InputFloat(TR_ID("FPS_OVERRIDE", Tr::FPS_OVERRIDE), &fpsOverride, 1.f, 10.f))
+        if(ImGui::InputFloat(TR_ID("FPS_OVERRIDE", Tr::FPS_OVERRIDE).c_str(), &fpsOverride, 1.f, 10.f))
         {
             fpsOverride = Util::Clamp(fpsOverride, 1.f, 150.f);
             // snap to new framerate
@@ -166,7 +169,7 @@ void TempoOverlay::DrawScriptPositionContent(const OverlayDrawingCtx& ctx) noexc
 #ifndef NDEBUG
     static int32_t prevInvisiblePreviousBeats = 0;
     if (prevInvisiblePreviousBeats != invisiblePreviousBeats) {
-        LOGF_INFO("%d", invisiblePreviousBeats);
+        LOGF_INFO("{:d}", invisiblePreviousBeats);
     }
     prevInvisiblePreviousBeats = invisiblePreviousBeats;
 #endif
@@ -189,7 +192,7 @@ void TempoOverlay::DrawScriptPositionContent(const OverlayDrawingCtx& ctx) noexc
         );
 
         if (isWholeMeasure) {
-            stbsp_snprintf(tmp, sizeof(tmp), "%d", thing == 0 ? beatIdx : beatIdx / thing);
+            std::format_to_n(tmp, sizeof(tmp), "{:d}", thing == 0 ? beatIdx : beatIdx / thing);
             const float textOffsetX = ImGui::GetFontSize() / 2.f;
             ctx.drawList->AddText(OFS_DynFontAtlas::DefaultFont2, ImGui::GetFontSize() * 2.f,
                 ctx.canvasPos + ImVec2((((offset + (i * beatTime)) / ctx.visibleTime) * ctx.canvasSize.x) + textOffsetX, 0.f),

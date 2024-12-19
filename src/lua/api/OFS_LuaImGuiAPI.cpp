@@ -1,51 +1,54 @@
 #include "OFS_LuaImGuiAPI.h"
-#include "imgui.h"
-#include "imgui_stdlib.h"
+#include <imgui.h>
+#include <misc/cpp/imgui_stdlib.h>
 
-OFS_ImGuiAPI::OFS_ImGuiAPI(sol::usertype<class OFS_ExtensionAPI>& ofs) noexcept
+// QQQ
+using lua_Number = double;
+using lua_Integer = int;
+OFS_ImGuiAPI::OFS_ImGuiAPI(/*sol::usertype<class OFS_ExtensionAPI>& ofs*/) noexcept
 {
-    ofs["Text"] = OFS_ImGuiAPI::Text;
-    ofs["Button"] = OFS_ImGuiAPI::Button;
-    ofs.set_function("Input", 
-        sol::overload(
-            OFS_ImGuiAPI::InputText,
-            OFS_ImGuiAPI::InputNumberWithoutStepSize,
-            OFS_ImGuiAPI::InputNumber
-        )
-    );
-
-    ofs.set_function("InputInt", 
-        sol::overload(
-            OFS_ImGuiAPI::InputInt,
-            OFS_ImGuiAPI::InputIntWithoutStepSize
-        )
-    );
-
-    ofs.set_function("Drag",
-        sol::overload(
-            OFS_ImGuiAPI::DragNumberWithoutStepSize,
-            OFS_ImGuiAPI::DragNumber
-        )
-    );
-    ofs.set_function("DragInt",
-        sol::overload(
-            OFS_ImGuiAPI::DragIntWithoutStepSize,
-            OFS_ImGuiAPI::DragInt
-        )
-    );
-
-    ofs["Slider"] = OFS_ImGuiAPI::SliderNumber;
-    ofs["SliderInt"] = OFS_ImGuiAPI::SliderInt;
-
-    ofs["Checkbox"] = OFS_ImGuiAPI::Checkbox;
-    ofs["Combo"] = OFS_ImGuiAPI::Combo;
-    ofs["SameLine"] = OFS_ImGuiAPI::SameLine;
-    ofs["Separator"] = OFS_ImGuiAPI::Separator;
-    ofs["NewLine"] = OFS_ImGuiAPI::NewLine;
-    ofs["Tooltip"] = OFS_ImGuiAPI::Tooltip;
-    ofs["CollapsingHeader"] = OFS_ImGuiAPI::CollapsingHeader;
-    ofs["BeginDisabled"] = [this](bool disabled) noexcept {return this->BeginDisabled(disabled); };
-    ofs["EndDisabled"] = [this]() noexcept {return this->EndDisabled(); };
+    //ofs["Text"] = OFS_ImGuiAPI::Text;
+    //ofs["Button"] = OFS_ImGuiAPI::Button;
+    //ofs.set_function("Input", 
+    //    sol::overload(
+    //        OFS_ImGuiAPI::InputText,
+    //        OFS_ImGuiAPI::InputNumberWithoutStepSize,
+    //        OFS_ImGuiAPI::InputNumber
+    //    )
+    //);
+    //
+    //ofs.set_function("InputInt", 
+    //    sol::overload(
+    //        OFS_ImGuiAPI::InputInt,
+    //        OFS_ImGuiAPI::InputIntWithoutStepSize
+    //    )
+    //);
+    //
+    //ofs.set_function("Drag",
+    //    sol::overload(
+    //        OFS_ImGuiAPI::DragNumberWithoutStepSize,
+    //        OFS_ImGuiAPI::DragNumber
+    //    )
+    //);
+    //ofs.set_function("DragInt",
+    //    sol::overload(
+    //        OFS_ImGuiAPI::DragIntWithoutStepSize,
+    //        OFS_ImGuiAPI::DragInt
+    //    )
+    //);
+    //
+    //ofs["Slider"] = OFS_ImGuiAPI::SliderNumber;
+    //ofs["SliderInt"] = OFS_ImGuiAPI::SliderInt;
+    //
+    //ofs["Checkbox"] = OFS_ImGuiAPI::Checkbox;
+    //ofs["Combo"] = OFS_ImGuiAPI::Combo;
+    //ofs["SameLine"] = OFS_ImGuiAPI::SameLine;
+    //ofs["Separator"] = OFS_ImGuiAPI::Separator;
+    //ofs["NewLine"] = OFS_ImGuiAPI::NewLine;
+    //ofs["Tooltip"] = OFS_ImGuiAPI::Tooltip;
+    //ofs["CollapsingHeader"] = OFS_ImGuiAPI::CollapsingHeader;
+    //ofs["BeginDisabled"] = [this](bool disabled) noexcept {return this->BeginDisabled(disabled); };
+    //ofs["EndDisabled"] = [this]() noexcept {return this->EndDisabled(); };
 }
 
 OFS_ImGuiAPI::~OFS_ImGuiAPI() noexcept
@@ -143,32 +146,32 @@ std::tuple<bool, bool> OFS_ImGuiAPI::Checkbox(const char* txt, bool current) noe
     return std::make_tuple(current, valueChanged);
 }
 
-std::tuple<lua_Integer, bool> OFS_ImGuiAPI::Combo(const char* txt, lua_Integer currentSelection, sol::table items) noexcept
+std::tuple<lua_Integer, bool> OFS_ImGuiAPI::Combo(const char* txt, lua_Integer currentSelection/*, sol::table items*/) noexcept
 {
     bool valueChanged = false;
-    sol::reference currentItem = items.raw_get<sol::reference>(currentSelection);
-    auto currentItemStack = sol::stack::push_pop(currentItem);   
-    auto currentItemStr = lua_tostring(items.lua_state(), currentItemStack.m_index);
-
-    if(currentItemStr) {
-        if(ImGui::BeginCombo(txt, currentItemStr)) {
-            for(int i=1, size=items.size(); i <= size; i += 1) {
-                sol::reference item = items[i];
-                auto stackItem = sol::stack::push_pop(item);
-                auto itemStr = lua_tostring(items.lua_state(), stackItem.m_index);
-                if(itemStr) {
-                    if(ImGui::Selectable(itemStr, i == currentSelection)) {
-                        currentSelection = i;
-                        valueChanged = true;
-                    }
-                }
-            }
-            ImGui::EndCombo();
-        }
-    }
-    else {
-        luaL_error(items.lua_state(), "Something went wrong in ofs.Combo");
-    }
+    //sol::reference currentItem = items.raw_get<sol::reference>(currentSelection);
+    //auto currentItemStack = sol::stack::push_pop(currentItem);   
+    //auto currentItemStr = lua_tostring(items.lua_state(), currentItemStack.m_index);
+    //
+    //if(currentItemStr) {
+    //    if(ImGui::BeginCombo(txt, currentItemStr)) {
+    //        for(int i=1, size=items.size(); i <= size; i += 1) {
+    //            sol::reference item = items[i];
+    //            auto stackItem = sol::stack::push_pop(item);
+    //            auto itemStr = lua_tostring(items.lua_state(), stackItem.m_index);
+    //            if(itemStr) {
+    //                if(ImGui::Selectable(itemStr, i == currentSelection)) {
+    //                    currentSelection = i;
+    //                    valueChanged = true;
+    //                }
+    //            }
+    //        }
+    //        ImGui::EndCombo();
+    //    }
+    //}
+    //else {
+    //    luaL_error(items.lua_state(), "Something went wrong in ofs.Combo");
+    //}
     return std::make_tuple(currentSelection, valueChanged);
 }
 

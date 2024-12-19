@@ -1,8 +1,11 @@
 #pragma once
+#include "state/OFS_StateHandle.h"
 
-#include "OFS_StateHandle.h"
+#include <imgui.h>
 
-enum VideoMode : int32_t {
+#include <cstdint>
+
+enum VideoMode : std::int32_t {
 	Full,
 	LeftPane,
 	RightPane,
@@ -27,19 +30,19 @@ struct VideoPlayerWindowState
     float zoomFactor = 1.f;
     bool lockedPosition = false;
 
-	inline static VideoPlayerWindowState& State(uint32_t stateHandle) noexcept {
+	inline static VideoPlayerWindowState& State(std::uint32_t stateHandle) noexcept {
 		return OFS_ProjectState<VideoPlayerWindowState>(stateHandle).Get();
 	}
 };
 
-REFL_TYPE(VideoPlayerWindowState)
-	REFL_FIELD(currentVrRotation)
-    REFL_FIELD(currentTranslation)
-    REFL_FIELD(videoPos)
-    REFL_FIELD(prevVrRotation)
-    REFL_FIELD(prevTranslation)
-    REFL_FIELD(activeMode, serializeEnum{})
-    REFL_FIELD(vrZoom)
-    REFL_FIELD(zoomFactor)
-    REFL_FIELD(lockedPosition)
-REFL_END
+//REFL_TYPE(VideoPlayerWindowState)
+//	REFL_FIELD(currentVrRotation)
+//    REFL_FIELD(currentTranslation)
+//    REFL_FIELD(videoPos)
+//    REFL_FIELD(prevVrRotation)
+//    REFL_FIELD(prevTranslation)
+//    REFL_FIELD(activeMode, serializeEnum{})
+//    REFL_FIELD(vrZoom)
+//    REFL_FIELD(zoomFactor)
+//    REFL_FIELD(lockedPosition)
+//REFL_END

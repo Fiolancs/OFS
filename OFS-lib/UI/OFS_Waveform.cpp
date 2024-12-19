@@ -5,9 +5,9 @@
 #include "OFS_ScriptTimeline.h"
 
 #define DR_FLAC_IMPLEMENTATION
-#include "dr_flac.h"
+#include <dr_flac.h>
 
-#include "subprocess.h"
+//#include "subprocess.h"
 
 bool OFS_Waveform::LoadFlac(const std::string& output) noexcept
 {
@@ -59,49 +59,51 @@ bool OFS_Waveform::LoadFlac(const std::string& output) noexcept
 
 bool OFS_Waveform::GenerateAndLoadFlac(const std::string& ffmpegPath, const std::string& videoPath, const std::string& output) noexcept
 {
-	generating = true;
-
-	std::array<const char*, 11> args =
-	{
-		ffmpegPath.c_str(),
-		"-y",
-		"-loglevel",
-		"quiet",
-		"-i", videoPath.c_str(),
-		"-vn",
-		"-ac", "1",
-		output.c_str(),
-		nullptr
-	};
-	struct subprocess_s proc;
-	if(subprocess_create(args.data(), subprocess_option_no_window, &proc) != 0) {
-		generating = false; 
-		return false; 
-	}
-
-	if(proc.stdout_file) 
-	{
-		fclose(proc.stdout_file);
-		proc.stdout_file = nullptr;
-	}
-	
-	if(proc.stderr_file) 
-	{
-		fclose(proc.stderr_file);
-		proc.stderr_file = nullptr;
-	}
-
-	int return_code;
-	subprocess_join(&proc, &return_code);
-	subprocess_destroy(&proc);
-
-	if (!LoadFlac(output)) {
-		generating = false;
-		return false;
-	}
-
-	generating = false;
-	return true;
+	// QQQ 
+	//generating = true;
+	//
+	//std::array<const char*, 11> args =
+	//{
+	//	ffmpegPath.c_str(),
+	//	"-y",
+	//	"-loglevel",
+	//	"quiet",
+	//	"-i", videoPath.c_str(),
+	//	"-vn",
+	//	"-ac", "1",
+	//	output.c_str(),
+	//	nullptr
+	//};
+	//struct subprocess_s proc;
+	//if(subprocess_create(args.data(), subprocess_option_no_window, &proc) != 0) {
+	//	generating = false; 
+	//	return false; 
+	//}
+	//
+	//if(proc.stdout_file) 
+	//{
+	//	fclose(proc.stdout_file);
+	//	proc.stdout_file = nullptr;
+	//}
+	//
+	//if(proc.stderr_file) 
+	//{
+	//	fclose(proc.stderr_file);
+	//	proc.stderr_file = nullptr;
+	//}
+	//
+	//int return_code;
+	//subprocess_join(&proc, &return_code);
+	//subprocess_destroy(&proc);
+	//
+	//if (!LoadFlac(output)) {
+	//	generating = false;
+	//	return false;
+	//}
+	//
+	//generating = false;
+	//return true;
+	return false;
 }
 
 void OFS_WaveformLOD::Init() noexcept

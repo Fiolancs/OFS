@@ -1,12 +1,12 @@
 #pragma once
-#include "OFS_StateHandle.h"
-#include "OFS_Localization.h"
-#include "imgui.h"
-
-#include <functional>
-#include <vector>
-
 #include "OFS_VectorSet.h"
+#include "state/OFS_StateHandle.h"
+
+#include <imgui.h>
+
+#include <string>
+#include <cstdint>
+
 
 
 // The lower 3 bytes of Mod are able to be used
@@ -17,13 +17,13 @@ enum OFS_ActionTriggerFlags
 
 struct OFS_ActionTrigger
 {
-    int32_t Mod = ImGuiKey_None;
-    int32_t Key = ImGuiKey_None;
+    std::int32_t Mod = ImGuiKey_None;
+    std::int32_t Key = ImGuiKey_None;
     bool ShouldRepeat = false;
     std::string MappedActionId;
 
     OFS_ActionTrigger() noexcept {}
-    OFS_ActionTrigger(int32_t modifier, ImGuiKey key, bool shouldRepeat = false) noexcept
+    OFS_ActionTrigger(std::int32_t modifier, ImGuiKey key, bool shouldRepeat = false) noexcept
         : Mod(modifier), Key(key), ShouldRepeat(shouldRepeat) {}
 
     inline ImGuiKey ImKey() const noexcept
@@ -48,19 +48,19 @@ struct OFS_ActionTrigger
         return Hash() < b.Hash();
     }
 
-    inline uint64_t Hash() const noexcept
+    inline std::uint64_t Hash() const noexcept
     {
         static_assert(sizeof(ImGuiKey) == 4);
-        return ((int64_t)Mod << 4) | Key;
+        return ((std::int64_t)Mod << 4) | Key;
     }
 };
 
-REFL_TYPE(OFS_ActionTrigger)
-    REFL_FIELD(Key)
-    REFL_FIELD(Mod)
-    REFL_FIELD(ShouldRepeat)
-    REFL_FIELD(MappedActionId)
-REFL_END
+//REFL_TYPE(OFS_ActionTrigger)
+//    REFL_FIELD(Key)
+//    REFL_FIELD(Mod)
+//    REFL_FIELD(ShouldRepeat)
+//    REFL_FIELD(MappedActionId)
+//REFL_END
 
 struct OFS_KeybindingState
 {
@@ -83,6 +83,6 @@ struct OFS_KeybindingState
     }
 };
 
-REFL_TYPE(OFS_KeybindingState)
-    REFL_FIELD(Triggers)
-REFL_END
+//REFL_TYPE(OFS_KeybindingState)
+//    REFL_FIELD(Triggers)
+//REFL_END

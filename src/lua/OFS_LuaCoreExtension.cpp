@@ -212,12 +212,12 @@ void OFS_CoreExtension::setup() noexcept
     #endif
         Util::CreateDirectories(path);
         path /= "main.lua";
-        auto pString = path.u8string();
+        auto pString = path.string();
         auto handle = Util::OpenFile(pString.c_str(), "wb", pString.size());
         if (handle) {
             auto size = strlen(Source);
-            SDL_RWwrite(handle, Source, size, sizeof(char));
-            SDL_RWclose(handle);
+            SDL_WriteIO(handle, Source, size);
+            SDL_CloseIO(handle);
         }
     }
 }

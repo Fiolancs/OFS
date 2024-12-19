@@ -1,15 +1,16 @@
 #include "OFS_Preferences.h"
-#include "OFS_Util.h"
 #include "OpenFunscripter.h"
-#include "OFS_Localization.h"
-#include "OFS_ImGui.h"
-
-#include "imgui.h"
-#include "imgui_stdlib.h"
-
 #include "OFS_Reflection.h"
-#include "OFS_StateHandle.h"
 #include "state/states/BaseOverlayState.h"
+
+#include "OFS_Util.h"
+#include "UI/OFS_ImGui.h"
+#include "state/OFS_StateHandle.h"
+#include "localization/OFS_Localization.h"
+
+#include <imgui.h>
+#include <misc/cpp/imgui_stdlib.h>
+
 
 OFS_Preferences::OFS_Preferences() noexcept
 {
@@ -27,10 +28,10 @@ static void copyTranslationHelper() noexcept
 	for(auto& pIt : langDirIt) {
 		if(pIt.path().extension() == ".csv") {
 			auto targetFile = targetDir / pIt.path().filename();
-			if(Util::FileExists(targetFile.u8string())) {
+			if(Util::FileExists(targetFile.string())) {
 				// merge the two
-				auto input1 = pIt.path().u8string();
-				auto input2 = targetFile.u8string();
+				auto input1 = pIt.path().string();
+				auto input2 = targetFile.string();
 				if(OFS_Translator::MergeIntoOne(input1.c_str(), input2.c_str(), input2.c_str())) {
 					std::filesystem::remove(pIt.path(), ec);
 				}
@@ -49,8 +50,8 @@ bool OFS_Preferences::ShowPreferenceWindow() noexcept
 {
 	bool save = false;
 	if (ShowWindow)
-		ImGui::OpenPopup(TR_ID("PREFERENCES", Tr::PREFERENCES));
-	if (ImGui::BeginPopupModal(TR_ID("PREFERENCES", Tr::PREFERENCES), &ShowWindow, ImGuiWindowFlags_AlwaysAutoResize))
+		ImGui::OpenPopup(TR_ID("PREFERENCES", Tr::PREFERENCES).c_str());
+	if (ImGui::BeginPopupModal(TR_ID("PREFERENCES", Tr::PREFERENCES).c_str(), &ShowWindow, ImGuiWindowFlags_AlwaysAutoResize))
 	{
 		OFS_PROFILE(__FUNCTION__);
 		auto& state = PreferenceState::State(prefStateHandle);
@@ -126,7 +127,7 @@ bool OFS_Preferences::ShowPreferenceWindow() noexcept
 						});
 						save = true;
 					}
-					if(ImGui::BeginCombo(TR_ID("LANGUAGE", Tr::LANGUAGE), state.languageCsv.empty() ? "English" : state.languageCsv.c_str()))
+					if(ImGui::BeginCombo(TR_ID("LANGUAGE", Tr::LANGUAGE).c_str(), state.languageCsv.empty() ? "English" : state.languageCsv.c_str()))
 					{
 						for(auto& file : translationFiles) {
 							if(ImGui::Selectable(file.c_str(), file == state.languageCsv)) {
@@ -145,7 +146,7 @@ bool OFS_Preferences::ShowPreferenceWindow() noexcept
 						std::filesystem::directory_iterator dirIt(Util::Prefpath(OFS_Translator::TranslationDir), ec);
 						for (auto& pIt : dirIt) {
 							if(pIt.path().extension() == ".csv") {
-								translationFiles.emplace_back(pIt.path().filename().u8string());
+								translationFiles.emplace_back(pIt.path().filename().string());
 							}
 						}
 					}
@@ -155,9 +156,9 @@ bool OFS_Preferences::ShowPreferenceWindow() noexcept
 						OFS_Translator::ptr->LoadDefaults();
 					}
 					ImGui::SameLine();
-					if(ImGui::Button(FMT("%s###DIRECTORY_TRANSLATION", ICON_FOLDER_OPEN)))
+					if(ImGui::Button(ICON_FOLDER_OPEN "###DIRECTORY_TRANSLATION"))
 					{
-						Util::OpenFileExplorer(Util::Prefpath(OFS_Translator::TranslationDir));
+						Util::OpenFileExplorer(std::filesystem::path(Util::Prefpath(OFS_Translator::TranslationDir)).string());
 					}
 					ImGui::EndTabItem();
 				}
@@ -171,14 +172,14 @@ bool OFS_Preferences::ShowPreferenceWindow() noexcept
 				if (ImGui::BeginTabItem(TR(SCRIPTING)))
 				{
 					auto& overlayState = BaseOverlay::State();
-					if(ImGui::Checkbox(TR_ID("HighlightEnable", Tr::ENABLE_MAX_SPEED_HIGHLIGHT), &overlayState.ShowMaxSpeedHighlight)) {
+					if(ImGui::Checkbox(TR_ID("HighlightEnable", Tr::ENABLE_MAX_SPEED_HIGHLIGHT).c_str(), &overlayState.ShowMaxSpeedHighlight)) {
 						save = true;
 					}
 					ImGui::BeginDisabled(!overlayState.ShowMaxSpeedHighlight);
 					if(ImGui::InputFloat(TR(HIGHLIGHT_TRESHOLD), &overlayState.MaxSpeedPerSecond)) {
 						save = true;
 					}
-					ImGui::ColorEdit3(TR_ID("HighlightColor", Tr::COLOR), &overlayState.MaxSpeedColor.Value.x, ImGuiColorEditFlags_None);
+					ImGui::ColorEdit3(TR_ID("HighlightColor", Tr::COLOR).c_str(), &overlayState.MaxSpeedColor.Value.x, ImGuiColorEditFlags_None);
 					if(ImGui::IsItemDeactivatedAfterEdit()) {
 						save = true;
 					}

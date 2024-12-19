@@ -1,35 +1,39 @@
 #pragma once
-#include <cstdint>
+#include "UI/GradientBar.h"
+#include "UI/OFS_ScriptTimeline.h"
+#include "Funscript/Funscript.h"
+#include "Funscript/FunscriptAction.h"
+#include "state/states/BaseOverlayState.h"
+
+#include <imgui.h>
+#include <imgui_internal.h>
+
 #include <array>
 #include <vector>
 #include <memory>
+#include <cstdint>
 
-#include "Funscript.h"
-#include "imgui.h"
-#include "imgui_internal.h"
-#include "GradientBar.h"
 
-#include "state/states/BaseOverlayState.h"
-
-struct OverlayDrawingCtx {
+struct OverlayDrawingCtx
+{
 	const std::vector<std::shared_ptr<Funscript>>* scripts;
 	
-	int32_t drawingScriptIdx;
+	std::int32_t drawingScriptIdx;
 	inline auto& DrawingScript() const noexcept { return (*scripts)[drawingScriptIdx]; }
 
-	int32_t hoveredScriptIdx;
+	std::int32_t hoveredScriptIdx;
 	inline auto& HoveredScript() const noexcept { return (*scripts)[hoveredScriptIdx]; }
 
-	int32_t activeScriptIdx;
+	std::int32_t activeScriptIdx;
 	inline auto& ActiveScript() const noexcept { return (*scripts)[activeScriptIdx]; }
 
-	int32_t drawnScriptCount;
+	std::int32_t drawnScriptCount;
 
-	int32_t actionFromIdx;
-	int32_t actionToIdx;
+	std::int32_t actionFromIdx;
+	std::int32_t actionToIdx;
 
-	int32_t selectionFromIdx;
-	int32_t selectionToIdx;
+	std::int32_t selectionFromIdx;
+	std::int32_t selectionToIdx;
 
 	ImDrawList* drawList;
 
@@ -40,10 +44,11 @@ struct OverlayDrawingCtx {
 	float totalDuration;
 };
 
-class BaseOverlay {
+class BaseOverlay
+{
 protected:
 	class ScriptTimeline* timeline;
-	static uint32_t StateHandle;
+	static std::uint32_t StateHandle;
 
 	static void drawActionLinesSpline(const OverlayDrawingCtx& ctx, const BaseOverlayState& state) noexcept;
 	static void drawActionLinesLinear(const OverlayDrawingCtx& ctx, const BaseOverlayState& state) noexcept;
@@ -57,7 +62,7 @@ public:
 	struct ColoredLine {
 		ImVec2 p1;
 		ImVec2 p2;
-		uint32_t color;
+		std::uint32_t color;
 	};
 	static std::vector<ColoredLine> ColoredLines;
 	static float PointSize;
@@ -87,9 +92,11 @@ public:
 	static ImVec2 GetPointForAction(const OverlayDrawingCtx& ctx, FunscriptAction action) noexcept;
 };
 
-class EmptyOverlay : public BaseOverlay {
+class EmptyOverlay : public BaseOverlay
+{
 public:
-	EmptyOverlay(class ScriptTimeline* timeline) : BaseOverlay(timeline) {}
+	using BaseOverlay::BaseOverlay;
+
 	virtual void DrawScriptPositionContent(const OverlayDrawingCtx& ctx) noexcept override;
 	virtual float steppingIntervalForward(float realFrameTime, float fromTime) noexcept override;
 	virtual float steppingIntervalBackward(float realFrameTime, float fromTime) noexcept override;

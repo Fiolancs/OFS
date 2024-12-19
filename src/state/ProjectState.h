@@ -1,7 +1,7 @@
 #pragma once
 
-#include "OFS_StateHandle.h"
-#include "Funscript.h"
+#include "Funscript/Funscript.h"
+#include "state/OFS_StateHandle.h"
 
 #include <vector>
 #include <string>
@@ -20,11 +20,11 @@ struct TempoOverlayState
     }
 };
 
-REFL_TYPE(TempoOverlayState)
-    REFL_FIELD(bpm)
-    REFL_FIELD(beatOffsetSeconds)
-    REFL_FIELD(measureIndex)
-REFL_END
+//REFL_TYPE(TempoOverlayState)
+//    REFL_FIELD(bpm)
+//    REFL_FIELD(beatOffsetSeconds)
+//    REFL_FIELD(measureIndex)
+//REFL_END
 
 struct ProjectState
 {
@@ -45,13 +45,13 @@ struct ProjectState
     }
 };
 
-REFL_TYPE(ProjectState)
-    REFL_FIELD(metadata)
-    REFL_FIELD(relativeMediaPath)
-    REFL_FIELD(activeTimer)
-    REFL_FIELD(lastPlayerPosition)
-    REFL_FIELD(activeScriptIdx)
-    REFL_FIELD(nudgeMetadata)
-    REFL_FIELD(binaryFunscriptData)
-REFL_END
+//REFL_TYPE(ProjectState)
+//    REFL_FIELD(metadata)
+//    REFL_FIELD(relativeMediaPath)
+//    REFL_FIELD(activeTimer)
+//    REFL_FIELD(lastPlayerPosition)
+//    REFL_FIELD(activeScriptIdx)
+//    REFL_FIELD(nudgeMetadata)
+//    REFL_FIELD(binaryFunscriptData)
+//REFL_END
 

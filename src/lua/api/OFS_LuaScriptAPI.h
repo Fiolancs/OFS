@@ -1,15 +1,19 @@
 #pragma once
-#include "OFS_Lua.h"
-#include "Funscript.h"
-#include "FunscriptAction.h"
+#include "lua/OFS_Lua.h"
+#include "OFS_Util.h"
+#include "Funscript/Funscript.h"
+#include "Funscript/FunscriptAction.h"
 
-#include <vector>
-#include <memory>
-#include <tuple>
 #include <set>
+#include <tuple>
+#include <memory>
+#include <vector>
+#include <optional>
 
 struct LuaFunscriptAction
 {
+    using lua_Integer = int;
+    using lua_Number  = double;
     FunscriptAction o;
     bool selected = false;
 
@@ -52,12 +56,14 @@ using LuaFunscriptArray = std::vector<LuaFunscriptAction>;
 
 class LuaFunscript
 {
-    private:
+    using lua_Integer = int;
+    using lua_Number = double;
+private:
         int32_t scriptIdx = -1;
         std::weak_ptr<Funscript> script;
         LuaFunscriptArray actions;
         std::set<uint32_t> markedIndices;
-    public:
+public:
         LuaFunscript(int32_t scriptIdx, std::weak_ptr<Funscript> script) noexcept;
         LuaFunscript(const FunscriptArray& actions) noexcept;
 
@@ -87,29 +93,30 @@ class LuaFunscript
                 });
         }
 
-        void Commit(sol::this_state L) noexcept;
+        void Commit(/*sol::this_state L*/) noexcept;
         bool HasSelection() const noexcept;
         std::vector<lua_Integer> SelectedIndices() const noexcept;
 
         std::string Path() const noexcept;
         const char* Name() const noexcept;
 
-        sol::optional<std::tuple<LuaFunscriptAction, lua_Integer>> ClosestAction(lua_Number time) noexcept;
-        sol::optional<std::tuple<LuaFunscriptAction, lua_Integer>> ClosestActionAfter(lua_Number time) noexcept;
-        sol::optional<std::tuple<LuaFunscriptAction, lua_Integer>> ClosestActionBefore(lua_Number time) noexcept;
+        std::optional<std::tuple<LuaFunscriptAction, lua_Integer>> ClosestAction(lua_Number time) noexcept;
+        std::optional<std::tuple<LuaFunscriptAction, lua_Integer>> ClosestActionAfter(lua_Number time) noexcept;
+        std::optional<std::tuple<LuaFunscriptAction, lua_Integer>> ClosestActionBefore(lua_Number time) noexcept;
 
-        void MarkForRemoval(lua_Integer actionIdx, sol::this_state L) noexcept;
+        void MarkForRemoval(lua_Integer actionIdx/*, sol::this_state L*/) noexcept;
         lua_Integer RemoveMarked() noexcept;
 };
 
 class OFS_ScriptAPI
 {
-    private:
+    using lua_Integer = int;
+private:
         static std::unique_ptr<LuaFunscript> Script(lua_Integer idx) noexcept;
         static lua_Integer ActiveIdx() noexcept;
         static bool Undo() noexcept;
 
         static std::unique_ptr<LuaFunscript> Clipboard() noexcept;
-    public:
-        OFS_ScriptAPI(sol::usertype<class OFS_ExtensionAPI>& ofs) noexcept;
+public:
+        OFS_ScriptAPI(/*sol::usertype<class OFS_ExtensionAPI>& ofs*/) noexcept;
 };

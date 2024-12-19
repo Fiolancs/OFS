@@ -1,8 +1,12 @@
 #include "OpenFunscripter.h"
 #include "OFS_LuaExtensions.h"
 #include "OFS_Util.h"
-#include "OFS_Profiling.h"
+#include "UI/OFS_Profiling.h"
 #include "OFS_LuaCoreExtension.h"
+
+#include <format>
+#include <utility>
+#include <filesystem>
 
 bool OFS_LuaExtensions::DevMode = false;
 bool OFS_LuaExtensions::ShowLogs = false;
@@ -17,7 +21,7 @@ inline static void ShowExtensionLogWindow(bool* open) noexcept
 
 OFS_LuaExtensions::OFS_LuaExtensions() noexcept
 {
-	load(Util::Prefpath("extension.json"));
+	load(std::filesystem::path(Util::Prefpath("extension.json")).string());
 	Extensions.reserve(100); // NOTE: this is mitigate a relocation bug
 	UpdateExtensionList();
 	
@@ -60,12 +64,13 @@ void OFS_LuaExtensions::ScriptChanged(uint32_t scriptIdx) noexcept
 	}
 }
 
+// QQQ
 void OFS_LuaExtensions::save() noexcept
 {
-	nlohmann::json json;
-	OFS::Serializer<false>::Serialize(*this, json);
-	auto jsonText = Util::SerializeJson(json, true);
-	Util::WriteFile(LastConfigPath.c_str(), jsonText.data(), jsonText.size());
+	//nlohmann::json json;
+	//OFS::Serializer<false>::Serialize(*this, json);
+	//auto jsonText = Util::SerializeJson(json, true);
+	//Util::WriteFile(LastConfigPath.c_str(), jsonText.data(), jsonText.size());
 }
 
 void OFS_LuaExtensions::removeNonExisting() noexcept
@@ -85,10 +90,12 @@ void OFS_LuaExtensions::UpdateExtensionList() noexcept
 	
 	removeNonExisting();
 
-	for (auto it : dirIt) {
-		if (it.is_directory()) {
-			auto Name = it.path().filename().u8string();
-			auto Directory = it.path().u8string();
+	for (auto it : dirIt)
+	{
+		if (it.is_directory())
+		{
+			auto Name = it.path().filename().string();
+			auto Directory = it.path().string();
 			bool skip = std::any_of(Extensions.begin(), Extensions.end(), 
 				[&](auto& a) {
 				return a.Name == Name;
@@ -96,7 +103,7 @@ void OFS_LuaExtensions::UpdateExtensionList() noexcept
 			if (!skip) {
 				auto& ext = Extensions.emplace_back();
 				ext.Name = std::move(Name);
-				ext.NameId = Util::Format("%s##_%s_", ext.Name.c_str(), ext.Name.c_str());
+				ext.NameId = std::format("{:s}##_{:s}_", ext.Name.c_str(), ext.Name.c_str());
 				ext.Directory = std::move(Directory);
 			}
 		}

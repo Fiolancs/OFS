@@ -1,13 +1,13 @@
 #pragma once
-#include "OFS_Event.h"
+#include "event/OFS_Event.h"
 
-#include "SDL_gamecontroller.h"
-#include "SDL_haptic.h"
+#include <SDL3/SDL_haptic.h>
+#include <SDL3/SDL_gamepad.h>
 #include <array>
 
 class ControllerInput {
 private:
-    SDL_GameController* gamepad;
+    SDL_Gamepad* gamepad;
     SDL_Haptic* haptic;
     SDL_JoystickID instance_id;
     bool isConnected = false;
@@ -32,7 +32,7 @@ public:
 
     static void UpdateControllers() noexcept;
 
-    inline const char* GetName() const noexcept { return SDL_GameControllerName(gamepad); }
+    inline const char* GetName() const noexcept { return SDL_GetGamepadName(gamepad); }
     inline bool Connected() const noexcept { return isConnected; }
     static inline bool AnythingConnected() noexcept { return activeControllers > 0; }
 };

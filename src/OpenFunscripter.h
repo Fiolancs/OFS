@@ -1,27 +1,27 @@
 #pragma once
-#include "OFS_ScriptingMode.h"
-#include "OFS_KeybindingSystem.h"
-#include "OFS_Preferences.h"
-#include "OFS_ScriptTimeline.h"
-#include "OFS_UndoSystem.h"
-#include "OFS_EventSystem.h"
-#include "OFS_ScriptSimulator.h"
-#include "OFS_ControllerInput.h"
-#include "GradientBar.h"
-#include "OFS_SpecialFunctions.h"
-#include "OFS_VideoplayerControls.h"
 #include "OFS_Project.h"
-#include "OFS_BlockingTask.h"
-#include "OFS_DynamicFontAtlas.h"
-#include "OFS_LuaExtensions.h"
-#include "OFS_Localization.h"
-#include "OFS_StateManager.h"
-#include "OFS_FunscriptMetadataEditor.h"
+#include "OFS_UndoSystem.h"
+#include "OFS_ScriptingMode.h"
+#include "UI/OFS_Preferences.h"
+#include "UI/OFS_BlockingTask.h"
+#include "UI/OFS_ScriptTimeline.h"
+#include "UI/OFS_ChapterManager.h"
+#include "UI/OFS_KeybindingSystem.h"
+#include "UI/OFS_ScriptSimulator.h"
+#include "UI/OFS_SpecialFunctions.h"
+#include "UI/OFS_FunscriptMetadataEditor.h"
+#include "OFS_ControllerInput.h"
+#include "api/OFS_WebsocketApi.h"
+#include "lua/OFS_LuaExtensions.h"
 
-#include "OFS_Videoplayer.h"
-#include "OFS_VideoplayerWindow.h"
-#include "OFS_WebsocketApi.h"
-#include "OFS_ChapterManager.h"
+#include "UI/GradientBar.h"
+#include "OFS_DynamicFontAtlas.h"
+#include "event/OFS_EventSystem.h"
+#include "state/OFS_StateManager.h"
+#include "UI/OFS_VideoplayerControls.h"
+#include "videoplayer/OFS_Videoplayer.h"
+#include "videoplayer/OFS_VideoplayerWindow.h"
+#include "localization/OFS_Localization.h"
 
 #include <memory>
 #include <chrono>
@@ -184,7 +184,7 @@ public:
     void Redo() noexcept;
 };
 
-template<typename OnCloseAction>
+template <typename OnCloseAction>
 inline void OpenFunscripter::closeWithoutSavingDialog(OnCloseAction&& onProjectCloseHandler) noexcept
 {
     if (LoadedProject->HasUnsavedEdits()) {

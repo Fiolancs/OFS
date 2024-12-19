@@ -1,20 +1,23 @@
 #include "OFS_VideoplayerControls.h"
+
+#include "OFS_GL.h"
 #include "OFS_Util.h"
-#include "OFS_Profiling.h"
 #include "OFS_ImGui.h"
-#include "SDL_timer.h"
-#include "OFS_EventSystem.h"
-#include "OFS_Videoplayer.h"
-#include "OFS_VideoplayerEvents.h"
-#include "OFS_Localization.h"
+#include "UI/OFS_Profiling.h"
 #include "OFS_DynamicFontAtlas.h"
+#include "event/OFS_EventSystem.h"
+#include "videoplayer/OFS_Videoplayer.h"
+#include "videoplayer/OFS_VideoplayerEvents.h"
+#include "localization/OFS_Localization.h"
 
 #include "state/states/ChapterState.h"
 
-#include "imgui.h"
-#include "imgui_stdlib.h"
+#include <imgui.h>
+#include <misc/cpp/imgui_stdlib.h>
+#include <SDL3/SDL_timer.h>
+#include <format>
+#include <vector>
 
-#include "OFS_GL.h"
 
 void OFS_VideoplayerControls::VideoLoaded(const VideoLoadedEvent* ev) noexcept
 {
@@ -122,7 +125,7 @@ bool OFS_VideoplayerControls::DrawTimelineWidget(const char* label, float* posit
             ImGui::BeginTooltipEx(ImGuiWindowFlags_None, ImGuiTooltipFlags_None);
             {
                 const ImVec2 ImageDim = ImVec2(ImGui::GetFontSize()*7.f * (16.f / 9.f), ImGui::GetFontSize() * 7.f);
-                ImGui::Image((void*)(intptr_t)videoPreview->FrameTex(), ImageDim);
+                ImGui::Image((ImTextureID)videoPreview->FrameTex(), ImageDim);
                 float timeSeconds = player->Duration() * relTimelinePos;
                 float timeDelta = timeSeconds - player->CurrentTime();
 
@@ -321,7 +324,7 @@ bool OFS_VideoplayerControls::DrawChapter(ImDrawList* drawList, const ImRect& fr
         if(ImGui::MenuItem(TR(REMOVE)))
         {
             Util::YesNoCancelDialog(TR(REMOVE_CHAPTER), 
-                std::string(TR(REMOVE_CHAPTER_MSG)) + FMT("\n[%s]", chapter.name.c_str()),
+                std::string(TR(REMOVE_CHAPTER_MSG)) + std::format("\n[{:s}]", chapter.name.c_str()),
                 [chapterPtr = &chapter, stateHandle = chapterStateHandle](auto result)
                 {
                     if(result == Util::YesNoCancel::Yes)
@@ -397,7 +400,7 @@ bool OFS_VideoplayerControls::DrawBookmark(ImDrawList* drawList, const ImRect& f
         if(ImGui::MenuItem(TR(REMOVE)))
         {
             Util::YesNoCancelDialog(TR(REMOVE_BOOKMARK), 
-                std::string(TR(REMOVE_BOOKMARK_MSG)) + FMT("\n[%s]", bookmark.name.c_str()),
+                std::string(TR(REMOVE_BOOKMARK_MSG)) + std::format("\n[{:s}]", bookmark.name.c_str()),
                 [bookmarkPtr = &bookmark, stateHandle = chapterStateHandle](auto result)
                 {
                     if(result == Util::YesNoCancel::Yes)
@@ -508,7 +511,7 @@ void OFS_VideoplayerControls::DrawTimeline() noexcept
 {
     OFS_PROFILE(__FUNCTION__);
     FUN_ASSERT(player != nullptr, "nullptr");
-    ImGui::Begin(TR_ID(TimeId, Tr::TIME));
+    ImGui::Begin(TR_ID(TimeId, Tr::TIME).c_str());
 
     {
         constexpr float speedCalcUpdateFrequency = 1.0f;
@@ -576,7 +579,7 @@ void OFS_VideoplayerControls::DrawTimeline() noexcept
     ImGui::Columns(1, 0, false);
 
     float position = player->CurrentPercentPosition();
-    if (DrawTimelineWidget(TR_ID("TIMELINE", Tr::TIMELINE), &position)) {
+    if (DrawTimelineWidget(TR_ID("TIMELINE", Tr::TIMELINE).c_str(), &position)) {
         if (!player->IsPaused()) {
             hasSeeked = true;
         }
@@ -600,7 +603,7 @@ void OFS_VideoplayerControls::DrawControls() noexcept
     OFS_PROFILE(__FUNCTION__);
     FUN_ASSERT(player != nullptr, "nullptr");
 
-    ImGui::Begin(TR_ID(ControlId, Tr::CONTROLS));
+    ImGui::Begin(TR_ID(ControlId, Tr::CONTROLS).c_str());
 
     constexpr float seekTime = 3.f;
     // Playback controls
@@ -657,8 +660,8 @@ void OFS_VideoplayerControls::DrawControls() noexcept
     ImGui::End();
 }
 
-#include "OFS_Shader.h"
-#include "imgui_impl/imgui_impl_opengl3.h"
+#include <gl/OFS_Shader.h>
+#include <backends/imgui_impl_opengl3.h>
 
 std::vector<uint8_t> OFS_VideoplayerControls::RenderHeatmapToBitmapWithChapters(int16_t width, int16_t height, int16_t chapterHeight) noexcept
 {

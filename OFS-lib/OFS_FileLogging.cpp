@@ -1,26 +1,32 @@
 #include "OFS_FileLogging.h"
+
 #include "OFS_Util.h"
-#include "OFS_Profiling.h"
-#include "OFS_ImGui.h"
-#include "OFS_Localization.h"
+#include "UI/OFS_ImGui.h"
+#include "UI/OFS_Profiling.h"
+#include "localization/OFS_Localization.h"
+#include "localization/OFS_StringsGenerated.h"
 
-#include "SDL_log.h"
-#include "SDL_rwops.h"
-#include "SDL_thread.h"
-#include "SDL_timer.h"
-
-#include "stb_sprintf.h"
-#include <vector>
+#include <SDL3/SDL_log.h>
+#include <SDL3/SDL_timer.h>
+#include <SDL3/SDL_mutex.h>
+#include <SDL3/SDL_atomic.h>
+#include <SDL3/SDL_thread.h>
+#include <SDL3/SDL_IOStream.h>
 
 #include <atomic>
+#include <vector>
+#include <format>
+#include <ranges>
+#include <filesystem>
+#include <string_view>
 
 static OFS::AppLog OFS_MainLog;
 
-SDL_RWops* OFS_FileLogger::LogFileHandle = nullptr;
+SDL_IOStream* OFS_FileLogger::LogFileHandle = nullptr;
 
 struct OFS_LogThread {
-    SDL_SpinLock lock;
-    SDL_cond* WaitFlush = nullptr;
+    SDL_SpinLock lock = {};
+    SDL_Condition* WaitFlush = nullptr;
     std::vector<char> LogMsgBuffer;
 
     std::atomic<bool> ShouldExit = false;
@@ -28,18 +34,18 @@ struct OFS_LogThread {
 
     void Init() noexcept
     {
-        WaitFlush = SDL_CreateCond();
+        WaitFlush = SDL_CreateCondition();
         LogMsgBuffer.reserve(4096);
     }
 
     void Shutdown() noexcept
     {
         ShouldExit = true;
-        SDL_CondSignal(WaitFlush);
+        SDL_SignalCondition(WaitFlush);
         while (!Exited) {
             SDL_Delay(1);
         }
-        SDL_DestroyCond(WaitFlush);
+        SDL_DestroyCondition(WaitFlush);
     }
 };
 
@@ -52,16 +58,17 @@ static int LogThreadFunction(void* threadData) noexcept
     auto waitMut = SDL_CreateMutex();
     SDL_LockMutex(waitMut);
     while (!thread.ShouldExit && OFS_FileLogger::LogFileHandle) {
-        if (SDL_CondWait(thread.WaitFlush, waitMut) == 0) {
-            SDL_AtomicLock(&thread.lock);
-            SDL_RWwrite(OFS_FileLogger::LogFileHandle, msg.data(), 1, msg.size());
+        SDL_WaitCondition(thread.WaitFlush, waitMut);
+        {
+            SDL_LockSpinlock(&thread.lock);
+            SDL_WriteIO(OFS_FileLogger::LogFileHandle, msg.data(), msg.size());
             msg.clear();
-            SDL_AtomicUnlock(&thread.lock);
+            SDL_UnlockSpinlock(&thread.lock);
         }
     }
 
     SDL_DestroyMutex(waitMut);
-    thread.Exited = true;
+    thread.Exited.store(true, std::memory_order_release);
 
     return 0;
 }
@@ -70,10 +77,10 @@ void OFS_FileLogger::Init() noexcept
 {
     if (LogFileHandle) return;
 #ifndef NDEBUG
-    SDL_LogSetAllPriority(SDL_LOG_PRIORITY_VERBOSE);
+    SDL_SetLogPriorities(SDL_LOG_PRIORITY_VERBOSE);
 #endif
     auto LogFilePath = Util::Prefpath("OFS.log");
-    LogFileHandle = SDL_RWFromFile(LogFilePath.c_str(), "w");
+    LogFileHandle = SDL_IOFromFile(std::filesystem::path(LogFilePath).string().c_str(), "w");
 
     Thread.Init();
     auto t = SDL_CreateThread(LogThreadFunction, "MessageLogging", &Thread);
@@ -84,13 +91,13 @@ void OFS_FileLogger::Shutdown() noexcept
 {
     if (!LogFileHandle) return;
     Thread.Shutdown();
-    SDL_RWclose(LogFileHandle);
+    SDL_CloseIO(LogFileHandle);
 }
 
 void OFS_FileLogger::DrawLogWindow(bool* open) noexcept
 {
     if (!*open) return;
-    OFS_MainLog.Draw(TR_ID("OFS_LOG_OUTPUT", Tr::OFS_LOG_OUTPUT), open);
+    OFS_MainLog.Draw(TR_ID("OFS_LOG_OUTPUT", Tr::OFS_LOG_OUTPUT).c_str(), open);
 }
 
 inline static void LogToConsole(OFS_LogLevel level, const char* msg) noexcept
@@ -116,12 +123,18 @@ inline static void LogToConsole(OFS_LogLevel level, const char* msg) noexcept
     }
 }
 
+[[deprecated]]
 inline static void AppendToBuf(std::vector<char>& buffer, const char* msg, uint32_t size) noexcept
 {
     OFS_PROFILE(__FUNCTION__);
     auto initialSize = buffer.size();
     buffer.resize(initialSize + size);
-    memcpy(buffer.data() + initialSize, msg, size);
+    std::memcpy(buffer.data() + initialSize, msg, size);
+};
+inline static void AppendToBuf(std::vector<char>& buffer, std::ranges::range auto msg) noexcept
+{
+    OFS_PROFILE(__FUNCTION__);
+    buffer.append_range(msg);
 };
 
 inline static void AddNewLine() noexcept
@@ -139,48 +152,40 @@ void OFS_FileLogger::LogToFileR(const char* prefix, const char* msg, bool newLin
 {
     OFS_PROFILE(__FUNCTION__);
     SDL_Log("%s %s", prefix, msg);
-    SDL_AtomicLock(&Thread.lock);
+    SDL_LockSpinlock(&Thread.lock);
 
     auto& buffer = Thread.LogMsgBuffer;
-    AppendToBuf(buffer, prefix, strlen(prefix));
-    AppendToBuf(buffer, msg, strlen(msg));
+    AppendToBuf(buffer, prefix, std::strlen(prefix));
+    AppendToBuf(buffer, msg, std::strlen(msg));
 
     if (newLine) {
         AddNewLine();
     }
 
-    SDL_AtomicUnlock(&Thread.lock);
+    SDL_UnlockSpinlock(&Thread.lock);
 }
 
 void OFS_FileLogger::LogToFileR(OFS_LogLevel level, const char* msg, uint32_t size, bool newLine) noexcept
 {
     OFS_PROFILE(__FUNCTION__);
     LogToConsole(level, msg);
-    SDL_AtomicLock(&Thread.lock);
+    SDL_LockSpinlock(&Thread.lock);
 
     auto& buffer = Thread.LogMsgBuffer;
     {
-        constexpr const char* fmt = "[%6.3f][%s]: ";
-        char fileFmt[32];
+        constexpr std::string_view fmt = "[%6.3f][%s]: ";
+        char fileFmt[32]{};
         int msgTypeLen;
-        const float time = SDL_GetTicks() / 1000.f;
+        float const time = SDL_GetTicks() / 1000.f;
+        char const* levelStr = nullptr;
         switch (level) {
-            case OFS_LogLevel::OFS_LOG_INFO:
-                msgTypeLen = stbsp_snprintf(fileFmt, sizeof(fileFmt), fmt, time, "INFO ");
-                break;
-            case OFS_LogLevel::OFS_LOG_WARN:
-                msgTypeLen = stbsp_snprintf(fileFmt, sizeof(fileFmt), fmt, time, "WARN ");
-                break;
-            case OFS_LogLevel::OFS_LOG_DEBUG:
-                msgTypeLen = stbsp_snprintf(fileFmt, sizeof(fileFmt), fmt, time, "DEBUG");
-                break;
-            case OFS_LogLevel::OFS_LOG_ERROR:
-                msgTypeLen = stbsp_snprintf(fileFmt, sizeof(fileFmt), fmt, time, "ERROR");
-                break;
-            default:
-                msgTypeLen = stbsp_snprintf(fileFmt, sizeof(fileFmt), fmt, time, "-----");
-                break;
+            case OFS_LogLevel::OFS_LOG_INFO : levelStr = "INFO "; break;
+            case OFS_LogLevel::OFS_LOG_WARN : levelStr = "WARN "; break;
+            case OFS_LogLevel::OFS_LOG_DEBUG: levelStr = "DEBUG"; break;
+            case OFS_LogLevel::OFS_LOG_ERROR: levelStr = "ERROR"; break;
+            default                         : levelStr = "-----"; break;
         }
+        msgTypeLen = std::format_to_n(std::begin(fileFmt), std::size(fileFmt), fmt, time, levelStr).size;
         AppendToBuf(buffer, fileFmt, msgTypeLen);
     }
 
@@ -191,21 +196,53 @@ void OFS_FileLogger::LogToFileR(OFS_LogLevel level, const char* msg, uint32_t si
         AddNewLine();
     }
 
-    SDL_AtomicUnlock(&Thread.lock);
+    SDL_UnlockSpinlock(&Thread.lock);
+}
+
+void OFS_FileLogger::LogToFileR(std::string_view prefix, std::string_view msg, bool newLine) noexcept
+{
+    OFS_PROFILE(__FUNCTION__);
+
+    using std::literals::operator ""sv;
+    auto const full = { prefix, msg, newLine ? "\n"sv : ""sv };
+    //SDL_Log("%s %s", prefix, msg); // QQQ
+
+    SDL_LockSpinlock(&Thread.lock);
+    {
+        auto& buffer = Thread.LogMsgBuffer;
+        AppendToBuf(buffer, full | std::views::join);
+
+        if (newLine) {
+            AddNewLine();
+        }
+    }
+    SDL_UnlockSpinlock(&Thread.lock);
+}
+
+void OFS_FileLogger::LogToFileR(OFS_LogLevel level, std::string_view msg, bool newLine) noexcept
+{
+    OFS_PROFILE(__FUNCTION__);
+    //LogToConsole(level, std::string(msg).c_str()); // QQQ
+
+    float const time = SDL_GetTicks() / 1000.f;
+    char fileFmt[32]{};
+    std::string_view const levelStr = [level]
+    {
+        switch (level) {
+        case OFS_LogLevel::OFS_LOG_INFO : return "INFO ";
+        case OFS_LogLevel::OFS_LOG_WARN : return "WARN ";
+        case OFS_LogLevel::OFS_LOG_DEBUG: return "DEBUG";
+        case OFS_LogLevel::OFS_LOG_ERROR: return "ERROR";
+        default                         : return "-----";
+        }
+    } ();
+
+    auto const msgTypeLen = std::format_to_n(std::begin(fileFmt), std::size(fileFmt), "[{:6.3f}][{:5s}]: ", time, levelStr).size;
+
+    LogToFileR(std::string_view(fileFmt, msgTypeLen), msg, newLine);
 }
 
 void OFS_FileLogger::Flush() noexcept
 {
-    if (!Thread.LogMsgBuffer.empty()) SDL_CondSignal(Thread.WaitFlush);
-}
-
-void OFS_FileLogger::LogToFileF(OFS_LogLevel level, const char* fmt, ...) noexcept
-{
-    OFS_PROFILE(__FUNCTION__);
-    char FormatBuffer[1024];
-    va_list args;
-    va_start(args, fmt);
-    auto len = stbsp_vsnprintf(FormatBuffer, sizeof(FormatBuffer), fmt, args);
-    va_end(args);
-    LogToFileR(level, FormatBuffer, len > sizeof(FormatBuffer) ? sizeof(FormatBuffer) : len);
+    if (!Thread.LogMsgBuffer.empty()) SDL_SignalCondition(Thread.WaitFlush);
 }

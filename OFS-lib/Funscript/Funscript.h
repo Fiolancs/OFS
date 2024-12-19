@@ -1,21 +1,17 @@
 #pragma once
-
-#include "nlohmann/json.hpp"
+#include "OFS_Util.h"
 #include "FunscriptAction.h"
+#include "FunscriptSpline.h"
 #include "OFS_Reflection.h"
+#include "event/OFS_Event.h"
+#include "UI/OFS_Profiling.h"
 #include "OFS_Serialization.h"
 #include "OFS_BinarySerialization.h"
 
 #include <string>
 #include <memory>
 #include <chrono>
-
-#include "OFS_Util.h"
-#include "FunscriptSpline.h"
-
-#include "OFS_Profiling.h"
-
-#include "OFS_Event.h"
+#include <filesystem>
 
 class FunscriptUndoSystem;
 class Funscript;
@@ -83,13 +79,14 @@ public:
 	template<typename S>
 	void serialize(S& s)
 	{
-		s.ext(*this, bitsery::ext::Growable{},
-			[](S& s, Funscript& o) {
-				s.container(o.data.Actions, std::numeric_limits<uint32_t>::max());
-				s.text1b(o.currentPathRelative, o.currentPathRelative.max_size());
-				s.text1b(o.title, o.title.max_size());
-				s.boolValue(o.Enabled);
-			});
+		s(*this);
+		//s.ext(*this, bitsery::ext::Growable{},
+		//	[](S& s, Funscript& o) {
+		//		s.container(o.data.Actions, std::numeric_limits<uint32_t>::max());
+		//		s.text1b(o.currentPathRelative, o.currentPathRelative.max_size());
+		//		s.text1b(o.title, o.title.max_size());
+		//		s.boolValue(o.Enabled);
+		//	});
 	}
 
 private:
@@ -177,11 +174,11 @@ private:
 	inline void addAction(FunscriptArray& actions, FunscriptAction newAction) noexcept { actions.emplace(newAction); notifyActionsChanged(true); }
 	inline void notifySelectionChanged() noexcept { selectionChanged = true; }
 
-	static void loadMetadata(const nlohmann::json& metadataObj, Funscript::Metadata& outMetadata) noexcept;
-	static void saveMetadata(nlohmann::json& outMetadataObj, const Funscript::Metadata& inMetadata) noexcept;
+	static void loadMetadata(/*const nlohmann::json& metadataObj, */Funscript::Metadata& outMetadata) noexcept;
+	static void saveMetadata(/*nlohmann::json& outMetadataObj, */const Funscript::Metadata& inMetadata) noexcept;
 
 	void notifyActionsChanged(bool isEdit) noexcept; 
-	std::string currentPathRelative;
+	std::filesystem::path currentPathRelative;
 	std::string title;
 public:
 	Funscript() noexcept;
@@ -194,21 +191,26 @@ public:
 
 	void UpdateRelativePath(const std::string& path) noexcept;
 	inline void ClearUnsavedEdits() noexcept { unsavedEdits = false;	}
-	inline const std::string& RelativePath() const noexcept { return currentPathRelative; }
+	inline const std::filesystem::path& RelativePath() const noexcept { return currentPathRelative; }
 	inline const std::string& Title() const noexcept { return title; }
 
 	inline void Rollback(FunscriptData&& data) noexcept { this->data = std::move(data); notifyActionsChanged(true); }
 	inline void Rollback(const FunscriptData& data) noexcept { this->data = data; notifyActionsChanged(true); }
 	void Update() noexcept;
 
-	bool Deserialize(const nlohmann::json& json, Funscript::Metadata* outMetadata, bool loadChapters) noexcept;
-	inline nlohmann::json Serialize(const Funscript::Metadata& metadata, bool includeChapters) const noexcept 
-	{ 
-		nlohmann::json json;
-		Serialize(json, data, metadata, includeChapters); 
-		return json;
+	// QQQ
+	bool Deserialize(/*const nlohmann::json& json,*/ Funscript::Metadata* outMetadata, bool loadChapters) noexcept;
+	std::string Serialize(const Funscript::Metadata& metadata, bool includeChapters) const noexcept
+	{
+		return {};
 	}
-	static void Serialize(nlohmann::json& json, const FunscriptData& funscriptData, const Funscript::Metadata& metadata, bool includeChapters) noexcept;
+	//inline nlohmann::json Serialize(const Funscript::Metadata& metadata, bool includeChapters) const noexcept 
+	//{ 
+	//	nlohmann::json json;
+	//	Serialize(json, data, metadata, includeChapters); 
+	//	return json;
+	//}
+	static void Serialize(/*nlohmann::json& json, */const FunscriptData& funscriptData, const Funscript::Metadata& metadata, bool includeChapters) noexcept;
 	
 	inline const FunscriptData& Data() const noexcept { return data; }
 	inline const auto& Selection() const noexcept { return data.Selection; }
@@ -277,16 +279,16 @@ public:
 	}
 };
 
-REFL_TYPE(Funscript::Metadata)
-	REFL_FIELD(type)
-	REFL_FIELD(title)
-	REFL_FIELD(creator)
-	REFL_FIELD(script_url)
-	REFL_FIELD(video_url)
-	REFL_FIELD(tags)
-	REFL_FIELD(performers)
-	REFL_FIELD(description)
-	REFL_FIELD(license)
-	REFL_FIELD(notes)
-	REFL_FIELD(duration)
-REFL_END
+//REFL_TYPE(Funscript::Metadata)
+//	REFL_FIELD(type)
+//	REFL_FIELD(title)
+//	REFL_FIELD(creator)
+//	REFL_FIELD(script_url)
+//	REFL_FIELD(video_url)
+//	REFL_FIELD(tags)
+//	REFL_FIELD(performers)
+//	REFL_FIELD(description)
+//	REFL_FIELD(license)
+//	REFL_FIELD(notes)
+//	REFL_FIELD(duration)
+//REFL_END

@@ -1,5 +1,6 @@
 #pragma once
-#include "OFS_StateHandle.h"
+#include "state/OFS_StateHandle.h"
+
 #include <string>
 
 struct WebsocketApiState
@@ -14,7 +15,7 @@ struct WebsocketApiState
     }
 };
 
-REFL_TYPE(WebsocketApiState)
-    REFL_FIELD(port)
-    REFL_FIELD(serverActive)
-REFL_END
+//REFL_TYPE(WebsocketApiState)
+//    REFL_FIELD(port)
+//    REFL_FIELD(serverActive)
+//REFL_END

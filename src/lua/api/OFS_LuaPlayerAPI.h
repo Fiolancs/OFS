@@ -1,9 +1,13 @@
 #pragma once
-#include "OFS_Lua.h"
+#include "lua/OFS_Lua.h"
+
+#include <string>
 
 class OFS_PlayerAPI
 {
-    private:
+    using lua_Number = double;
+    using lua_Integer = int;
+private:
     static void Play(bool shouldPlay) noexcept;
     static void TogglePlay() noexcept;
     
@@ -19,7 +23,7 @@ class OFS_PlayerAPI
     static lua_Number VideoWidth() noexcept;
     static lua_Number VideoHeight() noexcept;
 
-    public:
-    OFS_PlayerAPI(sol::state_view& L) noexcept;
+public:
+    OFS_PlayerAPI(/*sol::state_view& L*/) noexcept;
     ~OFS_PlayerAPI() noexcept;
 };

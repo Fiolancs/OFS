@@ -1,9 +1,13 @@
 #include "OFS_KeybindingSystem.h"
+
 #include "OFS_Util.h"
-#include "OFS_Localization.h"
-#include "imgui_stdlib.h"
+#include "localization/OFS_Localization.h"
+
+#include <misc/cpp/imgui_stdlib.h>
 
 #include <array>
+#include <string>
+#include <format>
 
 static constexpr std::array<ImGuiKey, 12> ModifierKeys
 {
@@ -30,7 +34,7 @@ inline static bool isModifierKey(ImGuiKey key) noexcept
     return std::find(ModifierKeys.begin(), ModifierKeys.end(), key) != ModifierKeys.end();
 }
 
-inline static const char* getTriggerText(const OFS_ActionTrigger& trigger) noexcept
+inline static std::string getTriggerText(const OFS_ActionTrigger& trigger) noexcept
 {
     const char* key = nullptr;
     std::string mods;
@@ -62,18 +66,16 @@ inline static const char* getTriggerText(const OFS_ActionTrigger& trigger) noexc
 
     if(!mods.empty() && key != nullptr)
     {
-        FMT("%s+%s", mods.c_str(), key);
+        return std::format("{:s}+{:s}", mods.c_str(), key);
     }
     else if(!mods.empty() && key == nullptr) 
     {
-        FMT("%s", mods.c_str());
+        return std::format("{:s}", mods.c_str());
     }
     else 
     {
-        FMT("%s", key);
+        return std::format("{:s}", key);
     }
-
-    return Util::FormatBuffer;
 }
 
 OFS_KeybindingSystem::OFS_KeybindingSystem() noexcept
@@ -249,12 +251,12 @@ void OFS_KeybindingSystem::editTrigger(const OFS_ActionTrigger& oldTrigger, cons
 
 void OFS_KeybindingSystem::renderNewTriggerModal() noexcept
 {
-    if(ImGui::BeginPopupModal(TR_ID("ADD_EDIT_TRIGGER", Tr::ADD_EDIT_TRIGGER), nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+    if(ImGui::BeginPopupModal(TR_ID("ADD_EDIT_TRIGGER", Tr::ADD_EDIT_TRIGGER).c_str(), nullptr, ImGuiWindowFlags_AlwaysAutoResize))
     {
         ImGui::TextDisabled("[%s]", editingActionId.c_str());
         ImGui::TextUnformatted(TR(CHANGE_KEY_MSG));
 
-        ImGui::TextUnformatted(getTriggerText(tmpTrigger));
+        ImGui::TextUnformatted(getTriggerText(tmpTrigger).c_str());
 
         const auto oldMod = tmpTrigger.Mod;
         const auto oldKey = tmpTrigger.Key;
@@ -263,7 +265,7 @@ void OFS_KeybindingSystem::renderNewTriggerModal() noexcept
 
         auto& io = ImGui::GetIO();
         bool timerShouldReset = true;
-        for(int idx = 0; idx < ImGuiKey_KeysData_SIZE; idx += 1)
+        for(int idx = 0; idx < ImGuiKey_NamedKey_COUNT; ++idx)
         {
             auto key = (ImGuiKey)(ImGuiKey_NamedKey_BEGIN + idx);
             if(ImGui::IsKeyDown(key))
@@ -341,7 +343,7 @@ KeyModalType OFS_KeybindingSystem::renderActionRow(OFS_ActionUI& ui) noexcept
             ImGui::PushID(i);
             ImGui::Bullet();
             ImGui::SameLine();
-            if(ImGui::Selectable(getTriggerText(trigger), false, ImGuiSelectableFlags_DontClosePopups))
+            if(ImGui::Selectable(getTriggerText(trigger).c_str(), false, ImGuiSelectableFlags_NoAutoClosePopups))
             {
                 editingTrigger = trigger;
                 keyModal = KeyModalType::Edit;
@@ -349,7 +351,7 @@ KeyModalType OFS_KeybindingSystem::renderActionRow(OFS_ActionUI& ui) noexcept
             ImGui::NextColumn();
             ImGui::Checkbox(TR(REPEAT), &trigger.ShouldRepeat);
             ImGui::NextColumn();
-            if(ImGui::Button(FMT("%s " ICON_TRASH, TR(DELETE)), ImVec2(-1.f, 0.f)))
+            if(ImGui::Button(std::format("{:s} " ICON_TRASH, TR(DELETE)).c_str(), ImVec2(-1.f, 0.f)))
             { 
                 deleteIdx = i; 
             }
@@ -390,14 +392,14 @@ void OFS_KeybindingSystem::renderGroup(OFS_KeybindingState& state, OFS_ActionGro
             auto modal = renderActionRow(ui);
             if(modal == KeyModalType::New)
             {
-                ImGui::OpenPopup(TR_ID("ADD_EDIT_TRIGGER", Tr::ADD_EDIT_TRIGGER));
+                ImGui::OpenPopup(TR_ID("ADD_EDIT_TRIGGER", Tr::ADD_EDIT_TRIGGER).c_str());
                 editingActionId = ui.ActionId;
                 tmpTrigger = OFS_ActionTrigger();
                 currentModal = modal;
             }
             else if(modal == KeyModalType::Edit)
             {
-                ImGui::OpenPopup(TR_ID("ADD_EDIT_TRIGGER", Tr::ADD_EDIT_TRIGGER));
+                ImGui::OpenPopup(TR_ID("ADD_EDIT_TRIGGER", Tr::ADD_EDIT_TRIGGER).c_str());
                 editingActionId = ui.ActionId;
                 tmpTrigger = OFS_ActionTrigger();
                 currentModal = modal;
@@ -428,12 +430,12 @@ void OFS_KeybindingSystem::RenderKeybindingWindow() noexcept
 {
     if(showMainModal)
     {
-        ImGui::OpenPopup(TR_ID("KEYS", Tr::KEYS));
+        ImGui::OpenPopup(TR_ID("KEYS", Tr::KEYS).c_str());
         showMainModal = false;
     }
 
     bool showWindow = true;
-    if(ImGui::BeginPopupModal(TR_ID("KEYS", Tr::KEYS), &showWindow, ImGuiWindowFlags_None))
+    if(ImGui::BeginPopupModal(TR_ID("KEYS", Tr::KEYS).c_str(), &showWindow, ImGuiWindowFlags_None))
     {
         auto& state = OFS_KeybindingState::State(stateHandle);
         
@@ -465,7 +467,7 @@ void OFS_KeybindingSystem::RenderKeybindingWindow() noexcept
                 auto& orphanTrigger = orphanTriggers[i];
                 ImGui::Text("%s [%s]", orphanTrigger.MappedActionId.c_str(), getTriggerText(orphanTrigger));
                 ImGui::SameLine();
-                if(ImGui::Button(FMT("%s " ICON_TRASH, TR(DELETE))))
+                if(ImGui::Button(std::format("{:s} " ICON_TRASH, TR(DELETE)).c_str()))
                 {
                     deleteIdx = i;
                 }

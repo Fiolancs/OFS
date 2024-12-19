@@ -1,10 +1,12 @@
 #include "OFS_MpvLoader.h"
 #include "OFS_FileLogging.h"
 
-#include "SDL_loadso.h"
+#include <SDL3/SDL_error.h>
+#include <SDL3/SDL_loadso.h>
+
 #include <type_traits>
 
-static void* mpvHandle = nullptr;
+static SDL_SharedObject* mpvHandle = nullptr;
 
 mpv_create_FUNC OFS_MpvLoader::mpv_create_REAL = NULL;
 mpv_wait_event_FUNC OFS_MpvLoader::mpv_wait_event_REAL = NULL;
@@ -37,8 +39,8 @@ mpv_terminate_destroy_FUNC OFS_MpvLoader::mpv_terminate_destroy_REAL = NULL;
 bool OFS_MpvLoader::Load() noexcept
 {
     if (mpvHandle) return true;
-#if defined(WIN32)
-    mpvHandle = SDL_LoadObject("mpv-2.dll");
+#if defined(_WIN32)
+    mpvHandle = SDL_LoadObject("libmpv-2.dll");
 #elif defined(__APPLE__)
     mpvHandle = SDL_LoadObject("libmpv.dylib");
 #else // linux

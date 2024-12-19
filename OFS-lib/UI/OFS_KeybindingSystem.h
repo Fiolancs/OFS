@@ -1,7 +1,9 @@
 #pragma once
+#include "state/states/KeybindingState.h"
+#include "localization/OFS_Localization.h"
+
 #include <cstdint>
 #include <unordered_map>
-#include "state/states/KeybindingState.h"
 
 using ActionFireFn = std::function<void()>;
 struct OFS_Action

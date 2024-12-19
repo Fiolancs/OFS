@@ -1,9 +1,10 @@
 #pragma once
+#include "videoplayer/OFS_Videoplayer.h"
+
 #include <cstdint>
 #include <string>
 #include <memory>
 
-#include "OFS_Videoplayer.h"
 
 class VideoPreview {
 private:

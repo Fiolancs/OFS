@@ -1,18 +1,10 @@
 #pragma once
-
+#include <vector>
 #include <algorithm>
 
-template<typename T>
-struct DefaultComparison {
-    inline bool operator()(const T& a, const T& b) const noexcept
-    {
-        return a < b;
-    }
-};
-
-template<typename T, typename Comparison = DefaultComparison<T>, typename Allocator = std::allocator<T>>
-class vector_set: public std::vector<T, Allocator> {
-private:
+template <typename T, typename Comparison = std::less<T>, typename Allocator = std::allocator<T>>
+class vector_set : public std::vector<T, Allocator>
+{
 public:
     inline void sort() noexcept
     {
@@ -20,25 +12,22 @@ public:
     }
 
     template<typename... Args>
-    inline bool emplace(Args&&... args) noexcept
+    inline bool emplace(Args&&... args)
     {
         T obj(std::forward<Args>(args)...);
-        auto it = this->lower_bound(obj);
 
-        bool areEqual = false;
-        if (it != this->end()) {
-            Comparison comp;
-            areEqual = !comp(*it, obj) && !comp(obj, *it);
-        }
-
-        if (!areEqual) {
-            this->insert(it, std::move(obj));
-            return true;
+        if (auto it = this->lower_bound(obj); it != this->end())
+        {
+            if (Comparison comp{}; !comp(*it, obj) && !comp(obj, *it))
+            {
+                this->insert(it, std::move(obj));
+                return true;
+            }
         }
         return false;
     }
 
-    inline void emplace_back_unsorted(const T& a) noexcept
+    inline void emplace_back_unsorted(const T& a)
     {
         this->emplace_back(a);
     }
@@ -55,49 +44,29 @@ public:
     inline auto find(const T& a) const noexcept
     {
         auto it = lower_bound(a);
-        if (it != this->cend() && *it == a) {
+        if (it != this->end() && *it == a) {
             return it;
         }
-        return this->cend();
+        return this->end();
     }
 
     inline auto lower_bound(const T& a) noexcept
     {
-        auto it = std::lower_bound(this->begin(), this->end(), a,
-            [](auto& a, auto& b) noexcept {
-                Comparison comp;
-                return comp(a, b);
-            });
-        return it;
+        return std::lower_bound(this->begin(), this->end(), a, Comparison{});
     }
 
     inline auto lower_bound(const T& a) const noexcept
     {
-        auto it = std::lower_bound(this->cbegin(), this->cend(), a,
-            [](auto& a, auto& b) noexcept {
-                Comparison comp;
-                return comp(a, b);
-            });
-        return it;
+        return std::lower_bound(this->begin(), this->end(), a, Comparison{});
     }
 
     inline auto upper_bound(const T& a) noexcept
     {
-        auto it = std::upper_bound(this->begin(), this->end(), a,
-            [](auto& a, auto& b) noexcept {
-                Comparison comp;
-                return comp(a, b);
-            });
-        return it;
+        return std::upper_bound(this->begin(), this->end(), a, Comparison{});
     }
 
     inline auto upper_bound(const T& a) const noexcept
     {
-        auto it = std::upper_bound(this->cbegin(), this->cend(), a,
-            [](auto& a, auto& b) noexcept {
-                Comparison comp;
-                return comp(a, b);
-            });
-        return it;
+        return std::upper_bound(this->begin(), this->end(), a, Comparison{});
     }
 };

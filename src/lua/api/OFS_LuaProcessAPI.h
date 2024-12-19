@@ -1,29 +1,34 @@
 #pragma once
-#include "OFS_Lua.h"
-#include "subprocess.h"
+#include "lua/OFS_Lua.h"
+
+// QQQ
+//#include "subprocess.h"
+
 #include <memory>
 
+// QQQ
 class OFS_LuaProcess
 {
-    private:
-	struct subprocess_s proc = {0};
+private:
+	//struct subprocess_s proc = {0};
+	struct opaque_type { int _; } proc;
 	bool active = false;
 
-	public:
+public:
 	
-	OFS_LuaProcess(subprocess_s p) noexcept
-		: proc(p), active(true) 
+	OFS_LuaProcess(/*subprocess_s p*/) noexcept
+		: proc(/*p*/), active(true) 
 	{
-        if(proc.stdout_file) 
-        {
-            fclose(proc.stdout_file);
-            proc.stdout_file = nullptr;
-        }
-        if(proc.stderr_file)
-        {
-            fclose(proc.stderr_file);
-            proc.stderr_file = nullptr;
-        }
+        //if(proc.stdout_file) 
+        //{
+        //    fclose(proc.stdout_file);
+        //    proc.stdout_file = nullptr;
+        //}
+        //if(proc.stderr_file)
+        //{
+        //    fclose(proc.stderr_file);
+        //    proc.stderr_file = nullptr;
+        //}
 	}
 
     ~OFS_LuaProcess() noexcept
@@ -31,49 +36,49 @@ class OFS_LuaProcess
         Shutdown();
     }
 
-	static std::unique_ptr<OFS_LuaProcess> CreateProcess(const char* program, sol::variadic_args va) noexcept;
+	static std::unique_ptr<OFS_LuaProcess> CreateProcess(const char* program/*, sol::variadic_args va*/) noexcept;
 
 	inline void Shutdown() noexcept
 	{
-		if(active) {
-			if(subprocess_alive(&proc)) {
-				subprocess_terminate(&proc);
-			}
-			subprocess_destroy(&proc);
-		}
+		//if(active) {
+		//	if(subprocess_alive(&proc)) {
+		//		subprocess_terminate(&proc);
+		//	}
+		//	subprocess_destroy(&proc);
+		//}
 	}
 
 	inline bool IsAlive() noexcept
 	{
-		if(active) {
-			return subprocess_alive(&proc) > 0;
-		}
+		//if(active) {
+		//	return subprocess_alive(&proc) > 0;
+		//}
 		return false;
 	}
 
-	inline lua_Integer Join() noexcept
+	inline /*lua_Integer*/int Join() noexcept
 	{
 		int code = -1;
-		if(active) {
-			if(subprocess_join(&proc, &code) != 0) {
-            	return code;
-        	}
-		}
+		//if(active) {
+		//	if(subprocess_join(&proc, &code) != 0) {
+        //    	return code;
+        //	}
+		//}
 		return code;
 	}
 
 	inline void Detach() noexcept
 	{
-		if(active) {
-			subprocess_destroy(&proc);
-			active = false;
-		}
+		//if(active) {
+		//	subprocess_destroy(&proc);
+		//	active = false;
+		//}
 	}
 };
 
 class OFS_ProcessAPI
 {
     public:
-    OFS_ProcessAPI(sol::usertype<class OFS_ExtensionAPI>& ofs) noexcept;
+    OFS_ProcessAPI(/*sol::usertype<class OFS_ExtensionAPI>& ofs*/) noexcept;
     ~OFS_ProcessAPI() noexcept;
 };

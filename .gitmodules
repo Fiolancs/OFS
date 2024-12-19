@@ -1,33 +1,30 @@
-[submodule "lib/imgui"]
-	path = lib/imgui
-	url = https://github.com/ocornut/imgui.git
-[submodule "lib/SDL2"]
-	path = lib/SDL2
-	url = https://github.com/libsdl-org/SDL.git
-[submodule "lib/json"]
-	path = lib/json
-	url = https://github.com/nlohmann/json.git
-[submodule "lib/glm"]
-	path = lib/glm
-	url = https://github.com/g-truc/glm.git
-[submodule "lib/lua"]
-	path = lib/lua
-	url = https://github.com/lua/lua.git
-[submodule "lib/bitsery"]
-	path = lib/bitsery
-	url = https://github.com/fraillt/bitsery.git
-[submodule "lib/tracy"]
-	path = lib/tracy
-	url = https://github.com/wolfpld/tracy.git
-[submodule "lib/sol2"]
-	path = lib/sol2
-	url = https://github.com/ThePhD/sol2.git
-[submodule "lib/refl-cpp"]
-	path = lib/refl-cpp
-	url = https://github.com/veselink1/refl-cpp.git
-[submodule "lib/eventpp"]
-	path = lib/eventpp
-	url = https://github.com/wqking/eventpp.git
-[submodule "lib/civetweb"]
-	path = lib/civetweb
+[submodule "3rdParty/civetweb"]
+	path = 3rdParty/civetweb
 	url = https://github.com/civetweb/civetweb.git
+[submodule "3rdParty/dr_libs"]
+	path = 3rdParty/dr_libs
+	url = https://github.com/mackron/dr_libs.git
+[submodule "3rdParty/eventpp"]
+	path = 3rdParty/eventpp
+	url = https://github.com/wqking/eventpp.git
+[submodule "3rdParty/glaze"]
+	path = 3rdParty/glaze
+	url = https://github.com/stephenberry/glaze.git
+[submodule "3rdParty/imgui"]
+	path = 3rdParty/imgui
+	url = https://github.com/ocornut/imgui.git
+[submodule "3rdParty/SDL"]
+	path = 3rdParty/SDL
+	url = https://github.com/libsdl-org/SDL.git
+[submodule "3rdParty/stb"]
+	path = 3rdParty/stb
+	url = https://github.com/nothings/stb.git
+[submodule "3rdParty/zpp_bits"]
+	path = 3rdParty/zpp_bits
+	url = https://github.com/eyalz800/zpp_bits.git
+[submodule "3rdParty/tracy"]
+	path = 3rdParty/tracy
+	url = https://github.com/wolfpld/tracy.git
+[submodule "3rdParty/libscn"]
+	path = 3rdParty/libscn
+	url = https://github.com/eliaskosunen/scnlib.git

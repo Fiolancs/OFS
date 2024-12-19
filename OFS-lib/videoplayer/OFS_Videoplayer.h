@@ -11,7 +11,7 @@ class OFS_Videoplayer
     // Implementation data
     void* ctx = nullptr;
     // A OpenGL 2D_TEXTURE expected to contain the current video frame.
-    uint32_t frameTexture = 0;
+    std::uint32_t frameTexture = 0;
     // The position which was last requested via any of the seeking functions.
     float logicalPosition = 0.f;
     // Helper for Mute/Unmute
@@ -54,8 +54,8 @@ class OFS_Videoplayer
     inline void SyncWithPlayerTime() noexcept { SetPositionExact(CurrentPlayerTime()); }
     void Update(float delta) noexcept;
 
-    uint16_t VideoWidth() const noexcept;
-    uint16_t VideoHeight() const noexcept;
+    std::uint16_t VideoWidth() const noexcept;
+    std::uint16_t VideoHeight() const noexcept;
     float FrameTime() const noexcept;
     float CurrentSpeed() const noexcept;
     float Volume() const noexcept;
@@ -76,5 +76,5 @@ class OFS_Videoplayer
     double CurrentPlayerTime() const noexcept { return CurrentPlayerPosition() * Duration(); }
 
     const char* VideoPath() const noexcept;
-    inline uint32_t FrameTexture() const noexcept { return frameTexture; }
+    inline std::uint32_t FrameTexture() const noexcept { return frameTexture; }
 };

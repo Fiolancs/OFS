@@ -1,6 +1,7 @@
 #pragma once
+#include "state/OFS_StateHandle.h"
+
 #include <string>
-#include "OFS_StateHandle.h"
 
 enum class OFS_Theme : int32_t
 {
@@ -31,14 +32,14 @@ struct PreferenceState
 	}
 };
 
-REFL_TYPE(PreferenceState)
-	REFL_FIELD(languageCsv)
-	REFL_FIELD(fontOverride)
-	REFL_FIELD(defaultFontSize)
-	REFL_FIELD(currentTheme)
-	REFL_FIELD(fastStepAmount)
-	REFL_FIELD(vsync)
-	REFL_FIELD(framerateLimit)
-	REFL_FIELD(forceHwDecoding)
-	REFL_FIELD(showMetaOnNew)
-REFL_END
+//REFL_TYPE(PreferenceState)
+//	REFL_FIELD(languageCsv)
+//	REFL_FIELD(fontOverride)
+//	REFL_FIELD(defaultFontSize)
+//	REFL_FIELD(currentTheme)
+//	REFL_FIELD(fastStepAmount)
+//	REFL_FIELD(vsync)
+//	REFL_FIELD(framerateLimit)
+//	REFL_FIELD(forceHwDecoding)
+//	REFL_FIELD(showMetaOnNew)
+//REFL_END

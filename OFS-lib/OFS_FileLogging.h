@@ -1,6 +1,8 @@
 #pragma once
+
+#include <format>
 #include <cstdint>
-#include <cstdarg>
+#include <string_view>
 
 enum class OFS_LogLevel : int32_t {
     OFS_LOG_INFO,
@@ -9,10 +11,11 @@ enum class OFS_LogLevel : int32_t {
     OFS_LOG_ERROR,
 };
 
-class OFS_FileLogger {
+class OFS_FileLogger
+{
 public:
     static constexpr int MaxLogThreads = 1;
-    static struct SDL_RWops* LogFileHandle;
+    static struct SDL_IOStream* LogFileHandle;
 
     static void Init() noexcept;
     static void Shutdown() noexcept;
@@ -20,9 +23,19 @@ public:
     static void Flush() noexcept;
     static void DrawLogWindow(bool* open) noexcept;
 
+    [[deprecated]]
     static void LogToFileR(const char* prefix, const char* msg, bool newLine = true) noexcept;
+    [[deprecated]]
     static void LogToFileR(OFS_LogLevel level, const char* msg, uint32_t size = 0, bool newLine = true) noexcept;
-    static void LogToFileF(OFS_LogLevel level, const char* fmt, ...) noexcept;
+
+    static void LogToFileR(OFS_LogLevel level, std::string_view msg, bool newLine = true) noexcept;
+    static void LogToFileR(std::string_view prefix, std::string_view msg, bool newLine = true) noexcept;
+
+    template <typename ... T>
+    static void LogToFileF(OFS_LogLevel level, const char* fmt, T&&... argv)
+    {
+        LogToFileR(level, std::vformat(fmt, std::make_format_args(argv...)));
+    }
 };
 
 #ifndef NDEBUG

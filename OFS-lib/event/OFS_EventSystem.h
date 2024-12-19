@@ -1,8 +1,8 @@
 #pragma once
-
 #include "OFS_Event.h"
-#include "eventpp/eventqueue.h"
-#include <vector>
+
+#include <eventpp/eventqueue.h>
+
 
 struct OFS_EventPolicy
 {
@@ -63,4 +63,4 @@ class EV
     }
 };
 
-#define EVENT_SYSTEM_BIND(listener, handler) std::move(std::bind(handler, listener, std::placeholders::_1))
+#define EVENT_SYSTEM_BIND(listener, handler) std::bind(handler, listener, std::placeholders::_1)

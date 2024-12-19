@@ -1,9 +1,9 @@
 #pragma once
+#include <SDL3/SDL_events.h>
 
-#include "SDL_events.h"
+#include <memory>
 #include <cstdint>
 #include <functional>
-#include <memory>
 
 using OFS_EventType = uint32_t;
 
@@ -27,7 +27,7 @@ class OFS_Event : public BaseEvent
     static OFS_EventType EventType;
     OFS_EventType Type() const noexcept override { return EventType; }
 
-    template<typename Handler>
+    template <typename Handler>
     static auto HandleEvent(Handler&& handler) noexcept
     {
         return [handler = std::move(handler)](const EventPointer& ev) noexcept

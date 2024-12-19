@@ -1,5 +1,4 @@
 #pragma once
-
 #include <cstdint>
 
 #define OFS_SHADER_VERSION "#version 330 core\n"

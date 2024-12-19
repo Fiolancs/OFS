@@ -1,12 +1,14 @@
-#include "OFS_DownloadFfmpeg.h"
-#include "OFS_Util.h"
-#include "OFS_Localization.h"
-#include "SDL_thread.h"
-
 #include <sstream>
 #include <filesystem>
 
-#ifdef WIN32
+#include <SDL3/SDL_thread.h>
+
+#include "OFS_DownloadFfmpeg.h"
+#include "OFS_Util.h"
+#include "localization/OFS_Localization.h"
+
+
+#ifdef _WIN32
     #include <Windows.h>
     #include <urlmon.h>
     #pragma comment(lib, "urlmon.lib")
@@ -95,10 +97,10 @@ void OFS_DownloadFfmpeg::DownloadFfmpegModal() noexcept
 #ifdef WIN32
     static bool DownloadInProgress = false;
     static bool ExtractFailed = false;
-    static auto ZipExists = Util::FileExists(Util::Prefpath("ffmpeg.zip"));
+    static auto ZipExists = Util::FileExists(std::filesystem::path(Util::Prefpath("ffmpeg.zip")).string());
 
     bool isOpen = true;
-    if(ImGui::BeginPopupModal(TR_ID(OFS_DownloadFfmpeg::WindowId, Tr::DOWNLOAD_FFMPEG), DownloadInProgress ? NULL : &isOpen, ImGuiWindowFlags_AlwaysAutoResize)) {
+    if(ImGui::BeginPopupModal(TR_ID(OFS_DownloadFfmpeg::WindowId, Tr::DOWNLOAD_FFMPEG).c_str(), DownloadInProgress ? NULL : &isOpen, ImGuiWindowFlags_AlwaysAutoResize)) {
         if(DownloadInProgress) ImGui::ProgressBar(cb.Progress);
         if(!ZipExists && !DownloadInProgress) {
             ImGui::TextUnformatted(TR(FFMPEG_WAS_NOT_FOUND_MSG));

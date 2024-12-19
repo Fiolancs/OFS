@@ -1,30 +1,34 @@
 ﻿#include "OpenFunscripter.h"
-#include "OFS_Util.h"
-#include "OFS_Profiling.h"
-#include "OFS_ImGui.h"
-#include "GradientBar.h"
-#include "FunscriptHeatmap.h"
-#include "OFS_DownloadFfmpeg.h"
-#include "OFS_Shader.h"
-#include "OFS_MpvLoader.h"
-#include "OFS_Localization.h"
-
+#include "UI/OFS_DownloadFfmpeg.h"
 #include "state/OpenFunscripterState.h"
-#include "state/states/VideoplayerWindowState.h"
-#include "state/states/BaseOverlayState.h"
-#include "state/states/ChapterState.h"
 
-#include <filesystem>
-
-#include "stb_sprintf.h"
-
-#include "imgui_stdlib.h"
-#include "imgui_impl_sdl.h"
-#include "imgui_impl_opengl3.h"
-
-#include "SDL.h"
-#include "asap.h"
 #include "OFS_GL.h"
+#include "OFS_Util.h"
+#include "OFS_MpvLoader.h"
+#include "UI/OFS_ImGui.h"
+#include "UI/GradientBar.h"
+#include "UI/OFS_Profiling.h"
+#include "Funscript/FunscriptHeatmap.h"
+#include "gl/OFS_Shader.h"
+#include "localization/OFS_Localization.h"
+
+#include "state/states/ChapterState.h"
+#include "state/states/BaseOverlayState.h"
+#include "state/states/VideoplayerWindowState.h"
+
+#include <imgui.h>
+#include <imgui_internal.h>
+#include <misc/cpp/imgui_stdlib.h>
+#include <backends/imgui_impl_sdl3.h>
+#include <backends/imgui_impl_opengl3.h>
+
+#include <SDL3/SDL.h>
+
+#include <chrono>
+#include <format>
+#include <string>
+#include <filesystem>
+#include <string_view>
 
 // TODO: Use ImGui tables API in keybinding UI
 // TODO: extend "range extender" functionality ( only extend bottom/top, range reducer )
@@ -63,7 +67,7 @@ bool OpenFunscripter::imguiSetup() noexcept
     io.ConfigViewportsNoTaskBarIcon = false;
     io.ConfigDockingTransparentPayload = true;
 
-    static auto imguiIniPath = Util::Prefpath("imgui.ini");
+    static auto imguiIniPath = std::filesystem::path(Util::Prefpath("imgui.ini")).string();
     io.IniFilename = imguiIniPath.c_str();
 
     // NOTE: OFS_Preferences::OFS_Preferences() sets OFS_DynFontAtlas::FontOverride
@@ -78,14 +82,14 @@ bool OpenFunscripter::imguiSetup() noexcept
 
 
     // Setup Platform/Renderer bindings
-    ImGui_ImplSDL2_InitForOpenGL(window, glContext);
+    ImGui_ImplSDL3_InitForOpenGL(window, glContext);
     LOGF_DEBUG("init imgui with glsl: %s", GlslVersion);
     ImGui_ImplOpenGL3_Init(GlslVersion);
 
     // hook into paste for the dynamic atlas
-    if (io.GetClipboardTextFn) {
-        static auto OriginalSDL2_GetClipboardFunc = io.GetClipboardTextFn;
-        io.GetClipboardTextFn = [](void* d) noexcept -> const char* {
+    if (auto& platformIO = ImGui::GetPlatformIO();  platformIO.Platform_GetClipboardTextFn) {
+        static auto OriginalSDL2_GetClipboardFunc = platformIO.Platform_GetClipboardTextFn;
+        platformIO.Platform_GetClipboardTextFn = [](ImGuiContext* d) noexcept -> const char* {
             auto clipboard = OriginalSDL2_GetClipboardFunc(d);
             OFS_DynFontAtlas::AddText(clipboard);
             return clipboard;
@@ -95,12 +99,13 @@ bool OpenFunscripter::imguiSetup() noexcept
     return true;
 }
 
+// QQQ
 static void SaveState() noexcept
 {
-    auto stateJson = OFS_StateManager::Get()->SerializeAppAll(true);
-    auto stateBin = Util::SerializeCBOR(stateJson);
-    auto statePath = Util::Prefpath("state.ofs");
-    Util::WriteFile(statePath.c_str(), stateBin.data(), stateBin.size());
+    //auto stateJson = OFS_StateManager::Get()->SerializeAppAll(true);
+    //auto stateBin = Util::SerializeCBOR(stateJson);
+    //auto statePath = std::filesystem::path(Util::Prefpath("state.ofs")).string();
+    //Util::WriteFile(statePath.c_str(), stateBin.data(), stateBin.size());
 }
 
 OpenFunscripter::~OpenFunscripter() noexcept
@@ -129,12 +134,12 @@ bool OpenFunscripter::Init(int argc, char* argv[])
     {
         auto stateMgr = OFS_StateManager::Get();
         std::vector<uint8_t> fileData;
-        auto statePath = Util::Prefpath("state.ofs");
+        auto statePath = std::filesystem::path(Util::Prefpath("state.ofs")).string();
         if (Util::ReadFile(statePath.c_str(), fileData) > 0) {
             bool succ;
             auto cbor = Util::ParseCBOR(fileData, &succ);
             if (succ) {
-                stateMgr->DeserializeAppAll(cbor, true);
+                stateMgr->DeserializeAppAll(/*cbor,*/ true);
             }
         }
     }
@@ -145,7 +150,7 @@ bool OpenFunscripter::Init(int argc, char* argv[])
     preferences = std::make_unique<OFS_Preferences>();
     const auto& prefState = PreferenceState::State(preferences->StateHandle());
 
-    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_GAMECONTROLLER) != 0) {
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMEPAD) != 0) {
         LOG_ERROR(SDL_GetError());
         return false;
     }
@@ -176,13 +181,13 @@ bool OpenFunscripter::Init(int argc, char* argv[])
     SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
 
     window = SDL_CreateWindow(
-        "OpenFunscripter " OFS_LATEST_GIT_TAG "@" OFS_LATEST_GIT_HASH,
-        SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+        "OpenFunscripter " /*OFS_LATEST_GIT_TAG "@" OFS_LATEST_GIT_HASH*/,
+        //SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
         DefaultWidth, DefaultHeight,
-        SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_HIDDEN);
+        SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY | SDL_WINDOW_HIDDEN);
 
     SDL_Rect display;
-    int windowDisplay = SDL_GetWindowDisplayIndex(window);
+    int windowDisplay = SDL_GetDisplayForWindow(window);
     SDL_GetDisplayBounds(windowDisplay, &display);
     if (DefaultWidth >= display.w || DefaultHeight >= display.h) {
         SDL_MaximizeWindow(window);
@@ -233,9 +238,9 @@ bool OpenFunscripter::Init(int argc, char* argv[])
 
     EV::Queue().appendListener(FunscriptActionsChangedEvent::EventType,
         FunscriptActionsChangedEvent::HandleEvent(EVENT_SYSTEM_BIND(this, &OpenFunscripter::FunscriptChanged)));
-    EV::Queue().appendListener(SDL_DROPFILE,
+    EV::Queue().appendListener(SDL_EVENT_DROP_FILE,
         OFS_SDL_Event::HandleEvent(EVENT_SYSTEM_BIND(this, &OpenFunscripter::DragNDrop)));
-    EV::Queue().appendListener(SDL_CONTROLLERAXISMOTION,
+    EV::Queue().appendListener(SDL_EVENT_GAMEPAD_AXIS_MOTION,
         OFS_SDL_Event::HandleEvent(EVENT_SYSTEM_BIND(this, &OpenFunscripter::ControllerAxisPlaybackSpeed)));
     EV::Queue().appendListener(VideoLoadedEvent::EventType,
         VideoLoadedEvent::HandleEvent(EVENT_SYSTEM_BIND(this, &OpenFunscripter::VideoLoaded)));
@@ -273,7 +278,7 @@ bool OpenFunscripter::Init(int argc, char* argv[])
 
     chapterMgr = std::make_unique<OFS_ChapterManager>();
 #ifdef WIN32
-    OFS_DownloadFfmpeg::FfmpegMissing = !Util::FileExists(Util::FfmpegPath().u8string());
+    OFS_DownloadFfmpeg::FfmpegMissing = !Util::FileExists(Util::FfmpegPath().string());
 #endif
 
     closeProject(true);
@@ -757,7 +762,7 @@ void OpenFunscripter::registerBindings()
         keys->RegisterAction(
             { "save_frame_as_image",
                 [this]() {
-                    auto screenshotDir = Util::Prefpath("screenshot");
+                    auto screenshotDir = std::filesystem::path(Util::Prefpath("screenshot")).string();
                     player->SaveFrameToImage(screenshotDir);
                 },
                 false },
@@ -1241,7 +1246,7 @@ void OpenFunscripter::newFrame() noexcept
 
     // Start the Dear ImGui frame
     ImGui_ImplOpenGL3_NewFrame();
-    ImGui_ImplSDL2_NewFrame();
+    ImGui_ImplSDL3_NewFrame();
     if (OFS_DynFontAtlas::NeedsRebuild()) {
         const auto& prefState = PreferenceState::State(preferences->StateHandle());
         OFS_DynFontAtlas::RebuildFont(prefState.defaultFontSize);
@@ -1272,7 +1277,7 @@ void OpenFunscripter::render() noexcept
             ImGuiPlatformIO& platform_io = ImGui::GetPlatformIO();
             for (int i = 1; i < platform_io.Viewports.Size; i++) {
                 ImGuiViewport* viewport = platform_io.Viewports[i];
-                if (viewport->Flags & ImGuiViewportFlags_Minimized)
+                if (viewport->Flags & ImGuiViewportFlags_IsMinimized)
                     continue;
                 OFS_ImGui::CurrentlyRenderedViewport = viewport;
                 if (platform_io.Platform_RenderWindow) platform_io.Platform_RenderWindow(viewport, nullptr);
@@ -1281,7 +1286,7 @@ void OpenFunscripter::render() noexcept
             OFS_ImGui::CurrentlyRenderedViewport = nullptr;
             for (int i = 1; i < platform_io.Viewports.Size; i++) {
                 ImGuiViewport* viewport = platform_io.Viewports[i];
-                if (viewport->Flags & ImGuiViewportFlags_Minimized)
+                if (viewport->Flags & ImGuiViewportFlags_IsMinimized)
                     continue;
                 if (platform_io.Platform_SwapBuffers) platform_io.Platform_SwapBuffers(viewport, nullptr);
                 if (platform_io.Renderer_SwapBuffers) platform_io.Renderer_SwapBuffers(viewport, nullptr);
@@ -1301,17 +1306,17 @@ void OpenFunscripter::processEvents() noexcept
     auto& event = wrappedEvent->sdl;
     bool IsExiting = false;
     while (SDL_PollEvent(&event)) {
-        ImGui_ImplSDL2_ProcessEvent(&event);
+        ImGui_ImplSDL3_ProcessEvent(&event);
         switch (event.type) {
-            case SDL_QUIT: {
+            case SDL_EVENT_QUIT: {
                 if (!IsExiting) {
                     exitApp();
                     IsExiting = true;
                 }
                 break;
             }
-            case SDL_WINDOWEVENT: {
-                if (event.window.event == SDL_WINDOWEVENT_CLOSE && event.window.windowID == SDL_GetWindowID(window)) {
+            case SDL_EVENT_WINDOW_CLOSE_REQUESTED: {
+                if (event.window.windowID == SDL_GetWindowID(window)) {
                     if (!IsExiting) {
                         exitApp();
                         IsExiting = true;
@@ -1319,24 +1324,24 @@ void OpenFunscripter::processEvents() noexcept
                 }
                 break;
             }
-            case SDL_TEXTINPUT: {
+            case SDL_EVENT_TEXT_INPUT: {
                 OFS_DynFontAtlas::AddText(event.text.text);
                 break;
             }
         }
 
         switch (event.type) {
-            case SDL_CONTROLLERAXISMOTION:
-                if (std::abs(event.caxis.value) < 2000) break;
-            case SDL_MOUSEBUTTONUP:
-            case SDL_MOUSEBUTTONDOWN:
-            case SDL_MOUSEMOTION:
-            case SDL_MOUSEWHEEL:
-            case SDL_TEXTINPUT:
-            case SDL_KEYDOWN:
-            case SDL_KEYUP:
-            case SDL_CONTROLLERBUTTONUP:
-            case SDL_CONTROLLERBUTTONDOWN:
+            case SDL_EVENT_GAMEPAD_AXIS_MOTION:
+                if (std::abs(event.gaxis.value) < 2000) break;
+            case SDL_EVENT_MOUSE_BUTTON_UP:
+            case SDL_EVENT_MOUSE_BUTTON_DOWN:
+            case SDL_EVENT_MOUSE_MOTION:
+            case SDL_EVENT_MOUSE_WHEEL:
+            case SDL_EVENT_TEXT_INPUT:
+            case SDL_EVENT_KEY_DOWN:
+            case SDL_EVENT_KEY_UP:
+            case SDL_EVENT_GAMEPAD_BUTTON_UP:
+            case SDL_EVENT_GAMEPAD_BUTTON_DOWN:
                 IdleTimer = SDL_GetTicks();
                 setIdle(false);
                 break;
@@ -1378,7 +1383,7 @@ void OpenFunscripter::FunscriptChanged(const FunscriptActionsChangedEvent* ev) n
 
 void OpenFunscripter::ScriptTimelineActionClicked(const FunscriptActionClickedEvent* ev) noexcept
 {
-    if (SDL_GetModState() & KMOD_CTRL) {
+    if (SDL_GetModState() & SDL_KMOD_CTRL) {
         if (auto script = ev->script.lock()) {
             script->SelectAction(ev->action);
         }
@@ -1416,13 +1421,13 @@ void OpenFunscripter::DragNDrop(const OFS_SDL_Event* ev) noexcept
 {
     OFS_PROFILE(__FUNCTION__);
 
-    std::string dragNDropFile = ev->sdl.drop.file;
+    std::string dragNDropFile = ev->sdl.drop.data;
     closeWithoutSavingDialog([this, dragNDropFile]() {
         openFile(dragNDropFile);
     });
     // NOTE: currently there is just one DragNDrop handler
     // If another one would be added this SDL_free would be problematic
-    SDL_free(ev->sdl.drop.file);
+    //SDL_free(ev->sdl.drop.data);
 }
 
 void OpenFunscripter::VideoDuration(const DurationChangeEvent* ev) noexcept
@@ -1483,17 +1488,13 @@ void OpenFunscripter::autoBackup() noexcept
     lastBackup = std::chrono::steady_clock::now();
 
     auto backupDir = Util::PathFromString(Util::Prefpath("backup"));
-    auto name = Util::Filename(player->VideoPath());
+    auto name = std::filesystem::path(Util::Filename(player->VideoPath())).string();
     name = Util::trim(name); // this needs to be trimmed because trailing spaces
 
-    static auto BackupStartPoint = asap::now();
-    name = Util::Format("%s_%02d%02d%02d_%02d%02d%02d",
-        name.c_str(), BackupStartPoint.year(),
-        BackupStartPoint.month() + 1,
-        BackupStartPoint.mday(),
-        BackupStartPoint.hour(), BackupStartPoint.minute(), BackupStartPoint.second());
+    static auto BackupStartPoint = std::chrono::zoned_time{ std::chrono::current_zone(), std::chrono::system_clock::now() };
+    name = std::format("{:s}_{:%y%m%d}_{1:%h%M%S}", name, BackupStartPoint);
 
-#ifdef WIN32
+#ifdef _WIN32
     backupDir /= Util::Utf8ToUtf16(name);
 #else
     backupDir /= name;
@@ -1504,23 +1505,24 @@ void OpenFunscripter::autoBackup() noexcept
 
     std::error_code ec;
     auto iterator = std::filesystem::directory_iterator(backupDir, ec);
-    for (auto it = std::filesystem::begin(iterator); it != std::filesystem::end(iterator); ++it) {
+    for (auto it = std::filesystem::begin(iterator); it != std::filesystem::end(iterator); ++it){
         if (it->path().has_extension()) {
             if (it->path().extension() == ".backup") {
-                LOGF_INFO("Removing \"%s\"", it->path().u8string().c_str());
+                LOGF_INFO("Removing \"{:s}\"", it->path().string());
                 std::filesystem::remove(it->path(), ec);
-                if (ec) {
-                    LOGF_ERROR("%s", ec.message().c_str());
+                if (ec)
+                {
+                    LOG_ERROR(ec.message().c_str());
                 }
             }
         }
     }
 
-    auto time = asap::now();
-    auto fileName = Util::PathFromString(Util::Format("%s_%02d-%02d-%02d" OFS_PROJECT_EXT ".backup", name.c_str(), time.hour(), time.minute(), time.second()));
+    auto time = std::chrono::zoned_time{ std::chrono::current_zone(), std::chrono::system_clock::now() };
+    auto fileName = Util::PathFromString(std::format("%s_{1:%H}-{1:%M}-{1:%S}" OFS_PROJECT_EXT ".backup", name, time));
     auto savePath = backupDir / fileName;
-    LOGF_INFO("Backup at \"%s\"", savePath.u8string().c_str());
-    LoadedProject->Save(savePath.u8string(), false);
+    LOGF_INFO("Backup at \"{:s}\"", savePath.string());
+    LoadedProject->Save(savePath.string(), false);
 }
 
 void OpenFunscripter::exitApp(bool force) noexcept
@@ -1625,7 +1627,7 @@ void OpenFunscripter::Step() noexcept
             ShowStatisticsWindow(&ofsState.showStatistics);
 
             if (ofsState.showActionEditor) {
-                ImGui::Begin(TR_ID(ActionEditorWindowId, Tr::ACTION_EDITOR), &ofsState.showActionEditor);
+                ImGui::Begin(TR_ID(ActionEditorWindowId, Tr::ACTION_EDITOR).c_str(), &ofsState.showActionEditor);
                 OFS_PROFILE(ActionEditorWindowId);
 
                 ImGui::Columns(1, 0, false);
@@ -1728,7 +1730,7 @@ void OpenFunscripter::Shutdown() noexcept
     OFS_Translator::Shutdown();
 
     ImGui_ImplOpenGL3_Shutdown();
-    ImGui_ImplSDL2_Shutdown();
+    ImGui_ImplSDL3_Shutdown();
     ImGui::DestroyContext();
 
     // These players need to be freed before unloading mpv
@@ -1740,7 +1742,7 @@ void OpenFunscripter::Shutdown() noexcept
     webApi->Shutdown();
     controllerInput->Shutdown();
 
-    SDL_GL_DeleteContext(glContext);
+    SDL_GL_DestroyContext(glContext);
     SDL_DestroyWindow(window);
     SDL_Quit();
 }
@@ -1767,10 +1769,10 @@ void OpenFunscripter::openFile(const std::string& file) noexcept
 
     // If a project with the same name exists, it's opened instead.
     auto testProjectPath = Util::PathFromString(file);
-    if (testProjectPath.extension().u8string() != OFS_Project::Extension) {
+    if (testProjectPath.extension().string() != OFS_Project::Extension) {
         testProjectPath.replace_extension(OFS_Project::Extension);
-        if (Util::FileExists(testProjectPath.u8string())) {
-            openFile(testProjectPath.u8string());
+        if (Util::FileExists(testProjectPath.string())) {
+            openFile(testProjectPath.string());
             return;
         }
     }
@@ -1778,7 +1780,7 @@ void OpenFunscripter::openFile(const std::string& file) noexcept
     closeWithoutSavingDialog(
         [this, file]() noexcept {
             auto filePath = Util::PathFromString(file);
-            auto fileExtension = filePath.extension().u8string();
+            auto fileExtension = filePath.extension().string();
             LoadedProject = std::make_unique<OFS_Project>();
             OFS_StateManager::Get()->ClearProjectAll();
 
@@ -1828,7 +1830,7 @@ void OpenFunscripter::initProject() noexcept
     lastPath.remove_filename();
 
     auto& ofsState = OpenFunscripterState::State(stateHandle);
-    ofsState.lastPath = lastPath.u8string();
+    ofsState.lastPath = lastPath.string();
 
     lastBackup = std::chrono::steady_clock::now();
     EV::Enqueue<ProjectLoadedEvent>();
@@ -1843,19 +1845,14 @@ void OpenFunscripter::UpdateNewActiveScript(uint32_t activeIndex) noexcept
 
 void OpenFunscripter::updateTitle() noexcept
 {
-    const char* title = "OFS";
-    if (LoadedProject->IsValid()) {
-        title = Util::Format("OpenFunscripter %s@%s - \"%s\"",
-            OFS_LATEST_GIT_TAG,
-            OFS_LATEST_GIT_HASH,
-            LoadedProject->Path().c_str());
-    }
-    else {
-        title = Util::Format("OpenFunscripter %s@%s",
-            OFS_LATEST_GIT_TAG,
-            OFS_LATEST_GIT_HASH);
-    }
-    SDL_SetWindowTitle(window, title);
+    SDL_SetWindowTitle(window, [&LoadedProject = LoadedProject] (void) -> std::string
+        {
+            constexpr std::string_view title = "OpenFunscripter"/*" " OFS_LATEST_GIT_TAG "@" OFS_LATEST_GIT_HASH */;
+            if (LoadedProject->IsValid())
+                return std::format("{:s} - \"{:s}\"", title, LoadedProject->Path());
+            return std::string(title);
+        } ().c_str()
+    );
 }
 
 void OpenFunscripter::saveProject() noexcept
@@ -1866,7 +1863,7 @@ void OpenFunscripter::saveProject() noexcept
     LoadedProject->Save(true);
 
     auto& ofsState = OpenFunscripterState::State(stateHandle);
-    auto recentFile = RecentFile{ Util::PathFromString(LoadedProject->Path()).filename().u8string(), LoadedProject->Path() };
+    auto recentFile = RecentFile{ Util::PathFromString(LoadedProject->Path()).filename().string(), LoadedProject->Path() };
     ofsState.addRecentFile(recentFile);
 }
 
@@ -2108,14 +2105,14 @@ void OpenFunscripter::repeatLastStroke() noexcept
 void OpenFunscripter::saveActiveScriptAs()
 {
     Util::SaveFileDialog(TR(SAVE),
-        LoadedProject->MakePathAbsolute(ActiveFunscript()->RelativePath()),
+        LoadedProject->MakePathAbsolute(ActiveFunscript()->RelativePath().string()),
         [this](auto& result) {
             if (result.files.size() > 0) {
                 LoadedProject->ExportFunscript(result.files[0], LoadedProject->ActiveIdx());
                 auto dir = Util::PathFromString(result.files[0]);
                 dir.remove_filename();
                 auto& ofsState = OpenFunscripterState::State(stateHandle);
-                ofsState.lastPath = dir.u8string();
+                ofsState.lastPath = dir.string();
             }
         },
         { "Funscript", "*.funscript" });
@@ -2140,7 +2137,7 @@ void OpenFunscripter::ShowMainMenuBar() noexcept
     if (ImGui::BeginMainMenuBar()) {
         auto region = ImGui::GetContentRegionAvail();
         auto& ofsState = OpenFunscripterState::State(stateHandle);
-        if (ImGui::BeginMenu(TR_ID("FILE", Tr::FILE))) {
+        if (ImGui::BeginMenu(TR_ID("FILE", Tr::FILE).c_str())) {
             if (ImGui::MenuItem(TR(GENERIC_OPEN))) {
                 Util::OpenFileDialog(
                     TR(GENERIC_OPEN), ofsState.lastPath,
@@ -2156,7 +2153,7 @@ void OpenFunscripter::ShowMainMenuBar() noexcept
                 closeWithoutSavingDialog([]() {});
             }
             ImGui::Separator();
-            if (ImGui::BeginMenu(TR_ID("RECENT_FILES", Tr::RECENT_FILES))) {
+            if (ImGui::BeginMenu(TR_ID("RECENT_FILES", Tr::RECENT_FILES).c_str())) {
                 if (ofsState.recentFiles.empty()) {
                     ImGui::TextDisabled("%s", TR(NO_RECENT_FILES));
                 }
@@ -2183,25 +2180,25 @@ void OpenFunscripter::ShowMainMenuBar() noexcept
             if (ImGui::MenuItem(TR(SAVE_PROJECT), BINDING_STRING("save_project"), false, LoadedProject->IsValid())) {
                 saveProject();
             }
-            if (ImGui::BeginMenu(TR_ID("EXPORT_MENU", Tr::EXPORT_MENU), LoadedProject->IsValid())) {
-                if (ImGui::MenuItem(FMT(ICON_SHARE " %s", TR(QUICK_EXPORT)), BINDING_STRING("quick_export"))) {
+            if (ImGui::BeginMenu(TR_ID("EXPORT_MENU", Tr::EXPORT_MENU).c_str(), LoadedProject->IsValid())) {
+                if (ImGui::MenuItem(std::format(ICON_SHARE " {:s}", TR(QUICK_EXPORT)).c_str(), BINDING_STRING("quick_export"))) {
                     quickExport();
                 }
                 OFS::Tooltip(TR(QUICK_EXPORT_TOOLTIP));
-                if (ImGui::MenuItem(FMT(ICON_SHARE " %s", TR(EXPORT_ACTIVE_SCRIPT)))) {
+                if (ImGui::MenuItem(std::format(ICON_SHARE " {:s}", TR(EXPORT_ACTIVE_SCRIPT)).c_str())) {
                     saveActiveScriptAs();
                 }
-                if (ImGui::MenuItem(FMT(ICON_SHARE " %s", TR(EXPORT_ALL)))) {
+                if (ImGui::MenuItem(std::format(ICON_SHARE " {:s}", TR(EXPORT_ALL)).c_str())) {
                     if (LoadedFunscripts().size() == 1) {
                         auto savePath = Util::PathFromString(ofsState.lastPath) / (ActiveFunscript()->Title() + ".funscript");
-                        Util::SaveFileDialog(TR(EXPORT_MENU), savePath.u8string(),
+                        Util::SaveFileDialog(TR(EXPORT_MENU), savePath.string(),
                             [this](auto& result) {
                                 if (result.files.size() > 0) {
                                     LoadedProject->ExportFunscript(result.files[0], LoadedProject->ActiveIdx());
                                     std::filesystem::path dir = Util::PathFromString(result.files[0]);
                                     dir.remove_filename();
                                     auto& ofsState = OpenFunscripterState::State(stateHandle);
-                                    ofsState.lastPath = dir.u8string();
+                                    ofsState.lastPath = dir.string();
                                 }
                             },
                             { "Funscript", "*.funscript" });
@@ -2219,19 +2216,21 @@ void OpenFunscripter::ShowMainMenuBar() noexcept
             }
             ImGui::Separator();
             bool autoBackupTmp = Status & OFS_Status::OFS_AutoBackup;
-            if (ImGui::MenuItem(autoBackupTmp && LoadedProject->IsValid() ? FMT(TR(AUTO_BACKUP_TIMER_FMT), AutoBackupIntervalSeconds - std::chrono::duration_cast<std::chrono::seconds>((std::chrono::steady_clock::now() - lastBackup)).count())
+            auto const interval = AutoBackupIntervalSeconds - std::chrono::duration_cast<std::chrono::seconds>((std::chrono::steady_clock::now() - lastBackup)).count();
+            if (ImGui::MenuItem(autoBackupTmp && LoadedProject->IsValid() ? std::vformat(TR(AUTO_BACKUP_TIMER_FMT), std::make_format_args(interval)).c_str()
                                                                           : TR(AUTO_BACKUP),
-                    NULL, &autoBackupTmp)) {
+                    NULL, &autoBackupTmp))
+            {
                 Status = autoBackupTmp
                     ? Status | OFS_Status::OFS_AutoBackup
                     : Status ^ OFS_Status::OFS_AutoBackup;
             }
             if (ImGui::MenuItem(TR(OPEN_BACKUP_DIR))) {
-                Util::OpenFileExplorer(Util::Prefpath("backup").c_str());
+                Util::OpenFileExplorer(std::filesystem::path(Util::Prefpath("backup")).string().c_str());
             }
             ImGui::EndMenu();
         }
-        if (ImGui::BeginMenu(TR_ID("PROJECT", Tr::PROJECT), LoadedProject->IsValid())) {
+        if (ImGui::BeginMenu(TR_ID("PROJECT", Tr::PROJECT).c_str(), LoadedProject->IsValid())) {
             if (ImGui::MenuItem(TR(CONFIGURE), NULL, &ShowProjectEditor)) {}
             ImGui::Separator();
             if (ImGui::MenuItem(TR(PICK_DIFFERENT_MEDIA))) {
@@ -2242,7 +2241,7 @@ void OpenFunscripter::ShowMainMenuBar() noexcept
                     auto app = OpenFunscripter::ptr;
                     auto it = std::find_if(app->LoadedFunscripts().begin(), app->LoadedFunscripts().end(),
                         [filename = Util::PathFromString(path).filename().u8string()](auto& script) {
-                            return Util::PathFromString(script->RelativePath()).filename().u8string() == filename;
+                            return Util::PathFromString(script->RelativePath().string()).filename().u8string() == filename;
                         });
                     return it != app->LoadedFunscripts().end();
                 };
@@ -2251,9 +2250,9 @@ void OpenFunscripter::ShowMainMenuBar() noexcept
                         std::string newScriptPath;
                         {
                             auto root = Util::PathFromString(
-                                LoadedProject->MakePathAbsolute(LoadedFunscripts()[0]->RelativePath()));
-                            root.replace_extension(Util::Format(".%s.funscript", axisExt));
-                            newScriptPath = root.u8string();
+                                LoadedProject->MakePathAbsolute(LoadedFunscripts()[0]->RelativePath().string()));
+                            root.replace_extension(std::format(".{:s}.funscript", axisExt));
+                            newScriptPath = root.string();
                         }
 
                         if (!fileAlreadyLoaded(newScriptPath)) {
@@ -2321,13 +2320,13 @@ void OpenFunscripter::ShowMainMenuBar() noexcept
             }
             ImGui::EndMenu();
         }
-        if (ImGui::BeginMenu(TR_ID("EDIT", Tr::EDIT))) {
+        if (ImGui::BeginMenu(TR_ID("EDIT", Tr::EDIT).c_str())) {
             if (ImGui::MenuItem(TR(SAVE_FRAME_AS_IMAGE), BINDING_STRING("save_frame_as_image"))) {
-                auto screenshotDir = Util::Prefpath("screenshot");
+                auto screenshotDir = std::filesystem::path(Util::Prefpath("screenshot")).string();
                 player->SaveFrameToImage(screenshotDir);
             }
             if (ImGui::MenuItem(TR(OPEN_SCREENSHOT_DIR))) {
-                auto screenshotDir = Util::Prefpath("screenshot");
+                auto screenshotDir = std::filesystem::path(Util::Prefpath("screenshot")).string();
                 Util::CreateDirectories(screenshotDir);
                 Util::OpenFileExplorer(screenshotDir.c_str());
             }
@@ -2346,7 +2345,7 @@ void OpenFunscripter::ShowMainMenuBar() noexcept
                 auto defaultPath = Util::PathFromString(ofsState.heatmapSettings.defaultPath);
                 Util::ConcatPathSafe(defaultPath, filename);
                 Util::SaveFileDialog(
-                    TR(SAVE_HEATMAP), defaultPath.u8string(),
+                    TR(SAVE_HEATMAP), defaultPath.string(),
                     [this](auto& result) {
                         if (result.files.size() > 0) {
                             auto savePath = Util::PathFromString(result.files.front());
@@ -2354,7 +2353,7 @@ void OpenFunscripter::ShowMainMenuBar() noexcept
                                 auto& ofsState = OpenFunscripterState::State(stateHandle);
                                 saveHeatmap(result.files.front().c_str(), ofsState.heatmapSettings.defaultWidth, ofsState.heatmapSettings.defaultHeight, false);
                                 savePath.remove_filename();
-                                ofsState.heatmapSettings.defaultPath = savePath.u8string();
+                                ofsState.heatmapSettings.defaultPath = savePath.string();
                             }
                         }
                     },
@@ -2365,7 +2364,7 @@ void OpenFunscripter::ShowMainMenuBar() noexcept
                 auto defaultPath = Util::PathFromString(ofsState.heatmapSettings.defaultPath);
                 Util::ConcatPathSafe(defaultPath, filename);
                 Util::SaveFileDialog(
-                    TR(SAVE_HEATMAP), defaultPath.u8string(),
+                    TR(SAVE_HEATMAP), defaultPath.string(),
                     [this](auto& result) {
                         if (result.files.size() > 0) {
                             auto savePath = Util::PathFromString(result.files.front());
@@ -2373,7 +2372,7 @@ void OpenFunscripter::ShowMainMenuBar() noexcept
                                 auto& ofsState = OpenFunscripterState::State(stateHandle);
                                 saveHeatmap(result.files.front().c_str(), ofsState.heatmapSettings.defaultWidth, ofsState.heatmapSettings.defaultHeight, true);
                                 savePath.remove_filename();
-                                ofsState.heatmapSettings.defaultPath = savePath.u8string();
+                                ofsState.heatmapSettings.defaultPath = savePath.string();
                             }
                         }
                     },
@@ -2463,7 +2462,7 @@ void OpenFunscripter::ShowMainMenuBar() noexcept
             }
             ImGui::EndMenu();
         }
-        if (ImGui::BeginMenu(TR_ID("VIEW_MENU", Tr::VIEW_MENU))) {
+        if (ImGui::BeginMenu(TR_ID("VIEW_MENU", Tr::VIEW_MENU).c_str())) {
 #ifndef NDEBUG
             // this breaks the layout after restarting for some reason
             if (ImGui::MenuItem("Reset layout")) {
@@ -2554,7 +2553,7 @@ void OpenFunscripter::ShowMainMenuBar() noexcept
             }
             ImGui::EndMenu();
         }
-        if (ImGui::BeginMenu(TR_ID("EXTENSIONS", Tr::EXTENSIONS_MENU))) {
+        if (ImGui::BeginMenu(TR_ID("EXTENSIONS", Tr::EXTENSIONS_MENU).c_str())) {
             if (ImGui::IsWindowAppearing()) {
                 extensions->UpdateExtensionList();
             }
@@ -2562,7 +2561,7 @@ void OpenFunscripter::ShowMainMenuBar() noexcept
             OFS::Tooltip(TR(DEV_MODE_TOOLTIP));
             if (ImGui::MenuItem(TR(SHOW_LOGS), NULL, &OFS_LuaExtensions::ShowLogs)) {}
             if (ImGui::MenuItem(TR(EXTENSION_DIR))) {
-                Util::OpenFileExplorer(Util::Prefpath(OFS_LuaExtensions::ExtensionDir));
+                Util::OpenFileExplorer(std::filesystem::path(Util::Prefpath(OFS_LuaExtensions::ExtensionDir)).string());
             }
             ImGui::Separator();
             for (auto& ext : extensions->Extensions) {
@@ -2574,8 +2573,8 @@ void OpenFunscripter::ShowMainMenuBar() noexcept
                             Util::MessageBoxAlert(TR(UNKNOWN_ERROR), ext.Error);
                         }
                     }
-                    if (ImGui::MenuItem(Util::Format(TR(SHOW_WINDOW), ext.NameId.c_str()), NULL, &ext.WindowOpen, ext.Active)) {}
-                    if (ImGui::MenuItem(Util::Format(TR(OPEN_DIRECTORY), ext.NameId.c_str()), NULL)) {
+                    if (ImGui::MenuItem(std::vformat(TR(SHOW_WINDOW), std::make_format_args(ext.NameId)).c_str(), NULL, &ext.WindowOpen, ext.Active)) {}
+                    if (ImGui::MenuItem(std::vformat(TR(OPEN_DIRECTORY), std::make_format_args(ext.NameId)).c_str(), NULL)) {
                         Util::OpenFileExplorer(ext.Directory);
                     }
                     ImGui::EndMenu();
@@ -2617,10 +2616,10 @@ void OpenFunscripter::SetFullscreen(bool fullscreen)
         SDL_GetWindowPosition(window, &restoreRect.x, &restoreRect.y);
         SDL_GetWindowSize(window, &restoreRect.w, &restoreRect.h);
 
-        SDL_SetWindowResizable(window, SDL_FALSE);
-        SDL_SetWindowBordered(window, SDL_FALSE);
+        SDL_SetWindowResizable(window, false);
+        SDL_SetWindowBordered(window, false);
         SDL_SetWindowPosition(window, 0, 0);
-        int display = SDL_GetWindowDisplayIndex(window);
+        int display = SDL_GetDisplayForWindow(window);
         SDL_Rect bounds;
         SDL_GetDisplayBounds(display, &bounds);
 
@@ -2634,8 +2633,8 @@ void OpenFunscripter::SetFullscreen(bool fullscreen)
 #endif
     }
     else {
-        SDL_SetWindowResizable(window, SDL_TRUE);
-        SDL_SetWindowBordered(window, SDL_TRUE);
+        SDL_SetWindowResizable(window, true);
+        SDL_SetWindowBordered(window, true);
         SDL_SetWindowPosition(window, restoreRect.x, restoreRect.y);
         SDL_SetWindowSize(window, restoreRect.w, restoreRect.h);
     }
@@ -2694,10 +2693,10 @@ void OpenFunscripter::ShowAboutWindow(bool* open) noexcept
     if (!*open) return;
     OFS_PROFILE(__FUNCTION__);
     ImGui::Begin(TR(ABOUT), open, ImGuiWindowFlags_None | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoCollapse);
-    ImGui::TextUnformatted("OpenFunscripter " OFS_LATEST_GIT_TAG);
-    ImGui::Text("%s: %s", TR(GIT_COMMIT), OFS_LATEST_GIT_HASH);
+    ImGui::TextUnformatted("OpenFunscripter " /*OFS_LATEST_GIT_TAG*/);
+    ImGui::Text("%s: %s", TR(GIT_COMMIT), /*OFS_LATEST_GIT_HASH*/"");
 
-    if (ImGui::Button(FMT("%s " ICON_GITHUB, TR(LATEST_RELEASE)), ImVec2(-1.f, 0.f))) {
+    if (ImGui::Button(std::format("{:s} " ICON_GITHUB, TR(LATEST_RELEASE)).c_str(), ImVec2(-1.f, 0.f))) {
         Util::OpenUrl("https://github.com/OpenFunscripter/OFS/releases/latest");
     }
     ImGui::End();
@@ -2707,7 +2706,7 @@ void OpenFunscripter::ShowStatisticsWindow(bool* open) noexcept
 {
     if (!*open) return;
     OFS_PROFILE(__FUNCTION__);
-    ImGui::Begin(TR_ID(StatisticsWindowId, Tr::STATISTICS), open, ImGuiWindowFlags_None);
+    ImGui::Begin(TR_ID(StatisticsWindowId, Tr::STATISTICS).c_str(), open, ImGuiWindowFlags_None);
 
     const float currentTime = player->CurrentTime();
     const FunscriptAction* front = ActiveFunscript()->GetActionAtTime(currentTime, 0.001f);
@@ -2749,7 +2748,7 @@ void OpenFunscripter::ControllerAxisPlaybackSpeed(const OFS_SDL_Event* ev) noexc
 {
     static Uint8 lastAxis = 0;
     OFS_PROFILE(__FUNCTION__);
-    auto& caxis = ev->sdl.caxis;
+    auto& caxis = ev->sdl.gaxis;
     if ((Status & OFS_Status::OFS_GamepadSetPlaybackSpeed) && caxis.axis == lastAxis && caxis.value <= 0) {
         Status &= ~(OFS_Status::OFS_GamepadSetPlaybackSpeed);
         return;
@@ -2762,12 +2761,12 @@ void OpenFunscripter::ControllerAxisPlaybackSpeed(const OFS_SDL_Event* ev) noexc
         return;
     }
     auto app = OpenFunscripter::ptr;
-    if (caxis.axis == SDL_CONTROLLER_AXIS_TRIGGERLEFT) {
+    if (caxis.axis == SDL_GAMEPAD_AXIS_LEFT_TRIGGER) {
         float speed = 1.f - (caxis.value / (float)std::numeric_limits<int16_t>::max());
         app->player->SetSpeed(speed);
         lastAxis = caxis.axis;
     }
-    else if (caxis.axis == SDL_CONTROLLER_AXIS_TRIGGERRIGHT) {
+    else if (caxis.axis == SDL_GAMEPAD_AXIS_RIGHT_TRIGGER) {
         float speed = 1.f + (caxis.value / (float)std::numeric_limits<int16_t>::max());
         app->player->SetSpeed(speed);
         lastAxis = caxis.axis;

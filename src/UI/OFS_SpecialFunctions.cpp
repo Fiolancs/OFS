@@ -1,20 +1,21 @@
 #include "OpenFunscripter.h"
 #include "OFS_SpecialFunctions.h"
-#include "FunscriptUndoSystem.h"
-#include "OFS_ImGui.h"
-#include "imgui.h"
-#include "imgui_stdlib.h"
-#include "OFS_Lua.h"
+#include "lua/OFS_Lua.h"
+#include "state/SpecialFunctionsState.h"
 
+#include "UI/OFS_ImGui.h"
+#include "Funscript/FunscriptUndoSystem.h"
+
+#include <imgui.h>
+#include <misc/cpp/imgui_stdlib.h>
+
+#include <SDL3/SDL_thread.h>
+#include <SDL3/SDL_atomic.h>
+
+#include <cmath>
 #include <vector>
 #include <sstream>
 
-#include "state/SpecialFunctionsState.h"
-
-#include "SDL_thread.h"
-#include "SDL_atomic.h"
-
-#include <cmath>
 
 SpecialFunctionsWindow::SpecialFunctionsWindow() noexcept
 {
@@ -50,7 +51,7 @@ void SpecialFunctionsWindow::ShowFunctionsWindow(bool* open) noexcept
 	if (open != nullptr && !(*open)) { return; }
     OFS_PROFILE(__FUNCTION__);
     auto app = OpenFunscripter::ptr;
-	ImGui::Begin(TR_ID(WindowId, Tr::SPECIAL_FUNCTIONS), open, ImGuiWindowFlags_None);
+	ImGui::Begin(TR_ID(WindowId, Tr::SPECIAL_FUNCTIONS).c_str(), open, ImGuiWindowFlags_None);
 	ImGui::SetNextItemWidth(-1.f);
 
     auto functionToString = [](SpecialFunctionType func) noexcept -> const char*
@@ -164,7 +165,7 @@ inline static float PointLineDistance(FunscriptAction pt, FunscriptAction lineSt
     float dy = lineEnd.pos - lineStart.pos;
 
     // Normalize
-    float mag = sqrtf(dx * dx + dy * dy);
+    float mag = std::sqrtf(dx * dx + dy * dy);
     if (mag > 0.0f) {
         dx /= mag;
         dy /= mag;
@@ -179,7 +180,7 @@ inline static float PointLineDistance(FunscriptAction pt, FunscriptAction lineSt
     float ax = pvx - pvdot * dx;
     float ay = pvy - pvdot * dy;
 
-    return sqrtf(ax * ax + ay * ay);
+    return std::sqrtf(ax * ax + ay * ay);
 }
 
 static std::vector<bool> DouglasPeucker(const FunscriptArray& points, int startIndex, int lastIndex, float epsilon) noexcept {

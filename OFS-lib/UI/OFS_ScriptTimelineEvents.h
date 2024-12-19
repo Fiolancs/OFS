@@ -1,6 +1,7 @@
 #pragma once
-#include "OFS_Event.h"
-#include "Funscript.h"
+#include "event/OFS_Event.h"
+#include "funscript/Funscript.h"
+
 #include <cstdint>
 
 class FunscriptActionClickedEvent : public OFS_Event<FunscriptActionClickedEvent>

@@ -1,8 +1,9 @@
 #include "ScriptPositionsOverlayMode.h"
+
+#include "UI/OFS_Profiling.h"
 #include "OFS_ScriptTimeline.h"
-#include "OFS_Profiling.h"
-#include "OFS_Localization.h"
-#include "FunscriptHeatmap.h"
+#include "Funscript/FunscriptHeatmap.h"
+#include "localization/OFS_Localization.h"
 
 #include "state/states/BaseOverlayState.h"
 
@@ -339,12 +340,12 @@ void BaseOverlay::DrawSecondsLabel(const OverlayDrawingCtx& ctx) noexcept
     auto& style = ImGui::GetStyle();
     if (ctx.drawingScriptIdx == ctx.drawnScriptCount - 1) {
         OFS_PROFILE(__FUNCTION__);
-        auto tmp = FMT("%.2f %s", ctx.visibleTime, TR(TIMELINE_SECONDS));
-        auto textSize = ImGui::CalcTextSize(tmp);
+        auto tmp = std::format("{:.2f} {:s}", ctx.visibleTime, TR(TIMELINE_SECONDS));
+        auto textSize = ImGui::CalcTextSize(tmp.c_str());
         ctx.drawList->AddText(
             ctx.canvasPos + ImVec2(style.FramePadding.x, ctx.canvasSize.y - textSize.y - style.FramePadding.y),
             ImGui::GetColorU32(ImGuiCol_Text),
-            tmp
+            tmp.c_str()
         );
     }
 }

@@ -1,8 +1,7 @@
 #pragma once
-
 #include "GradientBar.h"
 #include "OFS_Videopreview.h"
-#include "FunscriptHeatmap.h"
+#include "Funscript/FunscriptHeatmap.h"
 
 class OFS_VideoplayerControls
 {
@@ -21,8 +20,8 @@ private:
 	uint32_t lastPreviewUpdate = 0;
 	class OFS_Videoplayer* player = nullptr;
 
-	bool DrawChapter(ImDrawList* drawList, const ImRect& frameBB, class Chapter& chapter, ImDrawFlags drawFlags, float currentTime) noexcept;
-	bool DrawBookmark(ImDrawList* drawList, const ImRect& frameBB, class Bookmark& bookmark) noexcept;
+	bool DrawChapter(ImDrawList* drawList, const ImRect& frameBB, struct Chapter& chapter, ImDrawFlags drawFlags, float currentTime) noexcept;
+	bool DrawBookmark(ImDrawList* drawList, const ImRect& frameBB, struct Bookmark& bookmark) noexcept;
 	void DrawChapterWidget(ImDrawList* drawList, float currentTime) noexcept;
 
 	void VideoLoaded(const class VideoLoadedEvent* ev) noexcept;

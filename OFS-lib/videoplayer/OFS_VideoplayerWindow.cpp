@@ -1,18 +1,22 @@
 #include "OFS_VideoplayerWindow.h"
 
-#include "stb_sprintf.h"
-#include "stb_image_write.h"
 #include "OFS_GL.h"
-#include "OFS_Localization.h"
-
-#include "OFS_EventSystem.h"
-#include "OFS_ImGui.h"
-#include "OFS_Profiling.h"
-#include "OFS_Shader.h"
-
+#include "gl/OFS_Shader.h"
 #include "OFS_Videoplayer.h"
-
+#include "UI/OFS_ImGui.h"
+#include "UI/OFS_Profiling.h"
+#include "event/OFS_EventSystem.h"
+#include "localization/OFS_Localization.h"
+#include "state/OFS_StateHandle.h"
 #include "state/states/VideoplayerWindowState.h"
+
+#include <imgui.h>
+#include <imgui_internal.h>
+#include <SDL3/SDL_events.h>
+#include <stb_image_write.h>
+
+#include <string>
+
 
 bool OFS_VideoplayerWindow::Init(OFS_Videoplayer* player) noexcept
 {
@@ -21,7 +25,7 @@ bool OFS_VideoplayerWindow::Init(OFS_Videoplayer* player) noexcept
 	this->player = player;
 	this->vrShader = std::make_unique<VrShader>();
 	
-	EV::Queue().appendListener(SDL_MOUSEWHEEL,
+	EV::Queue().appendListener(SDL_EVENT_MOUSE_WHEEL,
 		OFS_SDL_Event::HandleEvent(EVENT_SYSTEM_BIND(this, &OFS_VideoplayerWindow::mouseScroll)));
 	
 	videoImageId = ImGui::GetIDWithSeed("videoImage", 0, rand());
@@ -129,7 +133,7 @@ void OFS_VideoplayerWindow::drawVrVideo(ImDrawList* draw_list) noexcept
 			}
 		}, this);
 
-	OFS::ImageWithId(videoImageId, (void*)(intptr_t)player->FrameTexture(), ImGui::GetContentRegionAvail(), ImVec2(0.f, 0.f), ImVec2(1.f, 1.f));
+	OFS::ImageWithId(videoImageId, (ImTextureID)player->FrameTexture(), ImGui::GetContentRegionAvail(), ImVec2(0.f, 0.f), ImVec2(1.f, 1.f));
 	videoRightClickMenu();
 	videoDrawSize = ImGui::GetItemRectSize();
 }
@@ -183,7 +187,7 @@ void OFS_VideoplayerWindow::draw2dVideo(ImDrawList* draw_list) noexcept
 		state.currentTranslation = state.prevTranslation + ImGui::GetMouseDragDelta(ImGuiMouseButton_Left);
 	}
 
-	OFS::ImageWithId(videoImageId, (void*)(intptr_t)player->FrameTexture(), videoSize, uv0, uv1);
+	OFS::ImageWithId(videoImageId, (ImTextureID)player->FrameTexture(), videoSize, uv0, uv1);
 	videoRightClickMenu();
 }
 
@@ -201,7 +205,7 @@ void OFS_VideoplayerWindow::DrawVideoPlayer(bool* open, bool* drawVideo) noexcep
 	OFS_PROFILE(__FUNCTION__);
 	if (open != nullptr && !*open) return;
 	
-	ImGui::Begin(TR_ID("VIDEOPLAYER", Tr::VIDEOPLAYER), open, ImGuiWindowFlags_None | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoScrollbar);
+	ImGui::Begin(TR_ID("VIDEOPLAYER", Tr::VIDEOPLAYER).c_str(), open, ImGuiWindowFlags_None | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoScrollbar);
 
 	if (!player->VideoLoaded()) {
 		ImGui::End();

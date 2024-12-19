@@ -1,24 +1,20 @@
 ﻿#pragma once
-#include "SDL_rwops.h"
-#include "SDL_filesystem.h"
-#include "SDL_thread.h"
-#include "SDL_timer.h"
-#include "nlohmann/json.hpp"
+#include "OFS_FileLogging.h"
+#include "UI/OFS_Profiling.h"
 
+#include <chrono>
+#include <vector>
+#include <format>
+#include <string>
 #include <memory>
-#include <fstream>
-#include <iomanip>
 #include <filesystem>
 #include <functional>
-#include <vector>
-#include <sstream>
-#include <chrono>
 
-#include "stb_sprintf.h"
-#include "stb_image.h"
-
-#include "OFS_Profiling.h"
-#include "OFS_FileLogging.h"
+#include <scn/scan.h>
+#include <SDL3/SDL_timer.h>
+#include <SDL3/SDL_thread.h>
+#include <SDL3/SDL_iostream.h>
+#include <SDL3/SDL_filesystem.h>
 
 #include "emmintrin.h" // for _mm_pause
 
@@ -53,7 +49,7 @@
 #define ICON_LEAF "\xef\x81\xac"
 // when adding new ones they need to get added in OFS_DynamicFontAtlas
 
-#if defined(WIN32)
+#if defined(_WIN32)
 #define FUN_DEBUG_BREAK() __debugbreak()
 #else
 #define FUN_DEBUG_BREAK()
@@ -88,73 +84,79 @@
 
 class Util {
 public:
-    template<typename T>
+    template <typename T>
     inline static T Clamp(T v, T mn, T mx) noexcept
     {
         return (v < mn) ? mn : (v > mx) ? mx
                                         : v;
     }
 
-    template<typename T>
+    template <typename T>
     inline static T Min(T v1, T v2) noexcept
     {
         return (v1 < v2) ? v1 : v2;
     }
 
-    template<typename T>
+    template <typename T>
     inline static T Max(T v1, T v2) noexcept
     {
         return (v1 > v2) ? v1 : v2;
     }
 
-    template<typename T>
+    template <typename T>
     inline static T MapRange(T val, T a1, T a2, T b1, T b2) noexcept
     {
         return b1 + (val - a1) * (b2 - b1) / (a2 - a1);
     }
 
-    template<typename T>
+    template <typename T>
     inline static T Lerp(T startVal, T endVal, float t) noexcept
     {
         return startVal + ((endVal - startVal) * t);
     }
 
-#ifdef WIN32
-    inline static std::string WindowsMaxPath(const char* path, int32_t pathLen) noexcept
+#ifdef _WIN32
+    inline static std::u8string WindowsMaxPath(std::u8string_view path) noexcept
     {
-        std::string buffer;
-        buffer.reserve(strlen("\\\\?\\") + pathLen);
-        buffer.append("\\\\?\\");
-        buffer.append(path, pathLen);
+        std::u8string buffer(u8"\\\\?\\");
+        buffer.reserve(buffer.size() + path.size());
+        buffer.append(path);
+        return buffer;
+    }
+    inline static std::string WindowsMaxPath(char const* path, std::size_t pathLen) noexcept
+    {
+        std::string buffer("\\\\?\\");
+        buffer.reserve(buffer.size() + pathLen);
+        buffer.append(path);
         return buffer;
     }
 #endif
 
-    inline static SDL_RWops* OpenFile(const char* path, const char* mode, int32_t path_len) noexcept
+    inline static SDL_IOStream* OpenFile(const char* path, const char* mode, int32_t path_len) noexcept
     {
-#ifdef WIN32
-        SDL_RWops* handle = nullptr;
+#ifdef _WIN32
+        SDL_IOStream* handle = nullptr;
         if (path_len >= _MAX_PATH) {
             auto max = WindowsMaxPath(path, path_len);
-            handle = SDL_RWFromFile(max.c_str(), mode);
+            handle = SDL_IOFromFile(max.c_str(), mode);
         }
         else {
-            handle = SDL_RWFromFile(path, mode);
+            handle = SDL_IOFromFile(path, mode);
         }
 #else
-        auto handle = SDL_RWFromFile(path, mode);
+        auto handle = SDL_IOFromFile(path, mode);
 #endif
         return handle;
     }
 
     inline static size_t ReadFile(const char* path, std::vector<uint8_t>& buffer) noexcept
     {
-        auto file = OpenFile(path, "rb", strlen(path));
+        auto file = OpenFile(path, "rb", std::strlen(path));
         if (file) {
             buffer.clear();
-            buffer.resize(SDL_RWsize(file));
-            SDL_RWread(file, buffer.data(), sizeof(uint8_t), buffer.size());
-            SDL_RWclose(file);
+            buffer.resize(SDL_GetIOSize(file));
+            SDL_ReadIO(file, buffer.data(), buffer.size());
+            SDL_CloseIO(file);
             return buffer.size();
         }
         return 0;
@@ -163,67 +165,74 @@ public:
     inline static std::string ReadFileString(const char* path) noexcept
     {
         std::string str;
-        auto file = OpenFile(path, "rb", strlen(path));
+        auto file = OpenFile(path, "rb", std::strlen(path));
         if (file) {
-            str.resize(SDL_RWsize(file));
-            SDL_RWread(file, str.data(), 1, str.size());
-            SDL_RWclose(file);
+            str.resize(SDL_GetIOSize(file));
+            SDL_ReadIO(file, str.data(), str.size());
+            SDL_CloseIO(file);
         }
         return str;
     }
 
     inline static size_t WriteFile(const char* path, const void* buffer, size_t size) noexcept
     {
-        auto file = OpenFile(path, "wb", strlen(path));
+        auto file = OpenFile(path, "wb", std::strlen(path));
         if (file) {
-            auto written = SDL_RWwrite(file, buffer, 1, size);
-            SDL_RWclose(file);
+            auto written = SDL_WriteIO(file, buffer, size);
+            SDL_CloseIO(file);
             return written;
         }
         return 0;
     }
 
-    inline static nlohmann::json ParseJson(const std::string& jsonText, bool* success) noexcept
+    // QQQ
+    inline static std::string ParseJson(const std::string& jsonText, bool* success) noexcept
     {
-        nlohmann::json json;
-        *success = false;
-        if (!jsonText.empty()) {
-            try {
-                json = nlohmann::json::parse(jsonText, nullptr, false, true);
-                *success = !json.is_discarded();
-            }
-            catch (const std::exception& e) {
-                *success = false;
-                LOGF_ERROR("%s", e.what());
-            }
-        }
-        return json;
-    }
-
-    inline static nlohmann::json ParseCBOR(const std::vector<uint8_t>& data, bool* success) noexcept
-    {
-        try {
-            auto json = nlohmann::json::from_cbor(data);
-            *success = !json.is_discarded();
-            return json;
-        }
-        catch (const std::exception& e) {
-            *success = false;
-            LOGF_ERROR("%s", e.what());
-        }
+        //nlohmann::json json;
+        //*success = false;
+        //if (!jsonText.empty()) {
+        //    try {
+        //        json = nlohmann::json::parse(jsonText, nullptr, false, true);
+        //        *success = !json.is_discarded();
+        //    }
+        //    catch (const std::exception& e) {
+        //        *success = false;
+        //        LOGF_ERROR("%s", e.what());
+        //    }
+        //}
+        //return json;
         return {};
     }
 
-    inline static std::string SerializeJson(const nlohmann::json& json, bool pretty = false) noexcept
+    // QQQ
+    inline static std::string ParseCBOR(const std::vector<uint8_t>& data, bool* success) noexcept
     {
-        auto jsonText = json.dump(pretty ? 4 : -1, ' ');
-        return jsonText;
+        //try {
+        //    auto json = nlohmann::json::from_cbor(data);
+        //    *success = !json.is_discarded();
+        //    return json;
+        //}
+        //catch (const std::exception& e) {
+        //    *success = false;
+        //    LOGF_ERROR("%s", e.what());
+        //}
+        return {};
     }
 
-    inline static std::vector<uint8_t> SerializeCBOR(const nlohmann::json& json) noexcept
+    // QQQ
+    inline static std::string SerializeJson(/*const nlohmann::json& json, bool pretty = false*/...) noexcept
     {
-        auto data = nlohmann::json::to_cbor(json);
-        return data;
+        return {};
+        //auto jsonText = json.dump(pretty ? 4 : -1, ' ');
+        //return jsonText;
+    }
+
+    // QQQ
+    inline static std::vector<uint8_t> SerializeCBOR(/*const nlohmann::json& json*/...) noexcept
+    {
+        return {};
+        //auto data = nlohmann::json::to_cbor(json);
+        //return data;
     }
 
     inline static float ParseTime(const char* timeStr, bool* succ) noexcept
@@ -233,9 +242,15 @@ public:
         int seconds = 0;
         int milliseconds = 0;
         *succ = false;
-
-        if (sscanf(timeStr, "%d:%d:%d.%d", &hours, &minutes, &seconds, &milliseconds) < 3) {
+        auto const result = scn::scan(std::string_view(timeStr), "{:d}:{:d}:{:d}", std::make_tuple(hours, minutes, seconds));
+        if (!result) {
             return NAN;
+        }
+
+        std::tie(hours, minutes, seconds) = result.value().values();
+        if (auto r2 = scn::scan(result.value().range(), ".{:d}", std::make_tuple(milliseconds)); r2)
+        {
+            milliseconds = r2.value().value();
         }
 
         if (hours >= 0
@@ -274,10 +289,10 @@ public:
         if (withMs) {
             timeConsumed += chrono::duration<float>(1.f) * seconds;
             int ms = chrono::duration_cast<chrono::milliseconds>(duration - timeConsumed).count();
-            return stbsp_snprintf(buf, bufLen, "%02d:%02d:%02d.%03d", hours, minutes, seconds, ms);
+            return std::format_to_n(buf, bufLen, "{:02d}:{:02d}:{02d}.{:03d}", hours, minutes, seconds, ms).size;
         }
         else {
-            return stbsp_snprintf(buf, bufLen, "%02d:%02d:%02d", hours, minutes, seconds);
+            return std::format_to_n(buf, bufLen, "{:02d}:{:02d}:{02d}", hours, minutes, seconds).size;
         }
     }
 
@@ -286,13 +301,12 @@ public:
 
     inline static std::filesystem::path Basepath() noexcept
     {
-        char* base = SDL_GetBasePath();
+        char const* base = SDL_GetBasePath();
         auto path = Util::PathFromString(base);
-        SDL_free(base);
         return path;
     }
 
-    inline static std::string Filename(const std::string& path) noexcept
+    inline static std::u8string Filename(const std::string& path) noexcept
     {
         return Util::PathFromString(path)
             .replace_extension("")
@@ -303,7 +317,7 @@ public:
     inline static bool FileExists(const std::string& file) noexcept
     {
         bool exists = false;
-#if WIN32
+#if _WIN32
         std::wstring wfile = Util::Utf8ToUtf16(file);
         struct _stati64 s;
         exists = _wstati64(wfile.c_str(), &s) == 0;
@@ -322,9 +336,10 @@ public:
 
     inline static bool DirectoryExists(const std::string& dir) noexcept
     {
-        std::error_code ec;
-        bool exists = std::filesystem::exists(Util::PathFromString(dir), ec);
-        return exists && !ec;
+        std::error_code ec1{}, ec2{};
+        auto const path = Util::PathFromString(dir);
+        auto const status = std::filesystem::status(path);
+        return std::filesystem::exists(status) && std::filesystem::is_directory(status);
     }
 
     // http://www.martinbroadhurst.com/how-to-trim-a-stdstring.html
@@ -363,23 +378,18 @@ public:
         return false;
     }
 
-    inline static bool StringEndsWith(const std::string& string, const std::string& ending) noexcept
+    inline static bool StringEndsWith(std::string_view string, std::string_view ending) noexcept
     {
-        if (string.length() >= ending.length()) {
-            return (0 == string.compare(string.length() - ending.length(), ending.length(), ending));
-        }
-        return false;
+        return string.ends_with(ending);
     }
 
-    inline static bool StringStartsWith(const std::string& string, const std::string& start) noexcept
+    inline static bool StringStartsWith(std::string_view string, std::string_view start) noexcept
     {
-        if (string.length() >= start.length()) {
-            for (int i = 0; i < start.size(); i++) {
-                if (string[i] != start[i]) return false;
-            }
-            return true;
-        }
-        return false;
+        return string.starts_with(start);
+    }
+    inline static bool StringStartsWith(std::u8string_view string, std::u8string_view start) noexcept
+    {
+        return string.starts_with(start);
     }
 
     struct FileDialogResult {
@@ -418,7 +428,7 @@ public:
 
     static std::string Resource(const std::string& path) noexcept;
 
-    static std::string Prefpath(const std::string& path = std::string()) noexcept
+    static std::u8string Prefpath(const std::string& path = std::string()) noexcept
     {
         static const char* cachedPref = SDL_GetPrefPath("OFS", "OFS3_data");
         static std::filesystem::path prefPath = Util::PathFromString(cachedPref);
@@ -430,7 +440,7 @@ public:
         return prefPath.u8string();
     }
 
-    static std::string PrefpathOFP(const std::string& path) noexcept
+    static std::u8string PrefpathOFP(const std::string& path) noexcept
     {
         static const char* cachedPref = SDL_GetPrefPath("OFS", "OFP_data");
         static std::filesystem::path prefPath = Util::PathFromString(cachedPref);
@@ -442,10 +452,10 @@ public:
     static bool CreateDirectories(const std::filesystem::path& dirs) noexcept
     {
         std::error_code ec;
-#ifdef WIN32
-        if (dirs.u8string().size() >= _MAX_PATH) {
-            auto pString = dirs.u8string();
-            auto max = WindowsMaxPath(pString.c_str(), pString.size());
+#ifdef _WIN32
+        if (auto pString = dirs.u8string(); pString.size() >= _MAX_PATH) {
+            
+            auto max = WindowsMaxPath(pString);
             std::filesystem::create_directories(max, ec);
             if (ec) {
                 LOGF_ERROR("Failed to create directory: %s", ec.message().c_str());
@@ -465,34 +475,26 @@ public:
     static std::wstring Utf8ToUtf16(const std::string& str) noexcept;
 
     static std::filesystem::path PathFromString(const std::string& str) noexcept;
+    static std::filesystem::path PathFromString(const std::u8string& str) noexcept;
     static void ConcatPathSafe(std::filesystem::path& path, const std::string& element) noexcept;
 
     static bool SavePNG(const std::string& path, void* buffer, int32_t width, int32_t height, int32_t channels = 3, bool flipVertical = true) noexcept;
 
     static std::filesystem::path FfmpegPath() noexcept;
 
-    static char FormatBuffer[4096];
-    inline static const char* Format(const char* fmt, ...) noexcept
-    {
-        va_list argp;
-        va_start(argp, fmt);
-        stbsp_vsnprintf(FormatBuffer, sizeof(FormatBuffer), fmt, argp);
-        return FormatBuffer;
-    }
-
-    inline static const char* FormatBytes(size_t bytes) noexcept
+    inline static std::string FormatBytes(size_t bytes) noexcept
     {
         if (bytes < 1024) {
-            return Util::Format("%lld bytes", bytes); // bytes
+            return std::format("{:d} bytes", bytes); // bytes
         }
-        else if (bytes >= 1024 && bytes < (1024 * 1024)) {
-            return Util::Format("%0.2lf KB", bytes / 1024.0); // kilobytes
+        else if (bytes >= 1024 && bytes < size_t(1024 * 1024)) {
+            return std::format("{:.2f} KB", bytes / 1024.0); // kilobytes
         }
-        else if (bytes >= (1024 * 1024) && bytes < (1024 * 1024 * 1024)) {
-            return Util::Format("%0.2lf MB", bytes / (1024.0 * 1024.0)); // megabytes
+        else if (bytes >= (1024 * 1024) && bytes < size_t(1024 * 1024 * 1024)) {
+            return std::format("{:.2f} MB", bytes / (1024.0 * 1024.0)); // megabytes
         }
         else /*if (bytes > (1024 * 1024 * 1024))*/ {
-            return Util::Format("%0.2lf GB", bytes / (1024.0 * 1024.0 * 1024.0)); // gigabytes
+            return std::format("{:.2f} GB", bytes / (1024.0 * 1024.0 * 1024.0)); // gigabytes
         }
     }
 
@@ -516,5 +518,3 @@ public:
     static float NextFloat() noexcept;
     static uint32_t RandomColor(float s, float v, float alpha = 1.f) noexcept;
 };
-
-#define FMT(fmt, ...) Util::Format(fmt, __VA_ARGS__)

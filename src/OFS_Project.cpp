@@ -1,13 +1,17 @@
 #include "OFS_Project.h"
-#include "OFS_Localization.h"
-#include "OFS_ImGui.h"
-#include "OFS_DynamicFontAtlas.h"
-#include "OFS_BlockingTask.h"
-#include "OFS_EventSystem.h"
-
-#include "subprocess.h"
 
 #include <algorithm>
+#include <filesystem>
+
+
+#include "localization/OFS_Localization.h"
+#include "UI/OFS_ImGui.h"
+#include "OFS_DynamicFontAtlas.h"
+#include "UI/OFS_BlockingTask.h"
+#include "event/OFS_EventSystem.h"
+
+//#include "subprocess.h"
+
 
 static std::array<const char*, 6> VideoExtensions{
     ".mp4",
@@ -28,7 +32,7 @@ static std::array<const char*, 4> AudioExtensions{
 inline bool static HasMediaExtension(const std::string& pathStr) noexcept
 {
     auto path = Util::PathFromString(pathStr);
-    auto ext = path.extension().u8string();
+    auto ext = path.extension().string();
 
     bool hasMediaExt = std::any_of(VideoExtensions.begin(), VideoExtensions.end(),
         [&ext](auto validExt) noexcept {
@@ -57,7 +61,7 @@ inline bool FindMedia(const std::string& pathStr, std::string* outMedia) noexcep
     for (auto& entry : dirIt) {
         auto entryName = entry.path().stem().u8string();
         if (entryName == filename) {
-            auto entryPathStr = entry.path().u8string();
+            auto entryPathStr = entry.path().string();
 
             if (HasMediaExtension(entryPathStr)) {
                 *outMedia = entryPathStr;
@@ -107,7 +111,7 @@ bool OFS_Project::Load(const std::string& path) noexcept
         bool succ;
         auto projectState = Util::ParseCBOR(projectBin, &succ);
         if (succ) {
-            valid = OFS_StateManager::Get()->DeserializeProjectAll(projectState, true);
+            valid = OFS_StateManager::Get()->DeserializeProjectAll(/*projectState,*/ true);
         }
     }
 #else
@@ -141,7 +145,7 @@ bool OFS_Project::ImportFromFunscript(const std::string& file) noexcept
 
     auto& projectState = State();
     auto basePath = Util::PathFromString(file);
-    lastPath = basePath.replace_extension(OFS_Project::Extension).u8string();
+    lastPath = basePath.replace_extension(OFS_Project::Extension).string();
 
     if (Util::FileExists(file)) {
         Funscripts.clear();
@@ -178,13 +182,13 @@ bool OFS_Project::ImportFromMedia(const std::string& file) noexcept
 
     auto& projectState = State();
     auto basePath = Util::PathFromString(file);
-    lastPath = basePath.replace_extension(OFS_Project::Extension).u8string();
+    lastPath = basePath.replace_extension(OFS_Project::Extension).string();
 
     basePath = Util::PathFromString(file);
     if (Util::FileExists(file)) {
         projectState.relativeMediaPath = MakePathRelative(file);
         auto funscriptPath = basePath;
-        auto funscriptPathStr = funscriptPath.replace_extension(".funscript").u8string();
+        auto funscriptPathStr = funscriptPath.replace_extension(".funscript").string();
 
         Funscripts.clear();
         AddFunscript(funscriptPathStr);
@@ -208,7 +212,7 @@ bool OFS_Project::AddFunscript(const std::string& path) noexcept
     auto metadata = Funscript::Metadata();
 
     bool isFirstFunscript = Funscripts.size() == 0;
-    if (succ && script->Deserialize(json, &metadata, isFirstFunscript)) {
+    if (succ && script->Deserialize(/*json, */&metadata, isFirstFunscript)) {
         // Add existing script to project
         script = Funscripts.emplace_back(std::move(script));
         script->UpdateRelativePath(MakePathRelative(path));
@@ -246,9 +250,10 @@ void OFS_Project::Save(const std::string& path, bool clearUnsavedChanges) noexce
     }
 
 #if 1
-    auto projectState = OFS_StateManager::Get()->SerializeProjectAll(true);
-    auto projectBin = Util::SerializeCBOR(projectState);
-    Util::WriteFile(path.c_str(), projectBin.data(), projectBin.size());
+    // QQQ
+    //auto projectState = OFS_StateManager::Get()->SerializeProjectAll(true);
+    //auto projectBin = Util::SerializeCBOR(projectState);
+    //Util::WriteFile(path.c_str(), projectBin.data(), projectBin.size());
 #else
     auto projectState = OFS_StateManager::Get()->SerializeProjectAll(false);
     auto projectJson = Util::SerializeJson(projectState, false);
@@ -283,11 +288,13 @@ bool OFS_Project::HasUnsavedEdits() noexcept
 
 void OFS_Project::ShowProjectWindow(bool* open) noexcept
 {
-    if (*open) {
-        ImGui::OpenPopup(TR_ID("PROJECT", Tr::PROJECT));
+    if (*open)
+    {
+        ImGui::OpenPopup(TR_ID("PROJECT", Tr::PROJECT).c_str());
     }
 
-    if (ImGui::BeginPopupModal(TR_ID("PROJECT", Tr::PROJECT), open, ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_AlwaysAutoResize)) {
+    if (ImGui::BeginPopupModal(TR_ID("PROJECT", Tr::PROJECT).c_str(), open, ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_AlwaysAutoResize))
+    {
         OFS_PROFILE(__FUNCTION__);
         auto& projectState = State();
         auto& Metadata = projectState.metadata;
@@ -295,8 +302,9 @@ void OFS_Project::ShowProjectWindow(bool* open) noexcept
 
         ImGui::Text("%s: %s", TR(MEDIA), projectState.relativeMediaPath.c_str());
 
-        Util::FormatTime(Util::FormatBuffer, sizeof(Util::FormatBuffer), projectState.activeTimer, true);
-        ImGui::Text("%s: %s", TR(TIME_SPENT), Util::FormatBuffer);
+        char buffer[128]{};
+        Util::FormatTime(buffer, sizeof(buffer), projectState.activeTimer, true);
+        ImGui::Text("%s: %s", TR(TIME_SPENT), buffer);
         ImGui::Separator();
 
         ImGui::Spacing();
@@ -304,12 +312,12 @@ void OFS_Project::ShowProjectWindow(bool* open) noexcept
         for (auto& script : Funscripts) {
             if (ImGui::Button(script->Title().c_str(), ImVec2(-1.f, 0.f))) {
                 Util::SaveFileDialog(TR(CHANGE_DEFAULT_LOCATION),
-                    MakePathAbsolute(script->RelativePath()),
+                    MakePathAbsolute(script->RelativePath().string()),
                     [&](auto result) {
                         if (!result.files.empty()) {
                             auto newPath = Util::PathFromString(result.files[0]);
-                            if (newPath.extension().u8string() == ".funscript") {
-                                script->UpdateRelativePath(MakePathRelative(newPath.u8string()));
+                            if (newPath.extension().string() == ".funscript") {
+                                script->UpdateRelativePath(MakePathRelative(newPath.string()));
                             }
                         }
                     });
@@ -330,7 +338,7 @@ void OFS_Project::ExportFunscripts() noexcept
             auto json = script->Serialize(state.metadata, true);
             script->ClearUnsavedEdits();
             auto jsonText = Util::SerializeJson(json, false);
-            Util::WriteFile(MakePathAbsolute(script->RelativePath()).c_str(), jsonText.data(), jsonText.size());
+            Util::WriteFile(MakePathAbsolute(script->RelativePath().string()).c_str(), jsonText.data(), jsonText.size());
         }
     }
 }
@@ -341,8 +349,8 @@ void OFS_Project::ExportFunscripts(const std::string& outputDir) noexcept
     for (auto& script : Funscripts) {
         FUN_ASSERT(!script->RelativePath().empty(), "path is empty");
         if (!script->RelativePath().empty()) {
-            auto filename = Util::PathFromString(script->RelativePath()).filename();
-            auto outputPath = (Util::PathFromString(outputDir) / filename).u8string();
+            auto filename = Util::PathFromString(script->RelativePath().string()).filename();
+            auto outputPath = (Util::PathFromString(outputDir) / filename).string();
             auto json = script->Serialize(state.metadata, true);
             script->ClearUnsavedEdits();
             auto jsonText = Util::SerializeJson(json, false);
@@ -367,7 +375,7 @@ void OFS_Project::loadMultiAxis(const std::string& rootScript) noexcept
 {
     std::vector<std::filesystem::path> relatedFiles;
     {
-        auto filename = Util::Filename(rootScript) + '.';
+        auto filename = Util::Filename(rootScript) + u8'.';
         auto searchDirectory = Util::PathFromString(rootScript);
         searchDirectory.remove_filename();
 
@@ -376,7 +384,7 @@ void OFS_Project::loadMultiAxis(const std::string& rootScript) noexcept
         for (auto&& entry : dirIt) {
             auto extension = entry.path()
                                  .extension()
-                                 .u8string();
+                                 .string();
             auto currentFilename = entry.path()
                                        .filename()
                                        .replace_extension("")
@@ -400,7 +408,7 @@ void OFS_Project::loadMultiAxis(const std::string& rootScript) noexcept
         for (auto& ending : desiredOrder) {
             for (int i = 0; i < relatedFiles.size(); i++) {
                 auto& path = relatedFiles[i];
-                if (Util::StringEndsWith(path.u8string(), ending)) {
+                if (Util::StringEndsWith(path.string(), ending)) {
                     auto move = std::move(path);
                     relatedFiles.erase(relatedFiles.begin() + i);
                     relatedFiles.emplace_back(std::move(move));
@@ -412,7 +420,7 @@ void OFS_Project::loadMultiAxis(const std::string& rootScript) noexcept
     // load the related files
     for (int i = relatedFiles.size() - 1; i >= 0; i -= 1) {
         auto& file = relatedFiles[i];
-        auto filePathString = file.u8string();
+        auto filePathString = file.string();
         AddFunscript(filePathString);
     }
 }
@@ -431,8 +439,8 @@ std::string OFS_Project::MakePathAbsolute(const std::string& relPathStr) const n
         std::error_code ec;
         auto absPath = std::filesystem::absolute(projectDir / relPath, ec);
         if (!ec) {
-            auto absPathStr = absPath.u8string();
-            LOGF_INFO("Convert relative path \"%s\" to absolute \"%s\"", relPath.u8string().c_str(), absPathStr.c_str());
+            auto absPathStr = absPath.string();
+            LOGF_INFO("Convert relative path \"%s\" to absolute \"%s\"", relPath.string(), absPathStr);
             return absPathStr;
         }
         FUN_ASSERT(false, "This must not happen.");
@@ -446,7 +454,7 @@ std::string OFS_Project::MakePathRelative(const std::string& absPathStr) const n
     auto absPath = Util::PathFromString(absPathStr);
     auto projectDir = Util::PathFromString(lastPath).parent_path();
     auto relPath = absPath.lexically_relative(projectDir);
-    auto relPathStr = relPath.u8string();
+    auto relPathStr = relPath.string();
     LOGF_INFO("Convert absolute path \"%s\" to relative \"%s\"", absPathStr.c_str(), relPathStr.c_str());
     return relPathStr;
 }

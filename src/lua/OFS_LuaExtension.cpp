@@ -4,6 +4,7 @@
 #include "OpenFunscripter.h"
 
 #include <string>
+#include <format>
 
 void OFS_LuaExtension::Toggle() noexcept
 {
@@ -38,54 +39,59 @@ void OFS_LuaExtension::ShowWindow() noexcept
 		ImGui::Separator();
 	}
 
-	auto gui = L.get<sol::protected_function>(OFS_LuaExtensions::RenderGui);
-	auto res = gui();
-	if(res.status() != sol::call_status::ok) {
-		auto err = sol::stack::get_traceback_or_errors(L.lua_state());
-		AddError(err.what());
-	}
-	if(!api->guiAPI->Validate()) {
-		AddError(api->guiAPI->Error().c_str());
-	}
+	// QQQ
+	//auto gui = L.get<sol::protected_function>(OFS_LuaExtensions::RenderGui);
+	//auto res = gui();
+	//if(res.status() != sol::call_status::ok) {
+	//	auto err = sol::stack::get_traceback_or_errors(L.lua_state());
+	//	AddError(err.what());
+	//}
+	//if(!api->guiAPI->Validate()) {
+	//	AddError(api->guiAPI->Error().c_str());
+	//}
 	ImGui::End();
 }
 
 void OFS_LuaExtension::Update() noexcept
 {
 	if(!Active) return;
-	auto update = L.get<sol::protected_function>(OFS_LuaExtensions::UpdateFunction);
-	auto res = update(ImGui::GetIO().DeltaTime);
-	if(res.status() != sol::call_status::ok)
-	{
-		auto err = sol::stack::get_traceback_or_errors(L.lua_state());
-		AddError(err.what());
-	}
+	// QQQ
+	//auto update = L.get<sol::protected_function>(OFS_LuaExtensions::UpdateFunction);
+	//auto res = update(ImGui::GetIO().DeltaTime);
+	//if(res.status() != sol::call_status::ok)
+	//{
+	//	auto err = sol::stack::get_traceback_or_errors(L.lua_state());
+	//	AddError(err.what());
+	//}
 }
 
 bool OFS_LuaExtension::Load() noexcept
 {
-    auto directory = Util::PathFromString(this->Directory);
-    auto mainFile = directory / OFS_LuaExtension::MainFile;
-
-	NameId = directory.filename().u8string();
-	NameId = Util::Format("%s##_%s_", Name.c_str(), Name.c_str());
-	ClearError();
-
-	std::string extensionText;
-	{
-		std::vector<uint8_t> dataBuf;
-		if (!Util::ReadFile(mainFile.u8string().c_str(), dataBuf)) {
-			FUN_ASSERT(false, "no file");
-			return false;
-		}
-		extensionText = std::string((char*)dataBuf.data(), dataBuf.size());
-	}
+	// QQQ
+    //auto directory = Util::PathFromString(this->Directory);
+    //auto mainFile = directory / OFS_LuaExtension::MainFile;
+	//
+	//NameId = directory.filename().string();
+	//NameId = std::format("{:s}##_{:s}_", Name, Name);
+	//ClearError();
+	//
+	//std::string extensionText;
+	//{
+	//	std::vector<uint8_t> dataBuf;
+	//	if (!Util::ReadFile(mainFile.string().c_str(), dataBuf)) {
+	//		FUN_ASSERT(false, "no file");
+	//		return false;
+	//	}
+	//	extensionText = std::string((char*)dataBuf.data(), dataBuf.size());
+	//}
 
 	//UpdateTime = 0.f;
 	//MaxUpdateTime = 0.f;
 	//MaxGuiTime = 0.f;
 	//Bindables.clear();
 
+	// QQQ
+	/*
 	L = sol::state();
 	L.open_libraries(
 		sol::lib::base,
@@ -179,32 +185,34 @@ bool OFS_LuaExtension::Load() noexcept
 			app->extensions->AddBinding(NameId, globalName, name);
 		}
 	}
-
+	*/
 	return true;
 }
 
 void OFS_LuaExtension::Execute(const std::string& func) noexcept
 {
-	sol::protected_function bind = L[OFS_LuaExtension::BindingTable][func];
-	if(bind.valid()) {
-		auto res = bind();
-		if(res.status() != sol::call_status::ok) {
-			auto err = sol::stack::get_traceback_or_errors(L.lua_state());
-			AddError(err.what());
-		}
-	}
+	// QQQ
+	//sol::protected_function bind = L[OFS_LuaExtension::BindingTable][func];
+	//if(bind.valid()) {
+	//	auto res = bind();
+	//	if(res.status() != sol::call_status::ok) {
+	//		auto err = sol::stack::get_traceback_or_errors(L.lua_state());
+	//		AddError(err.what());
+	//	}
+	//}
 }
 
 void OFS_LuaExtension::ScriptChanged(uint32_t scriptIdx) noexcept
 {
-	sol::protected_function change = L[OFS_LuaExtension::ScriptChangeFunction];
-	if(change.valid()) {
-		auto res = change(scriptIdx + 1);
-		if(res.status() != sol::call_status::ok) {
-			auto err = sol::stack::get_traceback_or_errors(L.lua_state());
-			AddError(err.what());
-		}
-	}
+	// QQQ
+	//sol::protected_function change = L[OFS_LuaExtension::ScriptChangeFunction];
+	//if(change.valid()) {
+	//	auto res = change(scriptIdx + 1);
+	//	if(res.status() != sol::call_status::ok) {
+	//		auto err = sol::stack::get_traceback_or_errors(L.lua_state());
+	//		AddError(err.what());
+	//	}
+	//}
 }
 
 void OFS_LuaExtension::Shutdown() noexcept
@@ -213,6 +221,8 @@ void OFS_LuaExtension::Shutdown() noexcept
 	// MaxUpdateTime = 0.f;
 	// MaxGuiTime = 0.f;
 	// Bindables.clear();
-	L = sol::state();
+	
+	// QQQ
+	//L = sol::state();
 	Active = false;
 }

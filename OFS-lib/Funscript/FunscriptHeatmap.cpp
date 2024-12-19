@@ -1,14 +1,15 @@
 #include "FunscriptHeatmap.h"
-#include "OFS_Util.h"
-#include "OFS_Profiling.h"
 
-#include "OFS_ImGui.h"
-#include "OFS_Shader.h"
 #include "OFS_GL.h"
+#include "OFS_Util.h"
+#include "gl/OFS_Shader.h"
+#include "UI/OFS_ImGui.h"
+#include "UI/OFS_Profiling.h"
 
+#include <array>
 #include <chrono>
 #include <memory>
-#include <array>
+
 
 ImGradient FunscriptHeatmap::Colors;
 ImGradient FunscriptHeatmap::LineColors;
@@ -232,7 +233,7 @@ void FunscriptHeatmap::DrawHeatmap(ImDrawList* drawList, const ImVec2& min, cons
     drawList->AddCallback(ImDrawCallback_ResetRenderState, 0);
 }
 
-#include "imgui_impl/imgui_impl_opengl3.h"
+#include <backends/imgui_impl_opengl3.h>
 
 std::vector<uint8_t> FunscriptHeatmap::RenderToBitmap(int16_t width, int16_t height) noexcept
 {

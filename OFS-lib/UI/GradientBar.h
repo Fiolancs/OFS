@@ -1,9 +1,9 @@
 #pragma once
-#include "OFS_Profiling.h"
 #include "OFS_Util.h"
+#include "UI/OFS_Profiling.h"
+#include <imgui.h>
 
 #include <vector>
-#include "imgui.h"
 
 // lifted from: https://gist.github.com/galloscript/8a5d179e432e062550972afcd1ecf112
 // rewritten for my use case

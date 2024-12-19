@@ -1,25 +1,23 @@
 #pragma once
-#include "OFS_Event.h"
-#include "Funscript.h"
-
-#include "nlohmann/json.hpp"
+#include "event/OFS_Event.h"
+#include "Funscript/Funscript.h"
 
 #include <memory>
 #include <string>
 
 struct ToJsonInterface
 {
-    virtual void Serialize(nlohmann::json& json) noexcept = 0;
+    //virtual void Serialize(nlohmann::json& json) noexcept = 0;
 };
 
-void to_json(nlohmann::json& j, const class WsProjectChange& p);
-void to_json(nlohmann::json& j, const class WsPlayChange& p);
-void to_json(nlohmann::json& j, const class WsTimeChange& p);
-void to_json(nlohmann::json& j, const class WsDurationChange& p);
-void to_json(nlohmann::json& j, const class WsMediaChange& p);
-void to_json(nlohmann::json& j, const class WsPlaybackSpeedChange& p);
-void to_json(nlohmann::json& j, const class WsFunscriptChange& p);
-void to_json(nlohmann::json& j, const class WsFunscriptRemove& p);
+//void to_json(nlohmann::json& j, const class WsProjectChange& p);
+//void to_json(nlohmann::json& j, const class WsPlayChange& p);
+//void to_json(nlohmann::json& j, const class WsTimeChange& p);
+//void to_json(nlohmann::json& j, const class WsDurationChange& p);
+//void to_json(nlohmann::json& j, const class WsMediaChange& p);
+//void to_json(nlohmann::json& j, const class WsPlaybackSpeedChange& p);
+//void to_json(nlohmann::json& j, const class WsFunscriptChange& p);
+//void to_json(nlohmann::json& j, const class WsFunscriptRemove& p);
 
 class WsMediaChange : public OFS_Event<WsMediaChange>, public ToJsonInterface
 {
@@ -29,7 +27,7 @@ class WsMediaChange : public OFS_Event<WsMediaChange>, public ToJsonInterface
     WsMediaChange(const std::string& path) noexcept
         : mediaPath(path) {}
 
-    void Serialize(nlohmann::json& json) noexcept override { to_json(json, *this); }
+    //void Serialize(nlohmann::json& json) noexcept override { to_json(json, *this); }
 };
 
 class WsPlaybackSpeedChange : public OFS_Event<WsPlaybackSpeedChange>, public ToJsonInterface
@@ -40,7 +38,7 @@ class WsPlaybackSpeedChange : public OFS_Event<WsPlaybackSpeedChange>, public To
     WsPlaybackSpeedChange(float speed) noexcept
         : speed(speed) {}
 
-    void Serialize(nlohmann::json& json) noexcept override { to_json(json, *this); }
+    //void Serialize(nlohmann::json& json) noexcept override { to_json(json, *this); }
 };
 
 class WsPlayChange : public OFS_Event<WsPlayChange>, public ToJsonInterface
@@ -50,7 +48,7 @@ class WsPlayChange : public OFS_Event<WsPlayChange>, public ToJsonInterface
     WsPlayChange(bool playing) noexcept
         : playing(playing) {}
 
-    void Serialize(nlohmann::json& json) noexcept override { to_json(json, *this); }
+    //void Serialize(nlohmann::json& json) noexcept override { to_json(json, *this); }
 };
 
 class WsTimeChange : public OFS_Event<WsTimeChange>, public ToJsonInterface
@@ -60,7 +58,7 @@ class WsTimeChange : public OFS_Event<WsTimeChange>, public ToJsonInterface
     WsTimeChange(float time) noexcept
         : time(time) {}
 
-    void Serialize(nlohmann::json& json) noexcept override { to_json(json, *this); }
+    //void Serialize(nlohmann::json& json) noexcept override { to_json(json, *this); }
 };
 
 class WsDurationChange : public OFS_Event<WsDurationChange>, public ToJsonInterface
@@ -70,7 +68,7 @@ class WsDurationChange : public OFS_Event<WsDurationChange>, public ToJsonInterf
     WsDurationChange(float duration) noexcept
         : duration(duration) {}
 
-    void Serialize(nlohmann::json& json) noexcept override { to_json(json, *this); }
+    //void Serialize(nlohmann::json& json) noexcept override { to_json(json, *this); }
 };
 
 class WsFunscriptChange : public OFS_Event<WsFunscriptChange>, public ToJsonInterface
@@ -83,7 +81,7 @@ class WsFunscriptChange : public OFS_Event<WsFunscriptChange>, public ToJsonInte
     WsFunscriptChange(const std::string& name, Funscript::FunscriptData funscriptData, Funscript::Metadata metadata) noexcept
         : name(name), funscriptData(std::move(funscriptData)), funscriptMetadata(std::move(metadata)) {}
 
-    void Serialize(nlohmann::json& json) noexcept override { to_json(json, *this); }
+    //void Serialize(nlohmann::json& json) noexcept override { to_json(json, *this); }
 };
 
 class WsProjectChange : public OFS_Event<WsProjectChange>, public ToJsonInterface
@@ -91,7 +89,7 @@ class WsProjectChange : public OFS_Event<WsProjectChange>, public ToJsonInterfac
     public:
     WsProjectChange() noexcept {}
 
-    void Serialize(nlohmann::json& json) noexcept override { to_json(json, *this); }
+    //void Serialize(nlohmann::json& json) noexcept override { to_json(json, *this); }
 };
 
 class WsFunscriptRemove : public OFS_Event<WsFunscriptRemove>, public ToJsonInterface
@@ -101,6 +99,6 @@ class WsFunscriptRemove : public OFS_Event<WsFunscriptRemove>, public ToJsonInte
     WsFunscriptRemove(const std::string& name) noexcept
         : name(name) {}
 
-    void Serialize(nlohmann::json& json) noexcept override { to_json(json, *this); }
+    //void Serialize(nlohmann::json& json) noexcept override { to_json(json, *this); }
 };
 

@@ -2,12 +2,12 @@
 #include "state/states/ChapterState.h"
 
 #include "OpenFunscripter.h"
-#include "OFS_EventSystem.h"
-#include "OFS_VideoplayerEvents.h"
-#include "OFS_Localization.h"
+#include "event/OFS_EventSystem.h"
+#include "localization/OFS_Localization.h"
+#include "videoplayer/OFS_VideoplayerEvents.h"
 
-#include "imgui.h"
-#include "imgui_stdlib.h"
+#include <imgui.h>
+#include <misc/cpp/imgui_stdlib.h>
 
 OFS_ChapterManager::OFS_ChapterManager() noexcept
 {
@@ -28,7 +28,7 @@ void OFS_ChapterManager::ShowWindow(bool* open) noexcept
 {
     if(!*open) return;
     auto& chapterState = ChapterState::State(stateHandle);
-    ImGui::Begin(TR_ID("ChapterManager", Tr::CHAPTERS), open);
+    ImGui::Begin(TR_ID("ChapterManager", Tr::CHAPTERS).c_str(), open);
 
     if(ImGui::BeginTable("##chapterTable", 4, ImGuiTableFlags_Resizable))
     {
@@ -88,11 +88,10 @@ void OFS_ChapterManager::ShowWindow(bool* open) noexcept
 bool OFS_ChapterManager::ExportClip(const Chapter& chapter, const std::string& outputDirStr) noexcept
 {
     auto app = OpenFunscripter::ptr;
-    char startTimeChar[16];
-    char endTimeChar[16];
-    stbsp_snprintf(startTimeChar, sizeof(startTimeChar), "%f", chapter.startTime);
-    stbsp_snprintf(endTimeChar, sizeof(endTimeChar), "%f", chapter.endTime);
-
+    char startTimeChar[16]{};
+    char endTimeChar[16]{};
+    std::format_to_n(startTimeChar, sizeof(startTimeChar), "{:f}", chapter.startTime);
+    std::format_to_n(endTimeChar, sizeof(endTimeChar), "{:f}", chapter.endTime);
     
     auto outputDir = Util::PathFromString(outputDirStr);
     auto mediaPath = Util::PathFromString(app->player->VideoPath());
@@ -103,7 +102,7 @@ bool OFS_ChapterManager::ExportClip(const Chapter& chapter, const std::string& o
     {
         auto scriptOutputPath = (outputDir / (chapter.name + "_" + script->Title()));
         scriptOutputPath.replace_extension(".funscript");
-        auto scriptOutputPathStr = scriptOutputPath.u8string();
+        auto scriptOutputPathStr = scriptOutputPath.string();
 
         auto clippedScript = Funscript();
         auto slice = script->GetSelection(chapter.startTime, chapter.endTime);
@@ -120,14 +119,14 @@ bool OFS_ChapterManager::ExportClip(const Chapter& chapter, const std::string& o
     }
 
     auto clippedMedia = Util::PathFromString("");
-    clippedMedia.replace_filename(chapter.name + "_" + mediaPath.filename().u8string());
+    clippedMedia.replace_filename(chapter.name + "_" + mediaPath.filename().string());
     clippedMedia.replace_extension(mediaPath.extension());
     
     auto videoOutputPath = outputDir / clippedMedia;
-    auto videoOutputString = videoOutputPath.u8string();
+    auto videoOutputString = videoOutputPath.string();
     
-    auto ffmpegPath = Util::FfmpegPath().u8string();
-    auto mediaPathStr = mediaPath.u8string();
+    auto ffmpegPath = Util::FfmpegPath().string();
+    auto mediaPathStr = mediaPath.string();
 
     std::array<const char*, 17> args = {
         ffmpegPath.c_str(),
@@ -141,24 +140,25 @@ bool OFS_ChapterManager::ExportClip(const Chapter& chapter, const std::string& o
         nullptr
     };
 
-    struct subprocess_s proc;
-    if (subprocess_create(args.data(), subprocess_option_no_window, &proc) != 0) {
-        return false;
-    }
+    // QQQ
+    //struct subprocess_s proc;
+    //if (subprocess_create(args.data(), subprocess_option_no_window, &proc) != 0) {
+    //    return false;
+    //}
+    //
+    //if (proc.stdout_file) {
+    //    fclose(proc.stdout_file);
+    //    proc.stdout_file = nullptr;
+    //}
+    //
+    //if (proc.stderr_file) {
+    //    fclose(proc.stderr_file);
+    //    proc.stderr_file = nullptr;
+    //}
+    //
+    //int returnCode;
+    //subprocess_join(&proc, &returnCode);
+    //subprocess_destroy(&proc);
 
-    if (proc.stdout_file) {
-        fclose(proc.stdout_file);
-        proc.stdout_file = nullptr;
-    }
-
-    if (proc.stderr_file) {
-        fclose(proc.stderr_file);
-        proc.stderr_file = nullptr;
-    }
-
-    int returnCode;
-    subprocess_join(&proc, &returnCode);
-    subprocess_destroy(&proc);
-
-    return returnCode == 0;
+    return 0;// returnCode == 0;
 }

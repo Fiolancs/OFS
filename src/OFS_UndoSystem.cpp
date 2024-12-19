@@ -1,7 +1,8 @@
-#include "OFS_Profiling.h"
 #include "OFS_UndoSystem.h"
-#include "FunscriptUndoSystem.h"
-#include "OFS_Localization.h"
+
+#include "UI/OFS_Profiling.h"
+#include "Funscript/FunscriptUndoSystem.h"
+#include "localization/OFS_Localization.h"
 
 #include <array>
 
@@ -68,7 +69,7 @@ void UndoSystem::ShowUndoRedoHistory(bool* open) noexcept
     if (!*open) return;
     OFS_PROFILE(__FUNCTION__);
     ImGui::SetNextWindowSizeConstraints(ImVec2(200, 100), ImVec2(200, 200));
-    ImGui::Begin(TR_ID(UndoSystem::WindowId, Tr::UNDO_REDO_HISTORY), open, ImGuiWindowFlags_AlwaysVerticalScrollbar | ImGuiWindowFlags_AlwaysAutoResize);
+    ImGui::Begin(TR_ID(UndoSystem::WindowId, Tr::UNDO_REDO_HISTORY).c_str(), open, ImGuiWindowFlags_AlwaysVerticalScrollbar | ImGuiWindowFlags_AlwaysAutoResize);
     ImGui::TextDisabled(TR(REDO_STACK));
 
     for (auto it = RedoStack.begin(), end = RedoStack.end(); it != end; ++it) {

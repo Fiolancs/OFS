@@ -1,21 +1,44 @@
-#include <cstdio>
-#include <cstring>
+#include <glaze/glaze.hpp>
+
 #include <vector>
-#include "rapidcsv.h"
+#include <cstdio>
+#include <string>
+#include <cstring>
+#include <cstdint>
+#include <string_view>
 
 /*
     This program generates the default strings (english) from a csv file.
 */
 
-enum ColIdx : uint32_t
+enum ColIdx : std::uint32_t
 {
     Key,
     Default,
     Translation
 };
 
+struct LanguageDoc
+{
+    std::vector<std::string> Key;
+    std::vector<std::string> Default;
+    std::vector<std::string> Translation;
 
-constexpr const char* HeaderHead = R"(#pragma once
+    auto GetRowCount(void) const { return Key.size(); }
+};
+
+template <>
+struct glz::meta<LanguageDoc>
+{
+    using T = LanguageDoc;
+    static constexpr auto value = glz::object(
+        "Key (do not touch)", &T::Key,
+        "Default", &T::Default,
+        "Translation", &T::Translation
+    );
+};
+
+constexpr std::string_view HeaderHead = R"(#pragma once
 #include <cstdint>
 #include <array>
 #include <unordered_map>
@@ -25,7 +48,7 @@ enum class Tr : uint32_t
 {
     )";
 
-constexpr const char* HeaderFooter = R"(
+constexpr std::string_view HeaderFooter = R"(
 };
 
 struct OFS_DefaultStrings
@@ -36,80 +59,74 @@ struct OFS_DefaultStrings
 )";
 
 
-constexpr const char* SrcArrayHead = R"(#include "OFS_StringsGenerated.h"
+constexpr std::string_view SrcArrayHead = R"(#include "OFS_StringsGenerated.h"
 std::array<const char*, static_cast<uint32_t>(Tr::MAX_STRING_COUNT)> OFS_DefaultStrings::Default =
 {
     )";
 
-constexpr const char* SrcArrayFooter = R"(
+constexpr std::string_view SrcArrayFooter = R"(
 };
 )";
 
-constexpr const char* SrcMappingHead = R"(
+constexpr std::string_view SrcMappingHead = R"(
 std::unordered_map<std::string, Tr> OFS_DefaultStrings::KeyMapping =
 {
 )";
-constexpr const char* SrcMappingFooter = R"(
+constexpr std::string_view SrcMappingFooter = R"(
 };
 )";
 
-static void write_src_file(FILE* src, rapidcsv::Document& doc) noexcept
+static void write_src_file(FILE* src, LanguageDoc const& doc) noexcept
 {
     // write the array
-    fwrite(SrcArrayHead, 1, strlen(SrcArrayHead), src);
-    auto row = doc.GetRow<std::string>(0);
-    fwrite("R\"(", 1, sizeof("R\"(") - 1, src);
-    fwrite(row[ColIdx::Default].data(), 1, row[ColIdx::Default].size(), src);
-    fwrite(")\",\n\t", 1, sizeof(")\",\n\t") - 1, src);
+    fwrite(SrcArrayHead.data(), sizeof(char), SrcArrayHead.size(), src);
+    fwrite("R\"(", sizeof(char), sizeof("R\"(") - 1, src);
+    fwrite(doc.Default[0].data(), sizeof(doc.Default[0][0]), doc.Default[0].size(), src);
+    fwrite(")\",\n\t", sizeof(char), sizeof(")\",\n\t") - 1, src);
 
-    for(size_t i=1; i < doc.GetRowCount(); i += 1)
+    for (size_t n = 1; n < doc.GetRowCount(); ++n)
     {
-        row = doc.GetRow<std::string>(i);
-        fwrite("R\"(", 1, sizeof("R\"(") - 1, src);
-        fwrite(row[ColIdx::Default].data(), 1, row[ColIdx::Default].size(), src);
+        fwrite("R\"(", sizeof(char), sizeof("R\"(") - 1, src);
+        fwrite(doc.Default[n].data(), sizeof(char), doc.Default[n].size(), src);
         fwrite(")\",\n\t", 1, sizeof(")\",\n\t") - 1, src);
     }
-    fwrite(SrcArrayFooter, 1, strlen(SrcArrayFooter), src);
+    fwrite(SrcArrayFooter.data(), 1, SrcArrayFooter.size(), src);
 
     // write the key to enum hashmap
-    fwrite(SrcMappingHead, 1, strlen(SrcMappingHead), src);
-    row = doc.GetRow<std::string>(0);
+    fwrite(SrcMappingHead.data(), 1, SrcMappingHead.size(), src);
     fwrite("\t{\"", 1, sizeof("\t{\"")-1, src);
-    fwrite(row[0].data(), 1, row[0].size(), src);
-    fwrite("\", Tr::", 1, sizeof("\", Tr::")-1, src);
-    fwrite(row[0].data(), 1, row[0].size(), src);
-    fwrite("},\n", 1, sizeof("},\n")-1, src);
-    for(size_t i=1; i < doc.GetRowCount(); i += 1)
+    fwrite(doc.Key[0].data(), sizeof(doc.Key[0][0]), doc.Key[0].size(), src);
+    fwrite("\", Tr::", sizeof(char), sizeof("\", Tr::") - 1, src);
+    fwrite(doc.Key[0].data(), sizeof(doc.Key[0][0]), doc.Key[0].size(), src);
+    fwrite("},\n", sizeof(char), sizeof("},\n") - 1, src);
+    for (size_t n = 1; n < doc.GetRowCount(); ++n)
     {
-        row = doc.GetRow<std::string>(i);
-        fwrite("\t{\"", 1, sizeof("\t{\"")-1, src);
-        fwrite(row[0].data(), 1, row[0].size(), src);
+        fwrite("\t{\"", sizeof(char), sizeof("\t{\"")-1, src);
+        fwrite(doc.Key[0].data(), sizeof(doc.Key[0][0]), doc.Key[0].size(), src);
         fwrite("\", Tr::", 1, sizeof("\", Tr::")-1, src);
-        fwrite(row[0].data(), 1, row[0].size(), src);
-        fwrite("},\n", 1, sizeof("},\n")-1, src);
+        fwrite(doc.Key[0].data(), sizeof(doc.Key[0][0]), doc.Key[0].size(), src);
+        fwrite("},\n", sizeof(char), sizeof("},\n")-1, src);
     }
-    fwrite(SrcMappingFooter, 1, strlen(SrcMappingFooter), src);
+    fwrite(SrcMappingFooter.data(), 1, SrcMappingFooter.size(), src);
     fclose(src);
 }
 
-static void write_header_enum(FILE* header, rapidcsv::Document& doc) noexcept
+static void write_header_enum(FILE* header, LanguageDoc const& doc) noexcept
 {
-    fwrite(HeaderHead, 1, strlen(HeaderHead), header);
+    fwrite(HeaderHead.data(), 1, HeaderHead.size(), header);
 
-    auto row = doc.GetRow<std::string>(0);
-    fwrite(row[ColIdx::Key].data(), 1, row[ColIdx::Key].size(), header);
+    fwrite(doc.Key[0].data(), sizeof(doc.Key[0][0]), doc.Key[0].size(), header);
 
-    for(size_t i=1; i < doc.GetRowCount(); i += 1)
+    for(size_t n=1; n < doc.GetRowCount(); ++n)
     {
-        row = doc.GetRow<std::string>(i);
-        fwrite(",\n\t", 1, sizeof(",\n\t")-1, header);
-        fwrite(row[ColIdx::Key].data(), 1, row[ColIdx::Key].size(), header);
+        fwrite(",\n\t", 1, sizeof(",\n\t") - 1, header);
+        fwrite(doc.Key[n].data(), sizeof(doc.Key[0][0]), doc.Key[n].size(), header);
     }
 
-    fwrite(",\n\t", 1, 3, header);
+    fwrite(",\n\t", 1, sizeof(",\n\t") - 1, header);
     fwrite("MAX_STRING_COUNT", 1, sizeof("MAX_STRING_COUNT")-1, header);
 
-    fwrite(HeaderFooter, 1, strlen(HeaderFooter), header);
+    fwrite(HeaderFooter.data(), 1, HeaderFooter.size(), header);
     fclose(header);
 }
 
@@ -132,19 +149,14 @@ int main(int argc, char* argv[])
 
     try
     {
-        rapidcsv::Document doc(csvFile, 
-            rapidcsv::LabelParams(),
-            rapidcsv::SeparatorParams(',', false, true, true),
-            rapidcsv::ConverterParams(),
-            rapidcsv::LineReaderParams()
-        );
-        
-        auto cols = doc.GetColumnNames();
-        if(cols.size() != 3) 
+        LanguageDoc doc{};
+        if (auto err = glz::read_file_csv<glz::colwise>(doc, csvFile, std::string{}); err)
         {
-            printf("Wrong amount of columns.\n");
+            std::printf("Error reading csv file: %.*s, code %u\n", static_cast<int>(err.custom_error_message.size()), err.custom_error_message.data(), err.ec);
             return -1;
         }
+        
+        std::printf("lines read %lld", doc.GetRowCount());
         write_header_enum(header, doc);
         write_src_file(src, doc);
     }

@@ -1,10 +1,10 @@
 #pragma once
-#include "OFS_StateHandle.h"
-
 #include <vector>
 #include <string>
 
-#include "OFS_Event.h"
+#include "event/OFS_Event.h"
+#include "state/OFS_StateHandle.h"
+
 
 struct Chapter
 {
@@ -47,22 +47,22 @@ struct ChapterState
     Bookmark* AddBookmark(float time) noexcept;
 };
 
-REFL_TYPE(Chapter)
-    REFL_FIELD(startTime)
-    REFL_FIELD(endTime)
-    REFL_FIELD(name)
-    REFL_FIELD(color)
-REFL_END
-
-REFL_TYPE(Bookmark)
-    REFL_FIELD(time)
-    REFL_FIELD(name)
-REFL_END
-
-REFL_TYPE(ChapterState)
-    REFL_FIELD(chapters)
-    REFL_FIELD(bookmarks)
-REFL_END
+//REFL_TYPE(Chapter)
+//    REFL_FIELD(startTime)
+//    REFL_FIELD(endTime)
+//    REFL_FIELD(name)
+//    REFL_FIELD(color)
+//REFL_END
+//
+//REFL_TYPE(Bookmark)
+//    REFL_FIELD(time)
+//    REFL_FIELD(name)
+//REFL_END
+//
+//REFL_TYPE(ChapterState)
+//    REFL_FIELD(chapters)
+//    REFL_FIELD(bookmarks)
+//REFL_END
 
 
 class ChapterStateChanged : public OFS_Event<ChapterStateChanged>

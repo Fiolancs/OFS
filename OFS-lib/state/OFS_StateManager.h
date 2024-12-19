@@ -13,35 +13,36 @@ class OFS_StateMetadata
     template<typename T>
     static OFS_StateMetadata CreateMetadata() noexcept
     {
-        constexpr auto type = refl::reflect<T>();
+        // QQQ
+        //constexpr auto type = refl::reflect<T>();
         OFS_StateMetadata md;
-        md.name = type.name.c_str();
+        //md.name = type.name.c_str();
         md.creator = &OFS_StateMetadata::createUntyped<T>;
-        md.serializer = &OFS_StateMetadata::serializeUntyped<T>;
-        md.deserializer = &OFS_StateMetadata::deserializeUntyped<T>;
+        //md.serializer = &OFS_StateMetadata::serializeUntyped<T>;
+        //md.deserializer = &OFS_StateMetadata::deserializeUntyped<T>;
         return md;
     }
     
     std::any Create() const noexcept { return creator(); }
     std::string_view Name() const noexcept { return name; }
     
-    bool Serialize(const std::any& value, nlohmann::json& obj, bool enableBinary) const noexcept {
-        return serializer(value, obj, enableBinary);
-    }
+    //bool Serialize(const std::any& value, nlohmann::json& obj, bool enableBinary) const noexcept {
+    //    return serializer(value, obj, enableBinary);
+    //}
+    //
+    //bool Deserialize(std::any& value, const nlohmann::json& obj, bool enableBinary) const noexcept {
+    //    return deserializer(value, obj, enableBinary);
+    //}
 
-    bool Deserialize(std::any& value, const nlohmann::json& obj, bool enableBinary) const noexcept {
-        return deserializer(value, obj, enableBinary);
-    }
-
-    private:
+private:
     using OFS_StateCreator = std::any(*)() noexcept;
-    using OFS_StateSerializer = bool (*)(const std::any&, nlohmann::json&, bool) noexcept;
-    using OFS_StateDeserializer = bool (*)(std::any&, const nlohmann::json&, bool) noexcept;
+    //using OFS_StateSerializer = bool (*)(const std::any&, nlohmann::json&, bool) noexcept;
+    //using OFS_StateDeserializer = bool (*)(std::any&, const nlohmann::json&, bool) noexcept;
 
     std::string name;
     OFS_StateCreator creator;
-    OFS_StateSerializer serializer;
-    OFS_StateDeserializer deserializer;
+    //OFS_StateSerializer serializer;
+    //OFS_StateDeserializer deserializer;
 
     template <typename T>
     static std::any createUntyped() noexcept
@@ -58,19 +59,23 @@ class OFS_StateMetadata
         return instance;
     }
 
-    template<typename T>
-    static bool serializeUntyped(const std::any& value, nlohmann::json& obj, bool enableBinary) noexcept
-    {
-        auto& realValue = std::any_cast<const T&>(value);
-        return enableBinary ? OFS::Serializer<true>::Serialize(realValue, obj) : OFS::Serializer<false>::Serialize(realValue, obj);
-    }
-
-    template<typename T>
-    static bool deserializeUntyped(std::any& value, const nlohmann::json& obj, bool enableBinary) noexcept
-    {
-        auto& realValue = std::any_cast<T&>(value);
-        return enableBinary ? OFS::Serializer<true>::Deserialize(realValue, obj) : OFS::Serializer<false>::Deserialize(realValue, obj);
-    }
+    //template<typename T>
+    //static bool serializeUntyped(const std::any& value, nlohmann::json& obj, bool enableBinary) noexcept
+    //{
+    //    // QQQ
+    //    //auto& realValue = std::any_cast<const T&>(value);
+    //    //return enableBinary ? OFS::Serializer<true>::Serialize(realValue, obj) : OFS::Serializer<false>::Serialize(realValue, obj);
+    //    return true;
+    //}
+    //
+    //template<typename T>
+    //static bool deserializeUntyped(std::any& value, const nlohmann::json& obj, bool enableBinary) noexcept
+    //{
+    //    // QQQ
+    //    //auto& realValue = std::any_cast<T&>(value);
+    //    //return enableBinary ? OFS::Serializer<true>::Deserialize(realValue, obj) : OFS::Serializer<false>::Deserialize(realValue, obj);
+    //    return true;
+    //}
 };
 
 class OFS_StateRegistry
@@ -130,29 +135,31 @@ class OFS_StateManager
     template<typename T>
     inline static uint32_t registerState(const char* name, std::vector<OFS_State>& stateCollection, StateHandleMap& handleMap) noexcept
     {
-        constexpr auto type = refl::reflect<T>();
-        auto it = handleMap.find(name);
-        if(it == handleMap.end()) {
-            LOGF_DEBUG("Registering new state \"%s\". Type: %s", name, type.name.c_str());
-
-            auto metadata = OFS_StateRegistry::Get().Find(type.name.c_str());
-            FUN_ASSERT(metadata, "State wasn't registered using OFS_REGISTER_STATE macro");
-
-            uint32_t Id = stateCollection.size();
-            stateCollection.emplace_back(
-                std::move(OFS_State{name, type.name.c_str(), metadata, std::move(std::make_any<T>())})
-            );
-
-            auto sanityCheck = handleMap.insert(std::make_pair(std::string(name), std::make_pair(type.name, Id)));
-            FUN_ASSERT(sanityCheck.second, "Why did this fail?");
-
-            return Id;   
-        }
-        else {
-            FUN_ASSERT(stateCollection[it->second.second].Name == name, "Something went wrong");
-            LOGF_DEBUG("Loading existing state \"%s\"", name);
-            return it->second.second;
-        }
+        // QQQ
+        //constexpr auto type = refl::reflect<T>();
+        //auto it = handleMap.find(name);
+        //if(it == handleMap.end()) {
+        //    LOGF_DEBUG("Registering new state \"%s\". Type: %s", name, type.name.c_str());
+        //
+        //    auto metadata = OFS_StateRegistry::Get().Find(type.name.c_str());
+        //    FUN_ASSERT(metadata, "State wasn't registered using OFS_REGISTER_STATE macro");
+        //
+        //    uint32_t Id = stateCollection.size();
+        //    stateCollection.emplace_back(
+        //        std::move(OFS_State{name, type.name.c_str(), metadata, std::move(std::make_any<T>())})
+        //    );
+        //
+        //    auto sanityCheck = handleMap.insert(std::make_pair(std::string(name), std::make_pair(type.name, Id)));
+        //    FUN_ASSERT(sanityCheck.second, "Why did this fail?");
+        //
+        //    return Id;   
+        //}
+        //else {
+        //    FUN_ASSERT(stateCollection[it->second.second].Name == name, "Something went wrong");
+        //    LOGF_DEBUG("Loading existing state \"%s\"", name);
+        //    return it->second.second;
+        //}
+        return -1;
     }
 
     template<typename T>
@@ -193,10 +200,10 @@ class OFS_StateManager
         return getState<T>(id, ProjectState);
     }
 
-    nlohmann::json SerializeAppAll(bool enableBinary) noexcept;
-    bool DeserializeAppAll(const nlohmann::json& state, bool enableBinary) noexcept;
+    void SerializeAppAll(bool enableBinary) noexcept;
+    bool DeserializeAppAll(/*const nlohmann::json& state, */bool enableBinary) noexcept;
 
-    nlohmann::json SerializeProjectAll(bool enableBinary) noexcept;
-    bool DeserializeProjectAll(const nlohmann::json& project, bool enableBinary) noexcept;
+    void SerializeProjectAll(bool enableBinary) noexcept;
+    bool DeserializeProjectAll(/*const nlohmann::json& project, */bool enableBinary) noexcept;
     void ClearProjectAll() noexcept;
 };
