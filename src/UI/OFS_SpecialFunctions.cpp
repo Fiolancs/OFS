@@ -19,7 +19,7 @@
 
 SpecialFunctionsWindow::SpecialFunctionsWindow() noexcept
 {
-    stateHandle = OFS_AppState<SpecialFunctionState>::Register(SpecialFunctionState::StateName);
+    stateHandle = OFS_AppState<SpecialFunctionState>::Register(SpecialFunctionState::StateName, SpecialFunctionState::StateName);
     auto& state = SpecialFunctionState::State(stateHandle);
     SetFunction(state.selectedFunction);
 }

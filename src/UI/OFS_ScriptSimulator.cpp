@@ -1,4 +1,3 @@
-#define IMGUI_DEFINE_MATH_OPERATORS
 #include "OFS_ScriptSimulator.h"
 #include "state/SimulatorState.h"
 
@@ -10,7 +9,6 @@
 
 #include <imgui.h>
 #include <SDL3/SDL_events.h>
-#undef IMGUI_DEFINE_MATH_OPERATORS
 
 #include <format>
 #include <numbers>
@@ -37,7 +35,7 @@ inline static uint32_t GetColor(const ImColor& col, float opacity) noexcept
 
 void ScriptSimulator::Init() noexcept
 {
-    stateHandle = OFS_ProjectState<SimulatorState>::Register(SimulatorState::StateName);
+    stateHandle = OFS_ProjectState<SimulatorState>::Register(SimulatorState::StateName, SimulatorState::StateName);
     EV::Queue().appendListener(SDL_EVENT_MOUSE_MOTION,
         OFS_SDL_Event::HandleEvent(EVENT_SYSTEM_BIND(this, &ScriptSimulator::MouseMovement)));
 }

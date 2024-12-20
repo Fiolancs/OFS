@@ -125,7 +125,7 @@ void FrameOverlay::DrawSettings() noexcept
 TempoOverlay::TempoOverlay(ScriptTimeline* timeline) noexcept
     : BaseOverlay(timeline)
 {
-    stateHandle = OFS_ProjectState<TempoOverlayState>::Register(TempoOverlayState::StateName);
+    stateHandle = OFS_ProjectState<TempoOverlayState>::Register(TempoOverlayState::StateName, TempoOverlayState::StateName);
 }
 
 void TempoOverlay::DrawSettings() noexcept

@@ -438,3 +438,4 @@ FodyWeavers.xsd
 # Custom
 ##############################
 build/
+/OFS-lib/localization/OFS_StringsGenerated.*

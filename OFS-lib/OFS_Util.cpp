@@ -1,10 +1,13 @@
 #include "OFS_Util.h"
+
 #include "OFS_GL.h"
 #include "event/OFS_EventSystem.h"
 
 #include <imgui.h>
-#include <SDL3/SDL_IOStream.h>
 #include <tinyfiledialogs.h>
+#include <SDL3/SDL_IOStream.h>
+#include <stb_image.h>
+#include <stb_image_write.h>
 
 #if defined(_WIN32)
 #define NOMINMAX
@@ -16,36 +19,18 @@
 #undef  NOMINMAX
 #endif
 
-#define RND_IMPLEMENTATION
-//#define SINFL_IMPLEMENTATION
-//#define SDEFL_IMPLEMENTATION
-#define STB_IMAGE_IMPLEMENTATION
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#include <stb_image.h>
-#include <stb_image_write.h>
-//#include <stb/sdefl.h>
-//#include <stb/sinfl.h>
-//#include <stb/rnd.h>
-#undef STB_IMAGE_IMPLEMENTATION
-#undef STB_IMAGE_WRITE_IMPLEMENTATION
-#undef SDEFL_IMPLEMENTATION
-#undef SINFL_IMPLEMENTATION
-#undef RND_IMPLEMENTATION
-
 #include <string>
 #include <locale>
 #include <codecvt>
 #include <iostream>
-#include <filesystem>
 #include <algorithm>
+#include <filesystem>
 
 
+// tinyfiledialogs doesn't like quotes
 static void SanitizeString(std::string& str) noexcept
 {
-    // tinyfiledialogs doesn't like quotes
-    // I'm starting to not like tinyfiledialogs...
-    std::replace(str.begin(), str.end(), '\"', ' ');
-    std::replace(str.begin(), str.end(), '\'', ' ');
+    std::transform(str.begin(), str.end(), str.begin(), [](char c) { return c == '\'' || c == '\"' ? ' ' : c; });
 }
 
 #ifdef WIN32

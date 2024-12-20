@@ -289,10 +289,10 @@ public:
         if (withMs) {
             timeConsumed += chrono::duration<float>(1.f) * seconds;
             int ms = chrono::duration_cast<chrono::milliseconds>(duration - timeConsumed).count();
-            return std::format_to_n(buf, bufLen, "{:02d}:{:02d}:{02d}.{:03d}", hours, minutes, seconds, ms).size;
+            return std::format_to_n(buf, bufLen, "{:02d}:{:02d}:{:02d}.{:03d}", hours, minutes, seconds, ms).size;
         }
         else {
-            return std::format_to_n(buf, bufLen, "{:02d}:{:02d}:{02d}", hours, minutes, seconds).size;
+            return std::format_to_n(buf, bufLen, "{:02d}:{:02d}:{:02d}", hours, minutes, seconds).size;
         }
     }
 

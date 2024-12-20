@@ -159,7 +159,7 @@ static int EventSerializationThread(void* user) noexcept
 
 OFS_WebsocketApi::OFS_WebsocketApi() noexcept
 {
-	stateHandle = OFS_AppState<WebsocketApiState>::Register(WebsocketApiState::StateName);
+	stateHandle = OFS_AppState<WebsocketApiState>::Register(WebsocketApiState::StateName, WebsocketApiState::StateName);
 	eventSerializationCtx = std::make_unique<EventSerializationContext>();
 
 	auto serializationThread = SDL_CreateThread(

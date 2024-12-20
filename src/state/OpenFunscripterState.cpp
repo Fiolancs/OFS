@@ -7,6 +7,9 @@
 #include "SpecialFunctionsState.h"
 #include "WebsocketApiState.h"
 
+#include "state/OFS_StateManager.h"
+
+
 void OpenFunscripterState::RegisterAll() noexcept
 {
 	// App state

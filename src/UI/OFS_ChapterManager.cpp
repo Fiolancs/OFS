@@ -11,7 +11,7 @@
 
 OFS_ChapterManager::OFS_ChapterManager() noexcept
 {
-    stateHandle = OFS_ProjectState<ChapterState>::Register(ChapterState::StateName);
+    stateHandle = OFS_ProjectState<ChapterState>::Register(ChapterState::StateName, ChapterState::StateName);
 }
 
 OFS_ChapterManager::~OFS_ChapterManager() noexcept

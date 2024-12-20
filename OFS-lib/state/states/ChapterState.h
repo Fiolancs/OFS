@@ -38,7 +38,7 @@ struct ChapterState
 
     inline static ChapterState& StaticStateSlow() noexcept
     {
-        auto handle = OFS_ProjectState<ChapterState>::Register(StateName);
+        auto handle = OFS_ProjectState<ChapterState>::Register(StateName, StateName);
         return State(handle);
     }
 

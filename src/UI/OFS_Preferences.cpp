@@ -14,7 +14,7 @@
 
 OFS_Preferences::OFS_Preferences() noexcept
 {
-	prefStateHandle = OFS_AppState<PreferenceState>::Register(PreferenceState::StateName);
+	prefStateHandle = OFS_AppState<PreferenceState>::Register(PreferenceState::StateName, PreferenceState::StateName);
 	auto& state = PreferenceState::State(prefStateHandle);
     OFS_DynFontAtlas::FontOverride = state.fontOverride;
 }

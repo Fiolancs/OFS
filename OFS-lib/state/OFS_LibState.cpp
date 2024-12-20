@@ -1,4 +1,5 @@
 #include "state/OFS_LibState.h"
+#include "state/OFS_StateManager.h"
 #include "state/states/VideoplayerWindowState.h"
 #include "state/states/BaseOverlayState.h"
 #include "state/states/WaveformState.h"

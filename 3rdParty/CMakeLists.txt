@@ -100,6 +100,14 @@ target_include_directories(dr_libs INTERFACE "dr_libs/")
 #add_library(lua STATIC ${LUA_SOURCES} ${LUA_HEADERS})
 #target_include_directories(lua PUBLIC "lua/")
 
+# ===========
+# === stb ===
+# ===========
+set (STB_HEADERS "stb/stb_image.h" "stb/stb_image_write.h" "stb/stb_dxt.h")
+configure_file("../cmake/stb.c.in" "stb/stb.c")
+add_library(stb STATIC "stb/stb.c" ${STB_HEADERS})
+target_include_directories(stb PUBLIC "stb/")
+target_compile_features(stb PRIVATE c_std_11)
 
 # =========
 # = IMGUI =
@@ -111,24 +119,23 @@ set (IMGUI_SOURCES "imgui/imgui.cpp"
 				   "imgui/imgui_widgets.cpp"
 				   "imgui/backends/imgui_impl_opengl3.cpp"
 				   "imgui/backends/imgui_impl_sdl3.cpp"
+				   "imgui/misc/cpp/imgui_stdlib.cpp"
+
+				   "imgui/backends/imgui_impl_opengl3.h"
+				   "imgui/backends/imgui_impl_opengl3_loader.h"
+				   "imgui/backends/imgui_impl_sdl3.h"
+				   "imgui/misc/cpp/imgui_stdlib.h"
 )
 file (GLOB IMGUI_HEADERS imgui/**.h)
 add_library(imgui STATIC ${IMGUI_SOURCES} ${IMGUI_HEADERS})
 target_include_directories(imgui PUBLIC "imgui/")
-target_include_directories(imgui PUBLIC "stb/")
+target_include_directories(imgui PUBLIC "imgui/misc/cpp/")
+target_include_directories(imgui PRIVATE "stb/")
 target_include_directories(imgui PUBLIC "SDL/include/")
 target_compile_definitions(imgui PUBLIC "IMGUI_USE_STB_SPRINTF")
 target_compile_definitions(imgui PUBLIC "IMGUI_DEFINE_MATH_OPERATORS")
 target_compile_definitions(imgui PUBLIC "IMGUI_DISABLE_OBSOLETE_FUNCTIONS=1")
 target_compile_definitions(imgui PUBLIC "IMGUI_DISABLE_OBSOLETE_KEYIO=1")
-target_compile_features(imgui PUBLIC cxx_std_20)
-
-# ================
-# = IMGUI_STDLIB =
-# ================
-add_library(imgui_stdlib STATIC "imgui/misc/cpp/imgui_stdlib.cpp" "imgui/misc/cpp/imgui_stdlib.h")
-target_include_directories(imgui_stdlib PUBLIC "imgui/misc/cpp")
-target_link_libraries(imgui_stdlib PUBLIC imgui)
 target_compile_features(imgui PUBLIC cxx_std_20)
 
 # ===================
@@ -144,9 +151,6 @@ set_source_files_properties(tiny_SRC PROPERTIES LANGUAGE CXX )
 # === json ===
 # ============
 set(glaze_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-#set(JSON_BuildTests OFF CACHE BOOL "" FORCE)
-#set(JSON_MultipleHeaders ON CACHE BOOL "" FORCE)
-#set(JSON_Install OFF CACHE BOOL "" FORCE)
 if(NOT OFS_AVX) 
 	set(glaze_ENABLE_AVX2 OFF CACHE BOOL "" FORCE)
 endif()
@@ -155,13 +159,15 @@ add_subdirectory("glaze/")
 # =============
 # === tracy ===
 # =============
-set(tracy_SOURCES
-	"tracy/public/TracyClient.cpp"
-)
-add_library(tracy STATIC ${tracy_SOURCES})
-target_include_directories(tracy PUBLIC "tracy/public/")
 if(OFS_PROFILE)
-target_compile_definitions(tracy PUBLIC "TRACY_ENABLE")
+	set(tracy_SOURCES
+		"tracy/public/TracyClient.cpp"
+	)
+	add_library(tracy STATIC ${tracy_SOURCES})
+	target_include_directories(tracy PUBLIC "tracy/public/")
+	if(OFS_PROFILE)
+	target_compile_definitions(tracy PUBLIC "TRACY_ENABLE")
+	endif()	
 endif()	
 
 ## ============

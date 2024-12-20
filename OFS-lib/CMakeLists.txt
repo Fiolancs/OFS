@@ -60,13 +60,13 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
 	SDL3-static
 	glad2
 	imgui
-	imgui_stdlib
 	tinyfiledialogs
 	eventpp
 	glaze::glaze
 	scn::scn
 	zpp_bits
 	dr_libs
+	stb
 )
 
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)

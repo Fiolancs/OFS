@@ -30,7 +30,7 @@ void OFS_VideoplayerControls::Init(OFS_Videoplayer* player, bool hwAccel) noexce
 {
     if(this->player) return;
     this->player = player;
-    chapterStateHandle = OFS_ProjectState<ChapterState>::Register(ChapterState::StateName);
+    chapterStateHandle = OFS_ProjectState<ChapterState>::Register(ChapterState::StateName, ChapterState::StateName);
     Heatmap = std::make_unique<FunscriptHeatmap>();
     videoPreview = std::make_unique<VideoPreview>(hwAccel);
     videoPreview->Init();
@@ -535,8 +535,8 @@ void OFS_VideoplayerControls::DrawTimeline() noexcept
 
     ImGui::Columns(5, 0, false);
     {
-        char timeBuf1[16];
-        char timeBuf2[16];
+        char timeBuf1[16]{};
+        char timeBuf2[16]{};
 
         float time = player->CurrentTime();
         Util::FormatTime(timeBuf1, sizeof(timeBuf1), time, true);

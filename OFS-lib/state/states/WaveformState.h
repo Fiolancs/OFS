@@ -63,7 +63,7 @@ struct WaveformState
     inline static WaveformState& StaticStateSlow() noexcept
     {
         // This shouldn't be done in hot paths but shouldn't be a problem otherwise.
-        uint32_t handle = OFS_ProjectState<WaveformState>::Register(StateName);
+        uint32_t handle = OFS_ProjectState<WaveformState>::Register(StateName, StateName);
         return OFS_ProjectState<WaveformState>(handle).Get();
     }
 };

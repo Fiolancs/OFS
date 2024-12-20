@@ -73,7 +73,7 @@ struct OFS_KeybindingState
 
     inline static OFS_KeybindingState& StateSlow() noexcept
     {
-        auto stateHandle = OFS_AppState<OFS_KeybindingState>::Register(StateName);
+        auto stateHandle = OFS_AppState<OFS_KeybindingState>::Register(StateName, "OFS_KeybindingState");
         return State(stateHandle);
     }
 

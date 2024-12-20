@@ -14,7 +14,7 @@ struct BaseOverlayState
 
     inline static uint32_t RegisterStatic() noexcept
     {
-        return OFS_AppState<BaseOverlayState>::Register(StateName);
+        return OFS_AppState<BaseOverlayState>::Register(StateName, StateName);
     }
 
     inline static BaseOverlayState& State(uint32_t stateHandle) noexcept

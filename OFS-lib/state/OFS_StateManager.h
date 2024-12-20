@@ -2,29 +2,30 @@
 #include "OFS_Util.h"
 #include "OFS_Serialization.h"
 
-#include <string>
-#include <vector>
 #include <any>
 #include <map>
+#include <string>
+#include <vector>
+#include <memory>
+#include <string_view>
 
-class OFS_StateMetadata
+struct OFS_StateMetadata
 {
-    public:
-    template<typename T>
-    static OFS_StateMetadata CreateMetadata() noexcept
+public:
+    template <typename T>
+    static OFS_StateMetadata CreateMetadata(std::string_view typeName) noexcept
     {
         // QQQ
-        //constexpr auto type = refl::reflect<T>();
-        OFS_StateMetadata md;
-        //md.name = type.name.c_str();
-        md.creator = &OFS_StateMetadata::createUntyped<T>;
-        //md.serializer = &OFS_StateMetadata::serializeUntyped<T>;
-        //md.deserializer = &OFS_StateMetadata::deserializeUntyped<T>;
-        return md;
+        return OFS_StateMetadata{
+            typeName,
+            &OFS_StateMetadata::createUntyped<T>,
+            //.serializer = &OFS_StateMetadata::serializeUntyped<T>,
+            //.deserializer = &OFS_StateMetadata::deserializeUntyped<T>,
+        };
     }
     
-    std::any Create() const noexcept { return creator(); }
-    std::string_view Name() const noexcept { return name; }
+    std::any          create(void) const noexcept { return creator(); }
+    std::string_view getName(void) const noexcept { return name; }
     
     //bool Serialize(const std::any& value, nlohmann::json& obj, bool enableBinary) const noexcept {
     //    return serializer(value, obj, enableBinary);
@@ -39,7 +40,7 @@ private:
     //using OFS_StateSerializer = bool (*)(const std::any&, nlohmann::json&, bool) noexcept;
     //using OFS_StateDeserializer = bool (*)(std::any&, const nlohmann::json&, bool) noexcept;
 
-    std::string name;
+    std::string_view name;
     OFS_StateCreator creator;
     //OFS_StateSerializer serializer;
     //OFS_StateDeserializer deserializer;
@@ -56,7 +57,7 @@ private:
         //        }
         //    }
         //});
-        return instance;
+        return T{};
     }
 
     //template<typename T>
@@ -76,11 +77,15 @@ private:
     //    //return enableBinary ? OFS::Serializer<true>::Deserialize(realValue, obj) : OFS::Serializer<false>::Deserialize(realValue, obj);
     //    return true;
     //}
+
+    OFS_StateMetadata(std::string_view typeName, OFS_StateCreator ctor)
+        : name{ typeName }, creator{ ctor }
+    {}
 };
 
 class OFS_StateRegistry
 {
-    public:
+public:
     static OFS_StateRegistry& Get() noexcept
     {
         static OFS_StateRegistry instance;
@@ -90,7 +95,7 @@ class OFS_StateRegistry
     const OFS_StateMetadata* Find(std::string_view typeName) const noexcept
     {
         auto iter = std::find_if(metadata.begin(), metadata.end(), [&](auto&& x) {
-            return x.Name() == typeName;
+            return x.getName() == typeName;
         });
         if (iter != metadata.end()) {
             return &(*iter);
@@ -98,71 +103,61 @@ class OFS_StateRegistry
         return nullptr;
     }
 
-    template<typename T>
-    void RegisterState()
+    template <typename T>
+    void RegisterState(std::string_view typeName)
     {
-        metadata.push_back(OFS_StateMetadata::CreateMetadata<T>());
+        metadata.push_back(OFS_StateMetadata::CreateMetadata<T>(typeName));
     }
 
-    private:
+private:
     std::vector<OFS_StateMetadata> metadata;
     OFS_StateRegistry() noexcept {}
 };
 
-#define OFS_REGISTER_STATE(StateTypeName) OFS_StateRegistry::Get().RegisterState<StateTypeName>()
+#define OFS_REGISTER_STATE(StateTypeName) OFS_StateRegistry::Get().RegisterState<StateTypeName>(#StateTypeName)
 
 struct OFS_State
 {
-    std::string Name;
-    std::string TypeName;
+    std::string_view stateName;
+    std::string_view typeName;
     const OFS_StateMetadata* Metadata = nullptr;
     std::any State;
 };
 
 class OFS_StateManager
 {
-    public:                        // StateName -> Pair(TypeName, Handle)
-    using StateHandleMap = std::map<std::string, std::pair<std::string, uint32_t>>;
-    private:
-    std::vector<OFS_State> ApplicationState;
-    std::vector<OFS_State> ProjectState;
+public:                        
+    using StateHandleMap = std::map<std::string_view, std::pair<std::string_view, uint32_t>>; // StateName -> Pair(TypeName, Handle)
+    inline static constexpr std::uint32_t INVALID_ID = 0xFFFF'FFFF;
 
-    StateHandleMap ApplicationHandleMap;
-    StateHandleMap ProjectHandleMap;
-
-    static OFS_StateManager* instance;
-
-    template<typename T>
-    inline static uint32_t registerState(const char* name, std::vector<OFS_State>& stateCollection, StateHandleMap& handleMap) noexcept
+    template <typename T>
+    inline static std::uint32_t registerState(std::string_view stateName, std::string_view typeName, std::vector<OFS_State>& stateCollection, StateHandleMap& handleMap) noexcept
     {
-        // QQQ
-        //constexpr auto type = refl::reflect<T>();
-        //auto it = handleMap.find(name);
-        //if(it == handleMap.end()) {
-        //    LOGF_DEBUG("Registering new state \"%s\". Type: %s", name, type.name.c_str());
-        //
-        //    auto metadata = OFS_StateRegistry::Get().Find(type.name.c_str());
-        //    FUN_ASSERT(metadata, "State wasn't registered using OFS_REGISTER_STATE macro");
-        //
-        //    uint32_t Id = stateCollection.size();
-        //    stateCollection.emplace_back(
-        //        std::move(OFS_State{name, type.name.c_str(), metadata, std::move(std::make_any<T>())})
-        //    );
-        //
-        //    auto sanityCheck = handleMap.insert(std::make_pair(std::string(name), std::make_pair(type.name, Id)));
-        //    FUN_ASSERT(sanityCheck.second, "Why did this fail?");
-        //
-        //    return Id;   
-        //}
-        //else {
-        //    FUN_ASSERT(stateCollection[it->second.second].Name == name, "Something went wrong");
-        //    LOGF_DEBUG("Loading existing state \"%s\"", name);
-        //    return it->second.second;
-        //}
-        return -1;
+        auto it = handleMap.find(stateName);
+        if(it == handleMap.end())
+        {
+            LOGF_DEBUG("Registering new state \"{:s}\". Type: {:s}", stateName, typeName);
+        
+            auto metadata = OFS_StateRegistry::Get().Find(typeName);
+            FUN_ASSERT(metadata, "State wasn't registered using OFS_REGISTER_STATE macro");
+        
+            std::uint32_t id = static_cast<std::uint32_t>( stateCollection.size() );
+            stateCollection.emplace_back(OFS_State{ stateName, typeName, metadata, std::make_any<T>() });
+        
+            handleMap.try_emplace(handleMap.end(), stateName, std::make_pair(typeName, id));
+            return id;
+        }
+        else
+        {
+            FUN_ASSERT(stateCollection[it->second.second].stateName == stateName, "Something went wrong");
+            LOGF_DEBUG("Loading existing state \"%s\"", stateName);
+            return it->second.second;
+        }
+
+        return INVALID_ID;
     }
 
-    template<typename T>
+    template <typename T>
     inline static T& getState(uint32_t id, std::vector<OFS_State>& stateCollection) noexcept
     {
         FUN_ASSERT(id < stateCollection.size(), "out of bounds");
@@ -177,15 +172,15 @@ class OFS_StateManager
     inline static OFS_StateManager* Get() noexcept { return instance; }
 
     template<typename T>
-    inline uint32_t RegisterApp(const char* name) noexcept
+    inline uint32_t RegisterApp(std::string_view name, std::string_view typeName) noexcept
     {
-        return registerState<T>(name, ApplicationState, ApplicationHandleMap);
+        return registerState<T>(name, typeName, ApplicationState, ApplicationHandleMap);
     }
 
-    template<typename T>
-    inline uint32_t RegisterProject(const char* name) noexcept
+    template <typename T>
+    inline uint32_t RegisterProject(std::string_view name, std::string_view typeName) noexcept
     {
-        return registerState<T>(name, ProjectState, ProjectHandleMap);
+        return registerState<T>(name, typeName, ProjectState, ProjectHandleMap);
     }
 
     template<typename T>
@@ -206,4 +201,13 @@ class OFS_StateManager
     void SerializeProjectAll(bool enableBinary) noexcept;
     bool DeserializeProjectAll(/*const nlohmann::json& project, */bool enableBinary) noexcept;
     void ClearProjectAll() noexcept;
+
+private:
+    std::vector<OFS_State> ApplicationState;
+    std::vector<OFS_State> ProjectState;
+
+    StateHandleMap ApplicationHandleMap;
+    StateHandleMap ProjectHandleMap;
+
+    static OFS_StateManager* instance;
 };

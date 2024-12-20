@@ -133,7 +133,7 @@ bool OpenFunscripter::Init(int argc, char* argv[])
     OFS_StateManager::Init();
     {
         auto stateMgr = OFS_StateManager::Get();
-        std::vector<uint8_t> fileData;
+        std::vector<std::uint8_t> fileData;
         auto statePath = std::filesystem::path(Util::Prefpath("state.ofs")).string();
         if (Util::ReadFile(statePath.c_str(), fileData) > 0) {
             bool succ;
@@ -144,13 +144,14 @@ bool OpenFunscripter::Init(int argc, char* argv[])
         }
     }
 
-    stateHandle = OFS_AppState<OpenFunscripterState>::Register(OpenFunscripterState::StateName);
+    stateHandle = OFS_AppState<OpenFunscripterState>::Register(OpenFunscripterState::StateName, "OpenFunscripterState");
     const auto& ofsState = OpenFunscripterState::State(stateHandle);
 
     preferences = std::make_unique<OFS_Preferences>();
     const auto& prefState = PreferenceState::State(preferences->StateHandle());
 
-    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMEPAD) != 0) {
+    if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMEPAD))
+    {
         LOG_ERROR(SDL_GetError());
         return false;
     }

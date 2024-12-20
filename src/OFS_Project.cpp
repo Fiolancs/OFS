@@ -75,7 +75,7 @@ inline bool FindMedia(const std::string& pathStr, std::string* outMedia) noexcep
 
 OFS_Project::OFS_Project() noexcept
 {
-    stateHandle = OFS_ProjectState<ProjectState>::Register(ProjectState::StateName);
+    stateHandle = OFS_ProjectState<ProjectState>::Register(ProjectState::StateName, ProjectState::StateName);
     Funscripts.emplace_back(std::move(std::make_shared<Funscript>()));
 }
 
