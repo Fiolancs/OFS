@@ -195,10 +195,10 @@ public:
         return getState<T>(id, ProjectState);
     }
 
-    void SerializeAppAll(bool enableBinary) noexcept;
+    std::string SerializeAppAll(bool enableBinary) noexcept;
     bool DeserializeAppAll(/*const nlohmann::json& state, */bool enableBinary) noexcept;
 
-    void SerializeProjectAll(bool enableBinary) noexcept;
+    std::string SerializeProjectAll(bool enableBinary) noexcept;
     bool DeserializeProjectAll(/*const nlohmann::json& project, */bool enableBinary) noexcept;
     void ClearProjectAll() noexcept;
 

@@ -2,6 +2,7 @@
 #include "OFS_Reflection.h"
 #include "OFS_BinarySerialization.h"
 #include "event/OFS_Event.h"
+#include "Funscript/Funscript.h"
 
 #include <imgui.h>
 
@@ -28,6 +29,6 @@ public:
 
 	void Init() noexcept;
 	void CenterSimulator() noexcept;
-	void ShowSimulator(bool* open, std::shared_ptr<class Funscript>& activeScript, float currentTime, bool splineMode) noexcept;
+	void ShowSimulator(bool* open, std::shared_ptr<Funscript>& activeScript, float currentTime, bool splineMode) noexcept;
 };
 

@@ -6,12 +6,195 @@
 #include "event/OFS_EventSystem.h"
 #include "state/states/ChapterState.h"
 
+#include <glaze/glaze.hpp>
+
+#include <map>
+#include <cmath>
 #include <array>
 #include <string>
+#include <vector>
 #include <limits>
+#include <utility>
 #include <algorithm>
-#include <filesystem>
-#include <cmath>
+#include <string_view>
+#include <type_traits>
+
+// FUNSCRIPT SPEC
+//{
+//	"version": "1.0",
+//	"inverted": false,
+//	"range": 90,
+//	"actions": [
+//		{"pos": 0, "at": 100},
+//		{"pos": 100, "at": 500},
+//		...
+//	]
+//}
+//
+//version: funscript version (optional, default="1.0")
+//inverted: positions are inverted (0=100,100=0) (optional, default=false)
+//range: range of moment to use in percent (0-100) (optional, default=90)
+//actions: script for a Launch
+//  pos: position in percent (0-100)
+//  at : time to be at position in milliseconds
+
+
+namespace
+{
+	std::string_view KNOWN_AXIS_NAMES[] = {
+		"surge",
+		"sway",
+		"suck",
+		"twist",
+		"roll",
+		"pitch",
+		"vib",
+		"pump",
+		"raw",
+	};
+
+	static inline constexpr auto JSON_OPTS = glz::opts{
+		.format = glz::JSON,
+		.error_on_unknown_keys = false,
+		.error_on_missing_keys = true,
+	};
+}
+
+namespace OFS::util
+{
+	template <typename T>
+	struct UnknownFieldProxy : public T
+	{
+		std::map<std::string_view, glz::raw_json_view> unknownFields;
+	};
+
+	struct FunscriptSerializeDummy
+	{
+		std::vector<OFS::v2::FunscriptAction> actions;
+		UnknownFieldProxy<OFS::v2::FunscriptMetadata> metadata;
+	};
+}
+
+namespace glz
+{
+	namespace detail
+	{
+		template <typename T> inline constexpr auto count_members<::OFS::util::UnknownFieldProxy<T> > = [] { return count_members<T>; }();
+		template <typename T> inline constexpr auto count_members<::OFS::util::UnknownFieldProxy<T>&> = [] { return count_members<T>; }();
+
+		template <class T>
+		struct allow_missing_t
+		{
+			static constexpr bool glaze_wrapper = true;
+			static constexpr auto glaze_reflect = false;
+			T& val;
+		};
+		template <class T>
+		struct from<JSON, allow_missing_t<T>>
+		{
+			template <auto Opts>
+			GLZ_ALWAYS_INLINE static void op(auto&& value, auto&&... args)
+			{
+				read<JSON>::op<opt_false<Opts, &opts::error_on_missing_keys>>(value.val, args...);
+			}
+		};
+
+		template <auto MemPtr>
+		GLZ_ALWAYS_INLINE constexpr decltype(auto) allow_missing_impl() noexcept
+		{
+			return [](auto&& val) { return allow_missing_t<std::remove_reference_t<decltype(val.*MemPtr)>>{val.*MemPtr}; };
+		}
+	}
+
+	template <auto MemPtr>
+	constexpr auto allow_missing = detail::allow_missing_impl<MemPtr>();
+
+	template <>
+	struct glz::meta<OFS::v2::FunscriptAction>
+	{
+		using T = OFS::v2::FunscriptAction;
+		static constexpr auto value = glz::object("at", &T::at, "pos", &T::pos);
+	};
+
+	template <typename T>
+	struct glz::meta<::OFS::util::UnknownFieldProxy<T>>
+	{
+		static constexpr auto unknown_read{ &::OFS::util::UnknownFieldProxy<T>::unknownFields };
+	};
+
+	template <>
+	struct glz::meta<OFS::util::FunscriptSerializeDummy>
+	{
+		static constexpr auto value = glz::object(
+			"actions", &::OFS::util::FunscriptSerializeDummy::actions
+		,	"metadata", glz::allow_missing<&::OFS::util::FunscriptSerializeDummy::metadata>
+		);
+	};
+	template <typename T>
+	struct glz::reflect<OFS::util::UnknownFieldProxy<T>> : public glz::reflect<T>
+	{
+		using V = OFS::util::UnknownFieldProxy<T>;
+	};
+
+	template <>
+	inline constexpr decltype(auto) to_tie<::OFS::util::UnknownFieldProxy<OFS::v2::FunscriptMetadata>&, detail::count_members<::OFS::util::UnknownFieldProxy<OFS::v2::FunscriptMetadata>>>(::OFS::util::UnknownFieldProxy<OFS::v2::FunscriptMetadata>& t)
+	{
+		return to_tie(static_cast<OFS::v2::FunscriptMetadata&>(t));
+	}
+	template <>
+	inline constexpr decltype(auto) to_tie<::OFS::util::UnknownFieldProxy<OFS::util::FunscriptSerializeDummy>&, detail::count_members<::OFS::util::UnknownFieldProxy<::OFS::util::FunscriptSerializeDummy>>>(::OFS::util::UnknownFieldProxy<::OFS::util::FunscriptSerializeDummy>& t)
+	{
+		return glz::reflect<::OFS::util::FunscriptSerializeDummy>::values;
+	}
+}
+
+std::string OFS::v2::Funscript::serialize(void) const
+{
+	auto output = glz::merge{
+		glz::obj{
+			"actions", actions,
+			"metadata", glz::merge{
+				metadata,
+				glz::detail::opts_wrapper_t<decltype(unknownMetadataFieldsJSON) const&, &glz::opts::raw>{unknownMetadataFieldsJSON}
+			}
+		},
+		glz::detail::opts_wrapper_t<decltype(unknownFieldsJSON) const&, &glz::opts::raw>{unknownFieldsJSON}
+	};
+	
+	std::string json{};
+	glz::context ctx{};
+	if (auto const err = glz::write<JSON_OPTS>(output, json, ctx); err)
+		[[unlikely]]
+		FUN_ASSERT(false, "Funscript serialization failed.");
+
+	return json;
+}
+
+bool OFS::v2::Funscript::deserialize(std::string rawJson)
+{
+	OFS::util::UnknownFieldProxy<OFS::util::FunscriptSerializeDummy> proxy{};
+
+	if (auto const err = glz::read<JSON_OPTS>(proxy, rawJson); err)
+	{
+		FUN_ASSERT(false, glz::format_error(err));
+		return false;
+	}
+
+	actions  = std::move(proxy.actions);
+	metadata = std::move(proxy.metadata);
+
+	// Save unknown fields
+	for (auto&& [key, value] : proxy.unknownFields)
+	{
+		unknownFieldsJSON.try_emplace(unknownFieldsJSON.end(), std::string(key), std::string(value.str));
+	}
+	for (auto&& [key, value] : proxy.metadata.unknownFields)
+	{
+		unknownMetadataFieldsJSON.try_emplace(unknownMetadataFieldsJSON.end(), std::string(key), std::string(value.str));
+	}
+
+	return true;
+}
 
 
 std::array<const char*, 9> Funscript::AxisNames = 

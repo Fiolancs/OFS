@@ -67,13 +67,12 @@
 
 
 // assertion without error message
-#define FUN_ASSERT(expr, msg) \
-    if (expr) {} \
-    else { \
+#define FUN_ASSERT(expr, msg)                                        \
+    if (!(expr)) {                                                   \
         LOG_ERROR("============== ASSERTION FAILED =============="); \
-        LOGF_ERROR("in file: \"%s\" line: %d", __FILE__, __LINE__); \
-        LOG_ERROR(msg); \
-        FUN_DEBUG_BREAK(); \
+        LOGF_ERROR("in file: \"%s\" line: %d", __FILE__, __LINE__);  \
+        LOG_ERROR(msg);                                              \
+        FUN_DEBUG_BREAK();                                           \
     }
 #else
 
@@ -314,24 +313,10 @@ public:
             .u8string();
     }
 
-    inline static bool FileExists(const std::string& file) noexcept
+    inline static bool FileExists(std::filesystem::path const& file) noexcept
     {
-        bool exists = false;
-#if _WIN32
-        std::wstring wfile = Util::Utf8ToUtf16(file);
-        struct _stati64 s;
-        exists = _wstati64(wfile.c_str(), &s) == 0;
-#else
-        auto handle = OpenFile(file.c_str(), "r", file.size());
-        if (handle != nullptr) {
-            SDL_RWclose(handle);
-            exists = true;
-        }
-        else {
-            LOGF_WARN("\"%s\" doesn't exist", file.c_str());
-        }
-#endif
-        return exists;
+        auto const status = std::filesystem::status(file);
+        return std::filesystem::exists(status) && std::filesystem::is_regular_file(status);
     }
 
     inline static bool DirectoryExists(const std::string& dir) noexcept
@@ -438,15 +423,6 @@ public:
             return (prefPath / rel).u8string();
         }
         return prefPath.u8string();
-    }
-
-    static std::u8string PrefpathOFP(const std::string& path) noexcept
-    {
-        static const char* cachedPref = SDL_GetPrefPath("OFS", "OFP_data");
-        static std::filesystem::path prefPath = Util::PathFromString(cachedPref);
-        std::filesystem::path rel = Util::PathFromString(path);
-        rel.make_preferred();
-        return (prefPath / rel).u8string();
     }
 
     static bool CreateDirectories(const std::filesystem::path& dirs) noexcept

@@ -147,14 +147,22 @@ add_library(tinyfiledialogs STATIC ${tiny_SRC} ${tiny_HEADER})
 target_include_directories(tinyfiledialogs PUBLIC "tinyfiledialogs/")
 set_source_files_properties(tiny_SRC PROPERTIES LANGUAGE CXX )
 
-# ============
-# === json ===
-# ============
+# =============
+# === glaze ===
+# =============
 set(glaze_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 if(NOT OFS_AVX) 
 	set(glaze_ENABLE_AVX2 OFF CACHE BOOL "" FORCE)
 endif()
 add_subdirectory("glaze/")
+
+# ==========
+# == json ==
+# ==========
+set(JSON_Install OFF CACHE BOOL "" FORCE)
+set(JSON_BuildTests OFF CACHE BOOL "" FORCE)
+set(JSON_MultipleHeaders ON CACHE BOOL "" FORCE)
+add_subdirectory("json/")
 
 # =============
 # === tracy ===
@@ -164,17 +172,12 @@ if(OFS_PROFILE)
 		"tracy/public/TracyClient.cpp"
 	)
 	add_library(tracy STATIC ${tracy_SOURCES})
-	target_include_directories(tracy PUBLIC "tracy/public/")
-	if(OFS_PROFILE)
 	target_compile_definitions(tracy PUBLIC "TRACY_ENABLE")
-	endif()	
+	target_include_directories(tracy PUBLIC "tracy/public/")
+else()
+	add_library(tracy INTERFACE)
+	target_include_directories(tracy INTERFACE "tracy/public/")
 endif()	
-
-## ============
-## = refl-cpp =
-## ============
-#add_library(refl-cpp INTERFACE)
-#target_include_directories(refl-cpp INTERFACE "refl-cpp/include/")
 
 # ===========
 # = eventpp =
@@ -193,9 +196,9 @@ target_include_directories(civetweb PUBLIC "civetweb/include/")
 target_compile_definitions(civetweb PRIVATE "NO_SSL=1"
 											"USE_WEBSOCKET=1")
 
-# ============
-# = libscn =
-# ============
+# ==============
+# === libscn ===
+# ==============
 set(SCN_ENABLE_TESTS OFF CACHE BOOL "" FORCE)
 set(SCN_ENABLE_EXTRAS OFF CACHE BOOL "" FORCE)
 add_subdirectory("libscn/")

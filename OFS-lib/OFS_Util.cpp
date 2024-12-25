@@ -19,6 +19,7 @@
 #undef  NOMINMAX
 #endif
 
+#include <cmath>
 #include <string>
 #include <locale>
 #include <codecvt>
@@ -33,7 +34,7 @@ static void SanitizeString(std::string& str) noexcept
     std::transform(str.begin(), str.end(), str.begin(), [](char c) { return c == '\'' || c == '\"' ? ' ' : c; });
 }
 
-#ifdef WIN32
+#ifdef _WIN32
 inline static int WindowsShellExecute(const wchar_t* op, const wchar_t* program, const wchar_t* params) noexcept
 {
     // https://docs.microsoft.com/en-us/windows/win32/api/shellapi/nf-shellapi-shellexecutew
@@ -49,7 +50,7 @@ inline static int WindowsShellExecute(const wchar_t* op, const wchar_t* program,
 
 int Util::OpenFileExplorer(const std::string& str)
 {
-#if defined(WIN32)
+#if defined(_WIN32)
     std::wstring wstr = Util::Utf8ToUtf16(str);
     std::wstringstream ss;
     ss << L'"' << wstr << L'"';
@@ -362,7 +363,7 @@ void Util::InitRandom() noexcept
 //    time_t t = time(0);
 //    rnd_pcg_seed(&pcg, t);
 }
-//
+
 float Util::NextFloat() noexcept
 {
     return 0.f;
@@ -377,7 +378,7 @@ uint32_t Util::RandomColor(float s, float v, float alpha) noexcept
     static float H = NextFloat();
 
     H += goldenRatioConjugate;
-    H = SDL_fmodf(H, 1.f);
+    H = std::fmodf(H, 1.f);
 
     ImColor color;
     color.SetHSV(H, s, v, alpha);

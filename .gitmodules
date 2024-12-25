@@ -28,3 +28,6 @@
 [submodule "3rdParty/libscn"]
 	path = 3rdParty/libscn
 	url = https://github.com/eliaskosunen/scnlib.git
+[submodule "3rdParty/json"]
+	path = 3rdParty/json
+	url = https://github.com/nlohmann/json.git

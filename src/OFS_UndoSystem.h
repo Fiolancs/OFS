@@ -45,7 +45,7 @@ enum StateType : std::int32_t {
     TOTAL_UNDOSTATE_TYPES
 };
 
-using UndoContextScripts = std::vector<std::weak_ptr<const class Funscript>>;
+using UndoContextScripts = std::vector<std::weak_ptr<const Funscript>>;
 
 // this manages undo/redo accross the whole app
 class UndoSystem {
@@ -69,7 +69,7 @@ public:
     static constexpr const char* WindowId = "###UNDO_REDO_HISTORY";
     void ShowUndoRedoHistory(bool* open) noexcept;
 
-    void Snapshot(StateType type, std::weak_ptr<const class Funscript> scriptToSnapshot, bool clearRedo = true) noexcept
+    void Snapshot(StateType type, std::weak_ptr<const Funscript> scriptToSnapshot, bool clearRedo = true) noexcept
     {
         Snapshot(type, std::move(UndoContextScripts{ scriptToSnapshot }), clearRedo);
     }

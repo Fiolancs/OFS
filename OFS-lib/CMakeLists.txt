@@ -17,7 +17,6 @@ set(OFS_LIB_SOURCES
 	"UI/OFS_VideoplayerControls.cpp"
 	"UI/OFS_Videopreview.cpp"
 	"UI/OFS_BlockingTask.cpp"
-	
 	"UI/OFS_ScriptTimeline.cpp"
 	"UI/ScriptPositionsOverlayMode.cpp"
 	"UI/OFS_KeybindingSystem.cpp"
@@ -39,12 +38,63 @@ set(OFS_LIB_SOURCES
 	"OFS_DynamicFontAtlas.cpp"
 	"OFS_MpvLoader.cpp"
 
-	"OFS_StringsGenerated.cpp"
-
 	"localization/OFS_Localization.cpp"
+	"localization/OFS_StringsGenerated.cpp"
 )
 
-add_library(${PROJECT_NAME} STATIC ${OFS_LIB_SOURCES})
+set(OFS_LIB_HEADERS 
+	"OFS_Util.h"
+	"OFS_VectorSet.h"
+	"OFS_Serialization.h"
+	"OFS_BinarySerialization.h"
+	"OFS_Reflection.h"
+	"OFS_MpvLoader.h"
+	"OFS_GL.h"
+	"OFS_FileLogging.h"
+	"OFS_DynamicFontAtlas.h"
+	"OFS_ControllerInput.h"
+
+	"event/OFS_Event.h"
+	"event/OFS_EventSystem.h"
+
+	"Funscript/Funscript.h"
+	"Funscript/FunscriptAction.h"
+	"Funscript/FunscriptHeatmap.h"
+	"Funscript/FunscriptSpline.h"
+	"Funscript/FunscriptUndoSystem.h"
+
+	"gl/OFS_Shader.h"
+
+	"localization/OFS_Localization.h"
+	"localization/OFS_StringsGenerated.h"
+
+	"state/OFS_LibState.h"
+	"state/OFS_StateHandle.h"
+	"state/OFS_StateManager.h"
+	"state/states/BaseOverlayState.h"
+	"state/states/ChapterState.h"
+	"state/states/KeybindingState.h"
+	"state/states/VideoplayerWindowState.h"
+	"state/states/WaveformState.h"
+
+	"UI/GradientBar.h"
+	"UI/OFS_BlockingTask.h"
+	"UI/OFS_ImGui.h"
+	"UI/OFS_KeybindingSystem.h"
+	"UI/OFS_Profiling.h"
+	"UI/OFS_ScriptTimeline.h"
+	"UI/OFS_ScriptTimelineEvents.h"
+	"UI/OFS_VideoplayerControls.h"
+	"UI/OFS_Videopreview.h"
+	"UI/OFS_Waveform.h"
+	"UI/ScriptPositionsOverlayMode.h"
+
+	"videoplayer/OFS_Videoplayer.h"
+	"videoplayer/OFS_VideoplayerEvents.h"
+	"videoplayer/OFS_VideoplayerWindow.h"
+)
+
+add_library(${PROJECT_NAME} STATIC ${OFS_LIB_SOURCES} ${OFS_LIB_HEADERS})
 target_include_directories(${PROJECT_NAME} PRIVATE
 	"${PROJECT_SOURCE_DIR}/"
 	"${CMAKE_CURRENT_BINARY_DIR}"
@@ -67,6 +117,8 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
 	zpp_bits
 	dr_libs
 	stb
+	tracy
+	nlohmann_json
 )
 
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
@@ -100,7 +152,6 @@ target_compile_definitions(${PROJECT_NAME} PUBLIC
 
 if(OFS_PROFILE)
 	target_compile_definitions(${PROJECT_NAME} PUBLIC OFS_PROFILE_ENABLED)
-	target_link_libraries(${PROJECT_NAME} PUBLIC tracy)
 	message("== ${PROJECT_NAME} - Profiling enabled.")
 endif()
 
@@ -108,9 +159,6 @@ endif()
 if(WIN32)
 	target_include_directories(${PROJECT_NAME} PUBLIC 
 		"../3rdParty/libmpv/include"
-	)
-	target_compile_definitions(${PROJECT_NAME} PUBLIC
-		"NOMINMAX"
 	)
 elseif(UNIX AND NOT APPLE AND NOT EMSCRIPTEN)
 	# linux etc. 

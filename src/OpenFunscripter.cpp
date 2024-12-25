@@ -182,8 +182,7 @@ bool OpenFunscripter::Init(int argc, char* argv[])
     SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
 
     window = SDL_CreateWindow(
-        "OpenFunscripter " /*OFS_LATEST_GIT_TAG "@" OFS_LATEST_GIT_HASH*/,
-        //SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+        "OpenFunscripter " OFS_LATEST_GIT_TAG "@" OFS_LATEST_GIT_HASH,
         DefaultWidth, DefaultHeight,
         SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY | SDL_WINDOW_HIDDEN);
 
@@ -310,8 +309,10 @@ void OpenFunscripter::setupDefaultLayout(bool force) noexcept
 
     auto imgui_ini = ImGui::GetIO().IniFilename;
     bool imgui_ini_found = Util::FileExists(imgui_ini);
-    if (force || !imgui_ini_found) {
-        if (!imgui_ini_found) {
+    if (force || !imgui_ini_found)
+    {
+        if (!imgui_ini_found)
+        {
             LOG_INFO("imgui.ini was not found...");
             LOG_INFO("Setting default layout.");
         }
@@ -1848,7 +1849,7 @@ void OpenFunscripter::updateTitle() noexcept
 {
     SDL_SetWindowTitle(window, [&LoadedProject = LoadedProject] (void) -> std::string
         {
-            constexpr std::string_view title = "OpenFunscripter"/*" " OFS_LATEST_GIT_TAG "@" OFS_LATEST_GIT_HASH */;
+            constexpr std::string_view title = "OpenFunscripter " OFS_LATEST_GIT_TAG "@" OFS_LATEST_GIT_HASH;
             if (LoadedProject->IsValid())
                 return std::format("{:s} - \"{:s}\"", title, LoadedProject->Path());
             return std::string(title);
@@ -2694,11 +2695,13 @@ void OpenFunscripter::ShowAboutWindow(bool* open) noexcept
     if (!*open) return;
     OFS_PROFILE(__FUNCTION__);
     ImGui::Begin(TR(ABOUT), open, ImGuiWindowFlags_None | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoCollapse);
-    ImGui::TextUnformatted("OpenFunscripter " /*OFS_LATEST_GIT_TAG*/);
-    ImGui::Text("%s: %s", TR(GIT_COMMIT), /*OFS_LATEST_GIT_HASH*/"");
+    ImGui::TextUnformatted("OpenFunscripter " OFS_LATEST_GIT_TAG);
+    ImGui::Text("%s: " OFS_LATEST_GIT_HASH, TR(GIT_COMMIT));
 
-    if (ImGui::Button(std::format("{:s} " ICON_GITHUB, TR(LATEST_RELEASE)).c_str(), ImVec2(-1.f, 0.f))) {
-        Util::OpenUrl("https://github.com/OpenFunscripter/OFS/releases/latest");
+    std::string msg = std::format("{:s} {:s}", TR(LATEST_RELEASE), ICON_GITHUB);
+    if (ImGui::Button(msg.c_str(), ImVec2(-1.f, 0.f)))
+    {
+        Util::OpenUrl("https://github.com/Fiolancs/OFS/releases/latest");
     }
     ImGui::End();
 }

@@ -35,14 +35,54 @@ set(OPEN_FUNSCRIPTER_SOURCES
   "lua/api/OFS_LuaProcessAPI.cpp"
 )
 
+set(OPEN_FUNSCRIPTER_HEADERS
+  "OFS_Project.h"
+  "OFS_ScriptingMode.h"
+  "OFS_UndoSystem.h"
+  "OpenFunscripter.h"
+
+  "api/OFS_WebsocketApi.h"
+  "api/OFS_WebsocketApiClient.h"
+  "api/OFS_WebsocketApiCommands.h"
+  "api/OFS_WebsocketApiEvents.h"
+
+  "lua/OFS_Lua.h"
+  "lua/OFS_LuaCoreExtension.h"
+  "lua/OFS_LuaExtension.h"
+  "lua/OFS_LuaExtensionAPI.h"
+  "lua/OFS_LuaExtensions.h"
+  "lua/api/OFS_LuaImGuiAPI.h"
+  "lua/api/OFS_LuaPlayerAPI.h"
+  "lua/api/OFS_LuaProcessAPI.h"
+  "lua/api/OFS_LuaScriptAPI.h"
+
+  "state/MetadataEditorState.h"
+  "state/OpenFunscripterState.h"
+  "state/PreferenceState.h"
+  "state/ProjectState.h"
+  "state/ScriptModeState.h"
+  "state/SimulatorState.h"
+  "state/SpecialFunctionsState.h"
+  "state/WebsocketApiState.h"
+
+  "UI/OFS_ChapterManager.h"
+  "UI/OFS_DownloadFfmpeg.h"
+  "UI/OFS_FunscriptMetadataEditor.h"
+  "UI/OFS_Preferences.h"
+  "UI/OFS_ScriptPositionsOverlays.h"
+  "UI/OFS_ScriptSimulator.h"
+  "UI/OFS_SpecialFunctions.h"
+)
+
 if(WIN32)
 	set(OPEN_FUNSCRIPTER_SOURCES ${OPEN_FUNSCRIPTER_SOURCES} "../icon.rc")
 endif()
 
 if(APPLE)
-	add_executable(${PROJECT_NAME} MACOSX_BUNDLE ${OPEN_FUNSCRIPTER_SOURCES})
+	add_executable(${PROJECT_NAME} MACOSX_BUNDLE ${OPEN_FUNSCRIPTER_SOURCES} ${OPEN_FUNSCRIPTER_HEADERS})
 elseif(WIN32)
-	add_executable(${PROJECT_NAME} WIN32 ${OPEN_FUNSCRIPTER_SOURCES})
+	add_executable(${PROJECT_NAME} WIN32 ${OPEN_FUNSCRIPTER_SOURCES} ${OPEN_FUNSCRIPTER_HEADERS})
+	set(VS_STARTUP_PROJECT ${PROJECT_NAME})
 else()
 	add_executable(${PROJECT_NAME} ${OPEN_FUNSCRIPTER_SOURCES})
 endif()
@@ -69,7 +109,7 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
 
 if(WIN32)
 	# download mpv binaries
-	if (NOT EXISTS "${CMAKE_BINARY_DIR}/mpv-2.dll")
+	if (NOT EXISTS "${CMAKE_BINARY_DIR}/libmpv-2.dll")
 		file(DOWNLOAD "https://sourceforge.net/projects/mpv-player-windows/files/libmpv/mpv-dev-x86_64-v3-20241215-git-e52f975.7z/download" "mpv-dev.7z" SHOW_PROGRESS)
 		file(ARCHIVE_EXTRACT INPUT "mpv-dev.7z" DESTINATION "${CMAKE_BINARY_DIR}" PATTERNS "libmpv-2.dll")
 	endif()

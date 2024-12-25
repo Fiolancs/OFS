@@ -2,6 +2,8 @@
 
 #include <SDL3/SDL_timer.h>
 
+#include <string>
+
 OFS_StateManager* OFS_StateManager::instance = nullptr;
 
 void OFS_StateManager::Init() noexcept
@@ -20,8 +22,8 @@ void OFS_StateManager::Shutdown() noexcept
 }
 
 
-//inline static nlohmann::json SerializeStateCollection(const std::vector<OFS_State>& stateCollection, bool enableBinary) noexcept
-//{
+inline static std::string SerializeStateCollection(const std::vector<OFS_State>& stateCollection, bool enableBinary) noexcept
+{
 //    auto startTime = SDL_GetPerformanceCounter();
 //    nlohmann::json obj;
 //    for(auto& state : stateCollection) {
@@ -42,7 +44,7 @@ void OFS_StateManager::Shutdown() noexcept
 //    auto duration = (float)(SDL_GetPerformanceCounter() - startTime) / (float)SDL_GetPerformanceFrequency();
 //    LOGF_INFO("OFS_StateManager::SerializeStateCollection took %f seconds", duration);
 //    return obj;
-//}
+}
 
 inline static bool DeserializeStateCollection(/*const nlohmann::json& state, */std::vector<OFS_State>& stateCollection, OFS_StateManager::StateHandleMap& handleMap, bool enableBinary) noexcept
 {
@@ -92,7 +94,8 @@ inline static bool DeserializeStateCollection(/*const nlohmann::json& state, */s
     //    if(stateCollection.size() < handle + 1) {
     //        stateCollection.resize(handle + 1);
     //    }
-    //    if(!stateCollection[handle].State.has_value()) {
+    //    if(!stateCollection[handle].State.has_value())
+    //    {
     //        // Default initialize
     //        auto md = OFS_StateRegistry::Get().Find(state.second.first);
     //        FUN_ASSERT(md, "Metadata not found this must not happen in this context.");
@@ -108,9 +111,10 @@ inline static bool DeserializeStateCollection(/*const nlohmann::json& state, */s
 }
 
 // QQQ
-void/*nlohmann::json*/ OFS_StateManager::SerializeAppAll(bool enableBinary) noexcept
+std::string OFS_StateManager::SerializeAppAll(bool enableBinary) noexcept
 {
     //return SerializeStateCollection(ApplicationState, enableBinary);
+    return {};
 }
 
 // QQQ
@@ -122,9 +126,10 @@ bool OFS_StateManager::DeserializeAppAll(/*const nlohmann::json& state, */bool e
 }
 
 // QQQ
-void/*nlohmann::json*/ OFS_StateManager::SerializeProjectAll(bool enableBinary) noexcept
+std::string OFS_StateManager::SerializeProjectAll(bool enableBinary) noexcept
 {
     //return SerializeStateCollection(ProjectState, enableBinary);
+    return {};
 }
 
 // QQQ
