@@ -1,6 +1,6 @@
 #pragma once
+#include "OFS_Profiling.h"
 #include "FunscriptAction.h"
-#include "UI/OFS_Profiling.h"
 
 //#include "glm/gtx/spline.hpp"
 

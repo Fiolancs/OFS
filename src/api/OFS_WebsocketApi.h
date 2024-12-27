@@ -1,9 +1,10 @@
 #pragma once
 #include "event/OFS_Event.h"
 
-#include <SDL3/SDL_thread.h>
-#include <SDL3/SDL_atomic.h>
 #include <SDL3/SDL_timer.h>
+#include <SDL3/SDL_mutex.h>
+#include <SDL3/SDL_atomic.h>
+#include <SDL3/SDL_thread.h>
 
 #include <vector>
 #include <memory>

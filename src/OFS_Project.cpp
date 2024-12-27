@@ -5,9 +5,9 @@
 
 
 #include "localization/OFS_Localization.h"
-#include "UI/OFS_ImGui.h"
-#include "OFS_DynamicFontAtlas.h"
-#include "UI/OFS_BlockingTask.h"
+#include "ui/OFS_ImGui.h"
+#include "ui/OFS_DynamicFontAtlas.h"
+#include "ui/OFS_BlockingTask.h"
 #include "event/OFS_EventSystem.h"
 
 //#include "subprocess.h"

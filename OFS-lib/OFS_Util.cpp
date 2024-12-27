@@ -1,9 +1,8 @@
 #include "OFS_Util.h"
 
-#include "OFS_GL.h"
+//#include "OFS_GL.h"
 #include "event/OFS_EventSystem.h"
 
-#include <imgui.h>
 #include <tinyfiledialogs.h>
 #include <SDL3/SDL_IOStream.h>
 #include <stb_image.h>
@@ -21,6 +20,7 @@
 
 #include <cmath>
 #include <string>
+#include <format>
 #include <locale>
 #include <codecvt>
 #include <iostream>
@@ -48,13 +48,38 @@ inline static int WindowsShellExecute(const wchar_t* op, const wchar_t* program,
 }
 #endif
 
+int Util::FormatTime(char* buf, const int bufLen, float timeSeconds, bool withMs)
+{
+    OFS_PROFILE(__FUNCTION__);
+    namespace chrono = std::chrono;
+    FUN_ASSERT(bufLen >= 0, "wat");
+    if (std::isinf(timeSeconds) || std::isnan(timeSeconds))
+        timeSeconds = 0.f;
+
+    auto duration = chrono::duration<float>(timeSeconds);
+
+    int hours = chrono::duration_cast<chrono::hours>(duration).count();
+    auto timeConsumed = chrono::duration<float>(60.f * 60.f) * hours;
+
+    int minutes = chrono::duration_cast<chrono::minutes>(duration - timeConsumed).count();
+    timeConsumed += chrono::duration<float>(60.f) * minutes;
+
+    int seconds = chrono::duration_cast<chrono::seconds>(duration - timeConsumed).count();
+
+    if (withMs) {
+        timeConsumed += chrono::duration<float>(1.f) * seconds;
+        int ms = chrono::duration_cast<chrono::milliseconds>(duration - timeConsumed).count();
+        return std::format_to_n(buf, bufLen, "{:02d}:{:02d}:{:02d}.{:03d}", hours, minutes, seconds, ms).size;
+    }
+    else {
+        return std::format_to_n(buf, bufLen, "{:02d}:{:02d}:{:02d}", hours, minutes, seconds).size;
+    }
+}
+
 int Util::OpenFileExplorer(const std::string& str)
 {
 #if defined(_WIN32)
-    std::wstring wstr = Util::Utf8ToUtf16(str);
-    std::wstringstream ss;
-    ss << L'"' << wstr << L'"';
-    auto params = ss.str();
+    auto const params = std::format(L"\"{:s}\"", Util::Utf8ToUtf16(str));
     return WindowsShellExecute(nullptr, L"explorer", params.c_str());
 #elif defined(__APPLE__)
     LOG_ERROR("Not implemented for this platform.");
@@ -67,18 +92,14 @@ int Util::OpenFileExplorer(const std::string& str)
 int Util::OpenUrl(const std::string& url)
 {
 #if defined(WIN32)
-    std::wstring wstr = Util::Utf8ToUtf16(url);
-    std::wstringstream ss;
-    ss << L'"' << wstr << L'"';
-    auto params = ss.str();
+    auto const params = std::format(L"\"{:s}\"", Util::Utf8ToUtf16(url));
     return WindowsShellExecute(L"open", params.c_str(), NULL);
 #elif defined(__APPLE__)
     LOG_ERROR("Not implemented for this platform.");
     return 1;
 #else
-    char tmp[1024];
-    stbsp_snprintf(tmp, sizeof(tmp), "xdg-open \"%s\"", url.c_str());
-    return std::system(tmp);
+    auto const params = std::format("xdg-open \"{:s}\"", url);
+    return std::system(params.c_str());
 #endif
 }
 
@@ -370,7 +391,8 @@ float Util::NextFloat() noexcept
 //    return rnd_pcg_nextf(&pcg);
 }
 
-uint32_t Util::RandomColor(float s, float v, float alpha) noexcept
+// QQQ
+std::uint32_t Util::RandomColor(float s, float v, float alpha) noexcept
 {
     // This is cool :^)
     // https://martin.ankerl.com/2009/12/09/how-to-create-random-colors-programmatically/
@@ -380,7 +402,8 @@ uint32_t Util::RandomColor(float s, float v, float alpha) noexcept
     H += goldenRatioConjugate;
     H = std::fmodf(H, 1.f);
 
-    ImColor color;
-    color.SetHSV(H, s, v, alpha);
-    return ImGui::ColorConvertFloat4ToU32(color);
+    //ImColor color;
+    //color.SetHSV(H, s, v, alpha);
+    //return ImGui::ColorConvertFloat4ToU32(color);
+    return {};
 }

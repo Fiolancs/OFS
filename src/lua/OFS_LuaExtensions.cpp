@@ -1,8 +1,9 @@
 #include "OpenFunscripter.h"
 #include "OFS_LuaExtensions.h"
-#include "OFS_Util.h"
-#include "UI/OFS_Profiling.h"
 #include "OFS_LuaCoreExtension.h"
+
+#include "OFS_Util.h"
+#include "OFS_Profiling.h"
 
 #include <format>
 #include <utility>

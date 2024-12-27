@@ -1,10 +1,11 @@
 #pragma once
-#include "UI/OFS_ScriptPositionsOverlays.h"
+#include "event/OFS_SDL_Event.h"
+#include "ui/OFS_ScriptPositionsOverlays.h"
 
 #include "event/OFS_Event.h"
 #include "Funscript/Funscript.h"
 #include "Funscript/FunscriptAction.h"
-#include "UI/ScriptPositionsOverlayMode.h"
+#include "ui/ScriptPositionsOverlayMode.h"
 
 #include <array>
 #include <memory>

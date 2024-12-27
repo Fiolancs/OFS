@@ -1,5 +1,4 @@
 #pragma once
-#include <SDL3/SDL_events.h>
 
 #include <memory>
 #include <cstdint>
@@ -40,11 +39,12 @@ class OFS_Event : public BaseEvent
 template<typename Event>
 OFS_EventType OFS_Event<Event>::EventType = BaseEvent::RegisterNewEvent();
 
-class OFS_SDL_Event : public OFS_Event<OFS_SDL_Event>
-{
-    public:
-    SDL_Event sdl = {0};
-};
+//#include <SDL3/SDL_events.h>
+//class OFS_SDL_Event : public OFS_Event<OFS_SDL_Event>
+//{
+//    public:
+//    SDL_Event sdl = {0};
+//};
 
 using OFS_DeferEventFn = std::function<void()>;
 class OFS_DeferEvent : public OFS_Event<OFS_DeferEvent>

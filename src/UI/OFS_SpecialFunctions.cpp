@@ -3,7 +3,7 @@
 #include "lua/OFS_Lua.h"
 #include "state/SpecialFunctionsState.h"
 
-#include "UI/OFS_ImGui.h"
+#include "ui/OFS_ImGui.h"
 #include "Funscript/FunscriptUndoSystem.h"
 
 #include <imgui.h>

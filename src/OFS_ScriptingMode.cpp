@@ -1,10 +1,11 @@
-#include "OpenFunscripter.h"
 #include "OFS_ScriptingMode.h"
+#include "OpenFunscripter.h"
+#include "event/OFS_SDL_Event.h"
+#include "ui/OFS_ImGui.h"
 #include "state/ScriptModeState.h"
 
 #include "OFS_Util.h"
-#include "UI/OFS_ImGui.h"
-#include "UI/OFS_Profiling.h"
+#include "OFS_Profiling.h"
 #include "localization/OFS_Localization.h"
 
 #include <imgui.h>

@@ -1,20 +1,23 @@
 ﻿#pragma once
-#include "OFS_FileLogging.h"
-#include "UI/OFS_Profiling.h"
-
-#include <chrono>
-#include <vector>
-#include <format>
-#include <string>
-#include <memory>
-#include <filesystem>
-#include <functional>
+#include "OFS_Profiling.h"
+#include "io/OFS_FileLogging.h"
 
 #include <scn/scan.h>
 #include <SDL3/SDL_timer.h>
 #include <SDL3/SDL_thread.h>
 #include <SDL3/SDL_iostream.h>
 #include <SDL3/SDL_filesystem.h>
+
+#include <chrono>
+#include <vector>
+#include <format>
+#include <string>
+#include <memory>
+#include <cstdint>
+#include <fstream>
+#include <iterator>
+#include <filesystem>
+#include <functional>
 
 #include "emmintrin.h" // for _mm_pause
 
@@ -80,6 +83,32 @@
 #define FUN_ASSERT(expr, msg)
 
 #endif
+
+namespace OFS::util
+{
+#ifdef _WIN32
+    inline std::filesystem::path WindowsMaxPath(std::string_view path)
+    {
+        std::filesystem::path const maxPath = std::filesystem::path(u8"\\\\?\\").append(path);
+        return maxPath;
+    }
+#endif
+
+    inline std::ifstream OpenFile(std::filesystem::path const& path, std::ios::openmode mode)
+    {
+        return std::ifstream{ path, mode };
+    }
+
+    template <typename Container> requires requires{ typename Container::value_type; }
+    std::size_t ReadFile(std::filesystem::path const& path, Container& buffer);
+
+    inline std::string ReadFileString(std::filesystem::path const& path)
+    {
+        std::string str{};
+        ReadFile(path, str);
+        return str;
+    }
+}
 
 class Util {
 public:
@@ -267,36 +296,10 @@ public:
         return NAN;
     }
 
-    inline static int FormatTime(char* buf, const int bufLen, float timeSeconds, bool withMs) noexcept
-    {
-        OFS_PROFILE(__FUNCTION__);
-        namespace chrono = std::chrono;
-        FUN_ASSERT(bufLen >= 0, "wat");
-        if (std::isinf(timeSeconds) || std::isnan(timeSeconds))
-            timeSeconds = 0.f;
+    static int FormatTime(char* buf, const int bufLen, float timeSeconds, bool withMs);
 
-        auto duration = chrono::duration<float>(timeSeconds);
-
-        int hours = chrono::duration_cast<chrono::hours>(duration).count();
-        auto timeConsumed = chrono::duration<float>(60.f * 60.f) * hours;
-
-        int minutes = chrono::duration_cast<chrono::minutes>(duration - timeConsumed).count();
-        timeConsumed += chrono::duration<float>(60.f) * minutes;
-
-        int seconds = chrono::duration_cast<chrono::seconds>(duration - timeConsumed).count();
-
-        if (withMs) {
-            timeConsumed += chrono::duration<float>(1.f) * seconds;
-            int ms = chrono::duration_cast<chrono::milliseconds>(duration - timeConsumed).count();
-            return std::format_to_n(buf, bufLen, "{:02d}:{:02d}:{:02d}.{:03d}", hours, minutes, seconds, ms).size;
-        }
-        else {
-            return std::format_to_n(buf, bufLen, "{:02d}:{:02d}:{:02d}", hours, minutes, seconds).size;
-        }
-    }
-
-    static int OpenFileExplorer(const std::string& path);
     static int OpenUrl(const std::string& url);
+    static int OpenFileExplorer(const std::string& path);
 
     inline static std::filesystem::path Basepath() noexcept
     {
@@ -492,5 +495,17 @@ public:
 
     static void InitRandom() noexcept;
     static float NextFloat() noexcept;
-    static uint32_t RandomColor(float s, float v, float alpha = 1.f) noexcept;
+    static std::uint32_t RandomColor(float s, float v, float alpha = 1.f) noexcept;
 };
+
+template <typename Container> requires requires{ typename Container::value_type; }
+std::size_t OFS::util::ReadFile(std::filesystem::path const& path, Container& buffer)
+{
+    if (auto file = OpenFile(path, std::ios::in); file)
+    {
+        using iterator_t = decltype(std::istreambuf_iterator(file));
+        buffer.assign(iterator_t{ file }, iterator_t{});
+        return buffer.size();
+    }
+    return 0;
+}

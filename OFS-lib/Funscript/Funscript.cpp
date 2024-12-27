@@ -1,10 +1,10 @@
 #include "Funscript.h"
 #include "OFS_Util.h"
-#include "UI/OFS_Profiling.h"
-#include "OFS_Serialization.h"
+#include "OFS_Profiling.h"
 #include "FunscriptUndoSystem.h"
+#include "io/OFS_Serialization.h"
 #include "event/OFS_EventSystem.h"
-#include "state/states/ChapterState.h"
+//#include "state/states/ChapterState.h" // QQQ
 
 #include <glaze/glaze.hpp>
 
@@ -110,28 +110,28 @@ namespace glz
 	constexpr auto allow_missing = detail::allow_missing_impl<MemPtr>();
 
 	template <>
-	struct glz::meta<OFS::v2::FunscriptAction>
+	struct meta<OFS::v2::FunscriptAction>
 	{
 		using T = OFS::v2::FunscriptAction;
-		static constexpr auto value = glz::object("at", &T::at, "pos", &T::pos);
+		static constexpr auto value = object("at", &T::at, "pos", &T::pos);
 	};
 
 	template <typename T>
-	struct glz::meta<::OFS::util::UnknownFieldProxy<T>>
+	struct meta<::OFS::util::UnknownFieldProxy<T>>
 	{
 		static constexpr auto unknown_read{ &::OFS::util::UnknownFieldProxy<T>::unknownFields };
 	};
 
 	template <>
-	struct glz::meta<OFS::util::FunscriptSerializeDummy>
+	struct meta<OFS::util::FunscriptSerializeDummy>
 	{
-		static constexpr auto value = glz::object(
+		static constexpr auto value = object(
 			"actions", &::OFS::util::FunscriptSerializeDummy::actions
-		,	"metadata", glz::allow_missing<&::OFS::util::FunscriptSerializeDummy::metadata>
+		,	"metadata", allow_missing<&::OFS::util::FunscriptSerializeDummy::metadata>
 		);
 	};
 	template <typename T>
-	struct glz::reflect<OFS::util::UnknownFieldProxy<T>> : public glz::reflect<T>
+	struct reflect<OFS::util::UnknownFieldProxy<T>> : public reflect<T>
 	{
 		using V = OFS::util::UnknownFieldProxy<T>;
 	};
@@ -170,7 +170,7 @@ std::string OFS::v2::Funscript::serialize(void) const
 	return json;
 }
 
-bool OFS::v2::Funscript::deserialize(std::string rawJson)
+bool OFS::v2::Funscript::deserialize(std::string_view rawJson)
 {
 	OFS::util::UnknownFieldProxy<OFS::util::FunscriptSerializeDummy> proxy{};
 
@@ -179,9 +179,6 @@ bool OFS::v2::Funscript::deserialize(std::string rawJson)
 		FUN_ASSERT(false, glz::format_error(err));
 		return false;
 	}
-
-	actions  = std::move(proxy.actions);
-	metadata = std::move(proxy.metadata);
 
 	// Save unknown fields
 	for (auto&& [key, value] : proxy.unknownFields)
@@ -193,6 +190,8 @@ bool OFS::v2::Funscript::deserialize(std::string rawJson)
 		unknownMetadataFieldsJSON.try_emplace(unknownMetadataFieldsJSON.end(), std::string(key), std::string(value.str));
 	}
 
+	actions  = std::move(proxy.actions);
+	metadata = std::move(proxy.metadata);
 	return true;
 }
 

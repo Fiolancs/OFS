@@ -1,12 +1,12 @@
 #pragma once
 #include "OFS_Util.h"
-#include "FunscriptAction.h"
-#include "FunscriptSpline.h"
+#include "OFS_Profiling.h"
 #include "OFS_Reflection.h"
 #include "event/OFS_Event.h"
-#include "UI/OFS_Profiling.h"
-#include "OFS_Serialization.h"
-#include "OFS_BinarySerialization.h"
+#include "io/OFS_Serialization.h"
+#include "io/OFS_BinarySerialization.h"
+#include "funscript/FunscriptAction.h"
+#include "funscript/FunscriptSpline.h"
 
 #include <map>
 #include <chrono>
@@ -49,7 +49,10 @@ namespace OFS
 			inline static constexpr char FILE_EXTENSION[] = ".funscript";
 
 			std::string serialize  (void) const;
-			bool        deserialize(std::string rawJson);
+			bool        deserialize(std::string_view rawJson); //rawJson may be modified 
+
+			auto& getActions (void) noexcept { return actions;  }
+			auto& getMetadata(void) noexcept { return metadata; }
 
 		private:
 			std::vector<FunscriptAction> actions;

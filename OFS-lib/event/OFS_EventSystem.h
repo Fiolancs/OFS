@@ -14,12 +14,13 @@ struct OFS_EventPolicy
 
 class EV
 {
-    private:
+private:
     static EV* instance;
     static uint32_t eventCounter;
     eventpp::EventQueue<OFS_EventType, void(const EventPointer&), OFS_EventPolicy> queue;
     inline bool process() noexcept { return queue.process(); }
-    public:
+
+public:
 
     static bool Init() noexcept;
     inline static void Process() noexcept { Get()->process(); }

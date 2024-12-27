@@ -1,6 +1,8 @@
 #pragma once
+#include "event/OFS_SDL_Event.h"
+
 #include "OFS_Reflection.h"
-#include "OFS_BinarySerialization.h"
+#include "io/OFS_BinarySerialization.h"
 #include "event/OFS_Event.h"
 #include "Funscript/Funscript.h"
 

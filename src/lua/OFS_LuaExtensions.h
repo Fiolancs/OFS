@@ -2,7 +2,7 @@
 #include "OFS_Lua.h"
 #include "OFS_LuaExtension.h"
 
-#include "UI/OFS_ImGui.h"
+#include "ui/OFS_ImGui.h"
 
 #include <string>
 #include <vector>

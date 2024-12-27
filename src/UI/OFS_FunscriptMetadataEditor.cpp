@@ -1,8 +1,8 @@
 #include "OFS_FunscriptMetadataEditor.h"
 #include "state/MetadataEditorState.h"
-#include "UI/OFS_ImGui.h"
+#include "ui/OFS_ImGui.h"
 
-#include "UI/OFS_Profiling.h"
+#include "OFS_Profiling.h"
 #include "localization/OFS_Localization.h"
 
 #include <imgui.h>

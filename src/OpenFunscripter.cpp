@@ -1,15 +1,17 @@
 ﻿#include "OpenFunscripter.h"
-#include "UI/OFS_DownloadFfmpeg.h"
-#include "state/OpenFunscripterState.h"
 
-#include "OFS_GL.h"
-#include "OFS_Util.h"
-#include "OFS_MpvLoader.h"
-#include "UI/OFS_ImGui.h"
-#include "UI/GradientBar.h"
-#include "UI/OFS_Profiling.h"
-#include "Funscript/FunscriptHeatmap.h"
+#include "event/OFS_SDL_Event.h"
+#include "gl/OFS_GL.h"
 #include "gl/OFS_Shader.h"
+#include "ui/OFS_ImGui.h"
+#include "ui/GradientBar.h"
+#include "ui/OFS_DownloadFfmpeg.h"
+#include "state/OpenFunscripterState.h"
+#include "videoplayer/OFS_MpvLoader.h"
+#include "Funscript/FunscriptHeatmap.h"
+
+#include "OFS_Util.h"
+#include "OFS_Profiling.h"
 #include "localization/OFS_Localization.h"
 
 #include "state/states/ChapterState.h"
@@ -120,15 +122,15 @@ OpenFunscripter::~OpenFunscripter() noexcept
 
 bool OpenFunscripter::Init(int argc, char* argv[])
 {
-    OFS_FileLogger::Init();
-    Util::InMainThread();
-    Util::InitRandom();
-
     FUN_ASSERT(!ptr, "there can only be one instance");
     ptr = this;
 
     auto prefPath = Util::Prefpath("");
     Util::CreateDirectories(prefPath);
+
+    OFS::FileLogger::get().init((std::filesystem::path(prefPath) / "OFS.log").string());
+    Util::InMainThread();
+    Util::InitRandom();
 
     OFS_StateManager::Init();
     {
@@ -1606,7 +1608,8 @@ void OpenFunscripter::Step() noexcept
             LoadedProject->ShowProjectWindow(&ShowProjectEditor);
 
             extensions->ShowExtensions();
-            OFS_FileLogger::DrawLogWindow(&ofsState.showDebugLog);
+            // QQQ
+            //OFS_FileLogger::DrawLogWindow(&ofsState.showDebugLog);
             keys->RenderKeybindingWindow();
             chapterMgr->ShowWindow(&ofsState.showChapterManager);
 
@@ -1682,7 +1685,7 @@ void OpenFunscripter::Step() noexcept
         render();
     }
 
-    OFS_FileLogger::Flush();
+    OFS::FileLogger::get().flush();
     OFS_ENDPROFILING();
     SDL_GL_SwapWindow(window);
     player->NotifySwap();
@@ -1740,7 +1743,7 @@ void OpenFunscripter::Shutdown() noexcept
     player.reset();
     playerControls.videoPreview.reset();
     OFS_MpvLoader::Unload();
-    OFS_FileLogger::Shutdown();
+    OFS::FileLogger::get().shutdown();
     webApi->Shutdown();
     controllerInput->Shutdown();
 
@@ -1849,9 +1852,9 @@ void OpenFunscripter::updateTitle() noexcept
 {
     SDL_SetWindowTitle(window, [&LoadedProject = LoadedProject] (void) -> std::string
         {
-            constexpr std::string_view title = "OpenFunscripter " OFS_LATEST_GIT_TAG "@" OFS_LATEST_GIT_HASH;
+            constexpr std::string_view title = "OpenFunscripter " OFS_LATEST_GIT_TAG "@" OFS_LATEST_GIT_HASH " - \"{:s}\"";
             if (LoadedProject->IsValid())
-                return std::format("{:s} - \"{:s}\"", title, LoadedProject->Path());
+                return std::format(title, LoadedProject->Path());
             return std::string(title);
         } ().c_str()
     );

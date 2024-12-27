@@ -1,7 +1,7 @@
 #pragma once
 #include "OFS_ScriptSimulator.h"
 #include "state/PreferenceState.h"
-#include "UI/OFS_ScriptPositionsOverlays.h"
+#include "ui/OFS_ScriptPositionsOverlays.h"
 
 #include "OFS_Util.h"
 #include "OFS_Reflection.h"

@@ -1,13 +1,15 @@
 #include "OFS_ScriptSimulator.h"
+#include "event/OFS_SDL_Event.h"
 #include "state/SimulatorState.h"
 
 #include "OFS_Util.h"
-#include "UI/OFS_ImGui.h"
+#include "ui/OFS_ImGui.h"
 #include "Funscript/Funscript.h"
 #include "OFS_DynamicFontAtlas.h"
 #include "event/OFS_EventSystem.h"
 
 #include <imgui.h>
+#include <imgui_internal.h>
 #include <SDL3/SDL_events.h>
 
 #include <format>

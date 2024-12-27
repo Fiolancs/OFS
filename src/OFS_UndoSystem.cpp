@@ -1,8 +1,10 @@
 #include "OFS_UndoSystem.h"
 
-#include "UI/OFS_Profiling.h"
+#include "OFS_Profiling.h"
 #include "Funscript/FunscriptUndoSystem.h"
 #include "localization/OFS_Localization.h"
+
+#include <imgui.h>
 
 #include <array>
 

@@ -1,11 +1,12 @@
 #include "OFS_EventSystem.h"
 
-#include <SDL3/SDL_events.h>
+//#include <SDL3/SDL_events.h>
 
 EV* EV::instance = nullptr;
 
+// QQQ
 // In order to not collide with SDL_Event types the counter starts at SDL_USEREVENT
-uint32_t EV::eventCounter = SDL_EVENT_USER;
+uint32_t EV::eventCounter = 32768; //SDL_EVENT_USER;
 
 static void deferHandler(const OFS_DeferEvent* ev) noexcept
 {

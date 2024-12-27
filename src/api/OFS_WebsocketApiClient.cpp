@@ -2,7 +2,7 @@
 #include "OFS_WebsocketApiEvents.h"
 
 #include "OFS_Util.h"
-#include "UI/OFS_Profiling.h"
+#include "OFS_Profiling.h"
 #include "event/OFS_EventSystem.h"
 
 #include <civetweb.h>
