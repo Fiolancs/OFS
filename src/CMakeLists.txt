@@ -179,6 +179,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_23)
 
 if(WIN32)
+    target_compile_definitions(${PROJECT_NAME} PUBLIC UNICODE _UNICODE)
     if(CMAKE_BUILD_TYPE MATCHES "Release" OR CMAKE_BUILD_TYPE MATCHES "RelWithDebInfo") 
         target_compile_options(${PROJECT_NAME} PUBLIC /GL)
         target_link_options(${PROJECT_NAME} PUBLIC /LTCG)

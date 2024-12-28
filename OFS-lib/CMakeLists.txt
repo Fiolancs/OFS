@@ -69,9 +69,10 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
     stb
     tracy
     nlohmann_json
+    xoshiro
 )
 
-target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
+target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_23)
 
 find_package(Git)
 execute_process(
@@ -107,6 +108,7 @@ endif()
 
 
 if(WIN32)
+    target_compile_definitions(${PROJECT_NAME} PUBLIC UNICODE _UNICODE)
     target_include_directories(${PROJECT_NAME} PUBLIC 
         "../3rdParty/libmpv/include"
     )

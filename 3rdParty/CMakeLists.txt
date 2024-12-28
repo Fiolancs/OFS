@@ -204,6 +204,12 @@ set(SCN_ENABLE_EXTRAS OFF CACHE BOOL "" FORCE)
 add_subdirectory("libscn/")
 
 # ============
+# = xorshiro =
+# ============
+add_library(xoshiro STATIC "xoshiro/src/xoshiro256plus.cpp")
+target_include_directories(xoshiro PUBLIC "xoshiro/include/")
+
+# ============
 # = zpp_bits =
 # ============
 add_library(zpp_bits INTERFACE)
