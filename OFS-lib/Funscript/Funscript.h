@@ -49,7 +49,7 @@ namespace OFS
 			inline static constexpr char FILE_EXTENSION[] = ".funscript";
 
 			std::string serialize  (void) const;
-			bool        deserialize(std::string_view rawJson); //rawJson may be modified 
+			bool        deserialize(std::string_view rawJson);
 
 			auto& getActions (void) noexcept { return actions;  }
 			auto& getMetadata(void) noexcept { return metadata; }

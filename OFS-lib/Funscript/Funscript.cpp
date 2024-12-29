@@ -116,12 +116,6 @@ namespace glz
 		static constexpr auto value = object("at", &T::at, "pos", &T::pos);
 	};
 
-	template <typename T>
-	struct meta<::OFS::util::UnknownFieldProxy<T>>
-	{
-		static constexpr auto unknown_read{ &::OFS::util::UnknownFieldProxy<T>::unknownFields };
-	};
-
 	template <>
 	struct meta<OFS::util::FunscriptSerializeDummy>
 	{
@@ -130,22 +124,28 @@ namespace glz
 		,	"metadata", allow_missing<&::OFS::util::FunscriptSerializeDummy::metadata>
 		);
 	};
-	template <typename T>
-	struct reflect<OFS::util::UnknownFieldProxy<T>> : public reflect<T>
-	{
-		using V = OFS::util::UnknownFieldProxy<T>;
-	};
 
-	template <>
-	inline constexpr decltype(auto) to_tie<::OFS::util::UnknownFieldProxy<OFS::v2::FunscriptMetadata>&, detail::count_members<::OFS::util::UnknownFieldProxy<OFS::v2::FunscriptMetadata>>>(::OFS::util::UnknownFieldProxy<OFS::v2::FunscriptMetadata>& t)
+	template <typename T>
+	struct meta<OFS::util::UnknownFieldProxy<T>>
 	{
-		return to_tie(static_cast<OFS::v2::FunscriptMetadata&>(t));
-	}
-	template <>
-	inline constexpr decltype(auto) to_tie<::OFS::util::UnknownFieldProxy<OFS::util::FunscriptSerializeDummy>&, detail::count_members<::OFS::util::UnknownFieldProxy<::OFS::util::FunscriptSerializeDummy>>>(::OFS::util::UnknownFieldProxy<::OFS::util::FunscriptSerializeDummy>& t)
-	{
-		return glz::reflect<::OFS::util::FunscriptSerializeDummy>::values;
-	}
+		static constexpr auto value = [] {
+				if constexpr (requires { meta<T>::value; })
+				{
+					return meta<T>::value;
+				}
+				else
+				{
+					auto t = [] <std::size_t ... Ns> (std::index_sequence<Ns ...>) {
+						return std::tuple_cat(std::make_pair(reflect<T>::keys[Ns], [](auto& val) -> auto& { return get<Ns>(to_tie(static_cast<T&>(val))); }) ...);
+					} (std::make_index_sequence<reflect<T>::size>{});
+					return[] <std::size_t ... Ns> (auto& tuple, std::index_sequence<Ns ...>)
+					{
+						return object(std::move(std::get<Ns>(tuple)) ...);
+					} (t, std::make_index_sequence<std::tuple_size_v<decltype(t)>>{});
+				}
+			} ();
+		static constexpr auto unknown_read{ &OFS::util::UnknownFieldProxy<T>::unknownFields };
+	};
 }
 
 std::string OFS::v2::Funscript::serialize(void) const
