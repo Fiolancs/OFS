@@ -2,6 +2,7 @@
 #include "OpenFunscripter.h"
 #include "OFS_Reflection.h"
 #include "state/states/BaseOverlayState.h"
+#include "OFS_SDLUtil.h"
 
 #include "OFS_Util.h"
 #include "ui/OFS_ImGui.h"
@@ -21,8 +22,8 @@ OFS_Preferences::OFS_Preferences() noexcept
 
 static void copyTranslationHelper() noexcept
 {
-	auto srcDir = Util::Basepath() / "data" / OFS_Translator::TranslationDir;
-	auto targetDir = Util::Prefpath(OFS_Translator::TranslationDir);
+	auto srcDir = OFS::util::basePath() / "data" / OFS_Translator::TranslationDir;
+	auto targetDir = OFS::util::preferredPath(OFS_Translator::TranslationDir);
 	std::error_code ec;
 	std::filesystem::directory_iterator langDirIt(srcDir, ec);
 	for(auto& pIt : langDirIt) {
@@ -143,7 +144,7 @@ bool OFS_Preferences::ShowPreferenceWindow() noexcept
 						copyTranslationHelper();
 						translationFiles.clear();
 						std::error_code ec;
-						std::filesystem::directory_iterator dirIt(Util::Prefpath(OFS_Translator::TranslationDir), ec);
+						std::filesystem::directory_iterator dirIt(OFS::util::preferredPath(OFS_Translator::TranslationDir), ec);
 						for (auto& pIt : dirIt) {
 							if(pIt.path().extension() == ".csv") {
 								translationFiles.emplace_back(pIt.path().filename().string());
@@ -158,7 +159,7 @@ bool OFS_Preferences::ShowPreferenceWindow() noexcept
 					ImGui::SameLine();
 					if(ImGui::Button(ICON_FOLDER_OPEN "###DIRECTORY_TRANSLATION"))
 					{
-						OFS::util::openFileExplorer(std::filesystem::path(Util::Prefpath(OFS_Translator::TranslationDir)).string());
+						OFS::util::openFileExplorer(OFS::util::preferredPath(OFS_Translator::TranslationDir));
 					}
 					ImGui::EndTabItem();
 				}

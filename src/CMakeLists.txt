@@ -7,6 +7,7 @@ set(OPEN_FUNSCRIPTER_SOURCES
     "OFS_ScriptingMode.cpp"
     "OFS_UndoSystem.cpp"
     "OFS_ControllerInput.cpp"
+    "OFS_SDLUtil.cpp"
 
     "api/OFS_WebsocketApi.cpp"
     "api/OFS_WebsocketApiClient.cpp"
@@ -60,6 +61,7 @@ set(OPEN_FUNSCRIPTER_HEADERS
     "OFS_ScriptingMode.h"
     "OFS_UndoSystem.h"
     "OFS_ControllerInput.h"
+    "OFS_SDLUtil.h"
 
     "api/OFS_WebsocketApi.h"
     "api/OFS_WebsocketApiClient.h"

@@ -1,5 +1,6 @@
 #include "OFS_LuaScriptAPI.h"
 #include "OpenFunscripter.h"
+#include "OFS_SDLUtil.h"
 
 // QQQ
 
@@ -72,7 +73,7 @@ bool OFS_ScriptAPI::Undo() noexcept
 LuaFunscript::LuaFunscript(int32_t scriptIdx, std::weak_ptr<Funscript> script) noexcept
     : script(script), scriptIdx(scriptIdx)
 {
-    FUN_ASSERT(Util::InMainThread(), "Not in main thread.");
+    FUN_ASSERT(OFS::util::isMainThread(), "Not in main thread.");
     this->TakeSnapshot();
 }
 
@@ -85,7 +86,7 @@ LuaFunscript::LuaFunscript(const FunscriptArray& actions) noexcept
 
 void LuaFunscript::Commit(/*sol::this_state L*/) noexcept
 {
-    //FUN_ASSERT(Util::InMainThread(), "Not in main thread.");
+    //FUN_ASSERT(OFS::util::isMainThread(), "Not in main thread.");
     //auto app = OpenFunscripter::ptr;
     //auto ref = script.lock();
     //if(ref) {

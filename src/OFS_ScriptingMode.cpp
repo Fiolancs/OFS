@@ -3,6 +3,7 @@
 #include "event/OFS_SDL_Event.h"
 #include "ui/OFS_ImGui.h"
 #include "state/ScriptModeState.h"
+#include "OFS_SDLUtil.h"
 
 #include "OFS_Util.h"
 #include "OFS_Profiling.h"
@@ -511,10 +512,10 @@ void RecordingMode::DrawModeSettings() noexcept
             recordingAxisX = nullptr;
             recordingAxisY = nullptr;
             for (auto& script : app->LoadedFunscripts()) {
-                if (Util::ContainsInsensitive(script->Title().c_str(), ".roll")) {
+                if (OFS::util::stringContainsInsensitive(script->Title(), ".roll")) {
                     recordingAxisX = script;
                 }
-                else if (Util::ContainsInsensitive(script->Title().c_str(), ".pitch")) {
+                else if (OFS::util::stringContainsInsensitive(script->Title(), ".pitch")) {
                     recordingAxisY = script;
                 }
             }

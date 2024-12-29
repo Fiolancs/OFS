@@ -2,11 +2,6 @@
 #include "OFS_DebugBreak.h"
 #include "io/OFS_FileLogging.h"
 
-#include <SDL3/SDL_timer.h>
-#include <SDL3/SDL_thread.h>
-#include <SDL3/SDL_iostream.h>
-#include <SDL3/SDL_filesystem.h>
-
 #include <span>
 #include <chrono>
 #include <vector>
@@ -18,9 +13,12 @@
 #include <filesystem>
 #include <functional>
 
-#include "emmintrin.h" // for _mm_pause
-
-#define OFS_PAUSE_INTRIN _mm_pause
+#if __has_include("emmintrin.h")
+#   include "emmintrin.h" // for _mm_pause
+#   define OFS_PAUSE_INTRIN _mm_pause()
+#elif 
+#define OFS_PAUSE_INTRIN __asm__("REP NOP")
+#endif
 
 // helper for FontAwesome. Version 4.7.0 2016 ttf
 #define ICON_FOLDER_OPEN "\xef\x81\xbc"
@@ -80,8 +78,8 @@ namespace OFS::util
 
     std::filesystem::path sanitizePath(std::filesystem::path const& path);
 
-    std::filesystem::path pathFromString(std::string const& str) noexcept;
-    std::filesystem::path pathFromString(std::u8string const& str) noexcept;
+    std::filesystem::path pathFromString(std::string_view str) noexcept;
+    std::filesystem::path pathFromString(std::u8string_view str) noexcept;
     void concatPathSafe(std::filesystem::path& path, std::string const& element);
 
     bool fileExists(std::filesystem::path const& file) noexcept;
@@ -102,7 +100,7 @@ namespace OFS::util
     std::size_t writeFile(std::filesystem::path const& path, std::span<std::byte const> buffer);
     std::size_t writeFile(std::filesystem::path const& path, std::span<char const> buffer);
 
-    std::string filename(std::string const& path) noexcept;
+    std::string filename(std::string_view path) noexcept;
     std::string filename(std::filesystem::path const& path) noexcept;
 
 
@@ -122,7 +120,7 @@ namespace OFS::util
     constexpr std::string& rtrim(std::string& str, std::string_view chars = " \t\n\r\v\f") noexcept;
     constexpr std::string&  trim(std::string& str, std::string_view chars = " \t\n\r\v\f") noexcept;
 
-    std::wstring utf8ToUtf16(const std::string& str) noexcept;
+    std::wstring utf8ToUtf16(std::string_view str) noexcept;
 
 
     // ====================================================================================
@@ -231,31 +229,6 @@ public:
         //return data;
     }
 
-    inline static std::filesystem::path Basepath() noexcept
-    {
-        char const* base = SDL_GetBasePath();
-        auto path = OFS::util::pathFromString(base);
-        return path;
-    }
-
-    inline static bool StringEqualsInsensitive(const std::string& string1, const std::string string2) noexcept
-    {
-        if (string1.length() != string2.length()) return false;
-        return ContainsInsensitive(string1.c_str(), string2.c_str());
-    }
-
-    inline static bool ContainsInsensitive(const char* haystack, const char* needle) noexcept
-    {
-        size_t length = SDL_strlen(needle);
-        while (*haystack) {
-            if (SDL_strncasecmp(haystack, needle, length) == 0) {
-                return true;
-            }
-            ++haystack;
-        }
-        return false;
-    }
-
 
     struct FileDialogResult {
         std::vector<std::string> files;
@@ -291,28 +264,6 @@ public:
 
     static void MessageBoxAlert(const std::string& title, const std::string& message) noexcept;
 
-    static std::string Resource(const std::string& path) noexcept;
-
-    static std::u8string Prefpath(const std::string& path = std::string()) noexcept
-    {
-        static const char* cachedPref = SDL_GetPrefPath("OFS", "OFS3_data");
-        static std::filesystem::path prefPath = OFS::util::pathFromString(cachedPref);
-        if (!path.empty()) {
-            std::filesystem::path rel = OFS::util::pathFromString(path);
-            rel.make_preferred();
-            return (prefPath / rel).u8string();
-        }
-        return prefPath.u8string();
-    }
-
-    static std::filesystem::path FfmpegPath() noexcept;
-
-    inline static bool InMainThread() noexcept
-    {
-        static auto Main = SDL_ThreadID();
-        return SDL_ThreadID() == Main;
-    }
-
     static std::uint32_t RandomColor(float s, float v, float alpha = 1.f) noexcept;
 };
 
@@ -340,7 +291,7 @@ inline std::string OFS::util::readFileString(std::filesystem::path const& path)
     return str;
 }
 
-inline std::string OFS::util::filename(std::string const& path) noexcept
+inline std::string OFS::util::filename(std::string_view path) noexcept
 {
     return filename(pathFromString(path));
 }

@@ -5,6 +5,7 @@
 #include "ui/OFS_ImGui.h"
 #include "ui/ScriptPositionsOverlayMode.h"
 #include "videoplayer/OFS_VideoplayerEvents.h"
+#include "OFS_SDLUtil.h"
 
 #include "OFS_Waveform.h"
 #include "OFS_Profiling.h"
@@ -13,10 +14,9 @@
 #include "state/states/WaveformState.h"
 #include "state/states/BaseOverlayState.h"
 
+#include <imgui.h>
 #include <SDL3/SDL_timer.h>
 #include <SDL3/SDL_events.h>
-#include <imgui.h>
-#include <misc/cpp/imgui_stdlib.h>
 
 
 inline static FunscriptAction getActionForPoint(const OverlayDrawingCtx& ctx, ImVec2 point) noexcept
@@ -463,14 +463,14 @@ void ScriptTimeline::ShowScriptPositions(
 			auto updateAudioWaveformThread = [](void* userData) -> int {
 				auto& ctx = *((ScriptTimeline*)userData);
 				std::error_code ec;
-				auto ffmpegPath = Util::FfmpegPath();
-				auto outputPath = Util::Prefpath("tmp");
+				auto ffmpegPath = OFS::util::ffmpegPath();
+				auto outputPath = OFS::util::preferredPath("tmp");
 				if (!OFS::util::createDirectories(outputPath)) {
 					return 0;
 				}
 				
-				outputPath = (OFS::util::pathFromString(outputPath) / "audio.flac").u8string();
-				bool succ = ctx.Wave.data.GenerateAndLoadFlac(ffmpegPath.string(), ctx.videoPath, std::filesystem::path(outputPath).string().c_str());
+				outputPath = outputPath / "audio.flac";
+				bool succ = ctx.Wave.data.GenerateAndLoadFlac(ffmpegPath.string(), ctx.videoPath, outputPath.string());
 				EV::Enqueue<WaveformProcessingFinishedEvent>();
 				return 0;
 			};

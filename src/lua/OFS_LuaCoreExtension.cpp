@@ -1,5 +1,7 @@
 #include "OFS_LuaCoreExtension.h"
 #include "OFS_LuaExtensions.h"
+#include "OFS_SDLUtil.h"
+
 #include "OFS_Util.h"
 
 #include <filesystem>
@@ -204,7 +206,7 @@ end
 void OFS_CoreExtension::setup() noexcept
 {
     std::error_code ec;
-    auto path = OFS::util::pathFromString(Util::Prefpath(OFS_LuaExtensions::ExtensionDir)) / "Core";
+    auto path = OFS::util::preferredPath(OFS_LuaExtensions::ExtensionDir) / "Core";
     #if 1
     if(true) {
     #else
@@ -212,10 +214,8 @@ void OFS_CoreExtension::setup() noexcept
     #endif
         OFS::util::createDirectories(path);
         path /= "main.lua";
-        auto pString = path.string();
-        auto handle = OFS::util::openFile(pString, std::ios::out | std::ios::binary);
-        if (handle) {
-            handle.write(Source, std::size(Source));
+        if (auto writtenSz = OFS::util::writeFile(path, Source); !writtenSz) {
+            // QQQ write failed
         }
     }
 }

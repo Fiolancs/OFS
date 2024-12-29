@@ -1,4 +1,5 @@
 #include "OFS_KeybindingSystem.h"
+#include "OFS_SDLUtil.h"
 
 #include "OFS_Util.h"
 #include "localization/OFS_Localization.h"
@@ -389,7 +390,7 @@ void OFS_KeybindingSystem::renderGroup(OFS_KeybindingState& state, OFS_ActionGro
         for(uint32_t idx : group.actionUiIndices)
         {
             auto& ui = actionUI[idx];
-            if(!actionFilter.empty() && !Util::ContainsInsensitive(ui.Name.c_str(), actionFilter.c_str()))
+            if(!actionFilter.empty() && !OFS::util::stringContainsInsensitive(ui.Name.c_str(), actionFilter))
                 continue;
             auto modal = renderActionRow(ui);
             if(modal == KeyModalType::New)

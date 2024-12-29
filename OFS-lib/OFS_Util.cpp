@@ -61,13 +61,13 @@ std::filesystem::path OFS::util::sanitizePath(std::filesystem::path const& path)
     return path;
 }
 
-std::filesystem::path OFS::util::pathFromString(std::string const& str) noexcept
+std::filesystem::path OFS::util::pathFromString(std::string_view str) noexcept
 {
     auto result = std::filesystem::u8path(str);
     result.make_preferred();
     return result;
 }
-std::filesystem::path OFS::util::pathFromString(std::u8string const& str) noexcept
+std::filesystem::path OFS::util::pathFromString(std::u8string_view str) noexcept
 {
     auto result = std::filesystem::u8path(str);
     result.make_preferred();
@@ -194,15 +194,15 @@ bool OFS::util::directoryExists(std::filesystem::path const& dir) noexcept
     return !ec && std::filesystem::exists(status) && std::filesystem::is_directory(status);
 }
 
-std::wstring OFS::util::utf8ToUtf16(std::string const& str) noexcept
+std::wstring OFS::util::utf8ToUtf16(std::string_view str) noexcept
 {
     std::wstring wstr{};
     try {
         std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter{};
-        wstr = converter.from_bytes(str);
+        wstr = converter.from_bytes(str.data(), str.data() + str.size());
     }
     catch (const std::exception& ex) {
-        LOGF_ERROR("Failed to convert to UTF-16.\n{:s}", str.c_str());
+        LOGF_ERROR("Failed to convert to UTF-16.\n{:s}", str);
     }
     return wstr;
 }
@@ -339,8 +339,11 @@ void Util::OpenFileDialog(const std::string& title, const std::string& path, Fil
     threadData->multiple = multiple;
     threadData->path = path;
     threadData->title = title;
-    auto handle = SDL_CreateThread(thread, "OpenFileDialog", threadData);
-    SDL_DetachThread(handle);
+    auto handle = std::thread(thread, threadData);
+    handle.detach();
+    // QQQ
+    //auto handle = SDL_CreateThread(thread, "OpenFileDialog", threadData);
+    //SDL_DetachThread(handle);
 }
 
 void Util::SaveFileDialog(const std::string& title, const std::string& path, FileDialogResultHandler&& handler, const std::vector<const char*>& filters, const std::string& filterText) noexcept
@@ -384,8 +387,11 @@ void Util::SaveFileDialog(const std::string& title, const std::string& path, Fil
     threadData->filters = filters;
     threadData->filterText = filterText;
     threadData->handler = std::move(handler);
-    auto handle = SDL_CreateThread(thread, "SaveFileDialog", threadData);
-    SDL_DetachThread(handle);
+    auto handle = std::thread(thread, threadData);
+    handle.detach();
+    // QQQ
+    //auto handle = SDL_CreateThread(thread, "SaveFileDialog", threadData);
+    //SDL_DetachThread(handle);
 }
 
 void Util::OpenDirectoryDialog(const std::string& title, const std::string& path, FileDialogResultHandler&& handler) noexcept
@@ -421,8 +427,11 @@ void Util::OpenDirectoryDialog(const std::string& title, const std::string& path
     threadData->title = title;
     threadData->path = path;
     threadData->handler = std::move(handler);
-    auto handle = SDL_CreateThread(thread, "SaveFileDialog", threadData);
-    SDL_DetachThread(handle);
+    auto handle = std::thread(thread, threadData);
+    handle.detach();
+    // QQQ
+    //auto handle = SDL_CreateThread(thread, "SaveFileDialog", threadData);
+    //SDL_DetachThread(handle);
 }
 
 void Util::YesNoCancelDialog(const std::string& title, const std::string& message, YesNoDialogResultHandler&& handler)
@@ -458,8 +467,11 @@ void Util::YesNoCancelDialog(const std::string& title, const std::string& messag
     threadData->title = title;
     threadData->message = message;
     threadData->handler = std::move(handler);
-    auto handle = SDL_CreateThread(thread, "YesNoCancelDialog", threadData);
-    SDL_DetachThread(handle);
+    auto handle = std::thread(thread, threadData);
+    handle.detach();
+    // QQQ
+    //auto handle = SDL_CreateThread(thread, "YesNoCancelDialog", threadData);
+    //SDL_DetachThread(handle);
 }
 
 void Util::MessageBoxAlert(const std::string& title, const std::string& message) noexcept
@@ -483,25 +495,11 @@ void Util::MessageBoxAlert(const std::string& title, const std::string& message)
     auto threadData = new MessageBoxData;
     threadData->title = title;
     threadData->message = message;
-    auto handle = SDL_CreateThread(thread, "MessageBoxAlert", threadData);
-    SDL_DetachThread(handle);
-}
-
-std::string Util::Resource(const std::string& path) noexcept
-{
-    auto base = Util::Basepath() / L"data" / OFS::util::utf8ToUtf16(path);
-    base.make_preferred();
-    return base.string();
-}
-
-std::filesystem::path Util::FfmpegPath() noexcept
-{
-#if _WIN32
-    return OFS::util::pathFromString(Util::Prefpath("ffmpeg.exe"));
-#else
-    auto ffmpegPath = std::filesystem::path("ffmpeg");
-    return ffmpegPath;
-#endif
+    auto handle = std::thread(thread, threadData);
+    handle.detach();
+    // QQQ
+    //auto handle = SDL_CreateThread(thread, "MessageBoxAlert", threadData);
+    //SDL_DetachThread(handle);
 }
 
 

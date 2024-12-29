@@ -375,7 +375,7 @@ void OFS_Project::loadMultiAxis(const std::string& rootScript) noexcept
 {
     std::vector<std::filesystem::path> relatedFiles;
     {
-        auto filename = OFS::util::filename(rootScript) + '.';
+        auto filename = rootScript + '.';
         auto searchDirectory = OFS::util::pathFromString(rootScript);
         searchDirectory.remove_filename();
 

@@ -6,27 +6,29 @@
 #include <vector>
 #include <format>
 #include <variant>
+#include <filesystem>
 
 class OFS_Translator
 {
     private:
     std::vector<char> StringData;
-    
+    std::filesystem::path stdPath;
+
     public:
     static OFS_Translator* ptr;
     static constexpr const char* TranslationDir = "lang";
 
-    OFS_Translator() noexcept;
+    OFS_Translator(std::filesystem::path translationDir) noexcept;
     std::array<const char*, static_cast<uint32_t>(Tr::MAX_STRING_COUNT)> Translation;
     bool LoadTranslation(const char* name) noexcept;
     void LoadDefaults() noexcept;
 
     static bool MergeIntoOne(const char* input1, const char* input2, const char* outputPath) noexcept;
 
-    static void Init() noexcept
+    static void Init(std::filesystem::path translationDir) noexcept
     {
         if(ptr != nullptr) return;
-        ptr = new OFS_Translator();
+        ptr = new OFS_Translator(translationDir);
     }
 
     static void Shutdown() noexcept
@@ -46,10 +48,8 @@ class OFS_Translator
 //#define TR_ID(id, str_id)\
 //FMT("%s###%s", OFS_DefaultStrings::Default[static_cast<uint32_t>(str_id)], id)
 
-#define TR(str_id)\
-OFS_Translator::ptr->Translation[static_cast<uint32_t>(Tr::str_id)]
-#define TRD(id)\
-OFS_Translator::ptr->Translation[static_cast<uint32_t>(id)]
+#define TR(str_id) OFS_Translator::ptr->Translation[static_cast<uint32_t>(Tr::str_id)]
+#define TRD(id)    OFS_Translator::ptr->Translation[static_cast<uint32_t>(id)]
 #define TR_ID(id, str_id)\
 std::format("{:s}###{:s}", OFS_Translator::ptr->Translation[static_cast<uint32_t>(str_id)], id)
 

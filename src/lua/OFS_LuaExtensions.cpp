@@ -1,6 +1,7 @@
 #include "OpenFunscripter.h"
 #include "OFS_LuaExtensions.h"
 #include "OFS_LuaCoreExtension.h"
+#include "OFS_SDLUtil.h"
 
 #include "OFS_Util.h"
 #include "OFS_Profiling.h"
@@ -22,7 +23,7 @@ inline static void ShowExtensionLogWindow(bool* open) noexcept
 
 OFS_LuaExtensions::OFS_LuaExtensions() noexcept
 {
-	load(std::filesystem::path(Util::Prefpath("extension.json")).string());
+	load(OFS::util::preferredPath("extension.json").string());
 	Extensions.reserve(100); // NOTE: this is mitigate a relocation bug
 	UpdateExtensionList();
 	
@@ -49,7 +50,7 @@ void OFS_LuaExtensions::load(const std::string& path) noexcept
 {
 	LastConfigPath = path;
 	bool succ;
-	auto jsonText = OFS::util::readFileString(path.c_str());
+	auto jsonText = OFS::util::readFileString(path);
 	auto json = Util::ParseJson(jsonText, &succ);
 	if (succ) {
 		OFS::Serializer<false>::Deserialize(*this, json);
@@ -84,7 +85,7 @@ void OFS_LuaExtensions::removeNonExisting() noexcept
 
 void OFS_LuaExtensions::UpdateExtensionList() noexcept
 {
-	auto extensionDir = Util::Prefpath(ExtensionDir);
+	auto extensionDir = OFS::util::preferredPath(ExtensionDir);
 	OFS::util::createDirectories(extensionDir);
 	std::error_code ec;
 	std::filesystem::directory_iterator dirIt(extensionDir, ec);

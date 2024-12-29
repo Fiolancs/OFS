@@ -1,5 +1,6 @@
 #include "videoplayer/OFS_Videoplayer.h"
 #include "gl/OFS_GL.h"
+#include "OFS_SDLUtil.h"
 
 #include "OFS_Util.h"
 #include "event/OFS_EventSystem.h"
@@ -173,7 +174,7 @@ bool OFS_Videoplayer::Init(bool hwAccel) noexcept
     if(!CTX->mpv) {
         return false;
     }
-    auto confPath = std::filesystem::path(Util::Prefpath()).string();
+    auto confPath = OFS::util::preferredPath().string();
 
     int error = 0;
     error = mpv_set_option_string(CTX->mpv, "config", "yes");

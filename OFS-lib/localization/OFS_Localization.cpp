@@ -4,17 +4,16 @@
 #include <glaze/csv.hpp>
 
 #include <array>
-#include <fstream>
-#include <iterator>
 #include <optional>
 #include <filesystem>
 
 
 OFS_Translator* OFS_Translator::ptr = nullptr;
 
-OFS_Translator::OFS_Translator() noexcept
+OFS_Translator::OFS_Translator(std::filesystem::path translationDir) noexcept
+    : stdPath{ translationDir / TranslationDir }
 {
-    OFS::util::createDirectories(Util::Prefpath(TranslationDir));
+    OFS::util::createDirectories(stdPath);
     // initialize with the default strings
     LoadDefaults();
 }
@@ -46,12 +45,10 @@ struct glz::meta<LanguageDoc>
     );
 };
 
-static std::optional<LanguageDoc> OpenDocument(const char* path) noexcept
+static std::optional<LanguageDoc> OpenDocument(std::filesystem::path path) noexcept
 {
-    if (std::ifstream file{ std::filesystem::path(path), std::ios::binary })
+    if (std::string file_contents = OFS::util::readFileString(path); !file_contents.empty())
     {
-        std::string file_contents{ std::istreambuf_iterator<char>{file}, std::istreambuf_iterator<char>{} };
-
         LanguageDoc doc{};
         if (auto const err = glz::read_csv<glz::colwise>(doc, file_contents); !err)
         {
@@ -59,28 +56,7 @@ static std::optional<LanguageDoc> OpenDocument(const char* path) noexcept
         }
         else
         {
-            //QQQ
-            //LOG_ERROR(err.custom_error_message);
-        }
-    }
-
-    return {};
-}
-static std::optional<LanguageDoc> OpenDocument(const char8_t* path) noexcept
-{
-    if (std::ifstream file{ std::filesystem::path(path), std::ios::binary })
-    {
-        std::string file_contents{ std::istreambuf_iterator<char>{file}, std::istreambuf_iterator<char>{} };
-
-        LanguageDoc doc{};
-        if (auto const err = glz::read_csv<glz::colwise>(doc, file_contents); !err)
-        {
-            return doc;
-        }
-        else
-        {
-            //QQQ
-            //LOG_ERROR(err.custom_error_message);
+            LOG_ERROR(err.custom_error_message);
         }
     }
 
@@ -89,10 +65,7 @@ static std::optional<LanguageDoc> OpenDocument(const char8_t* path) noexcept
 
 bool OFS_Translator::LoadTranslation(const char* name) noexcept
 {
-    auto stdPath = OFS::util::pathFromString(Util::Prefpath(TranslationDir)) / name;
-    auto path = stdPath.u8string();
-
-    auto docOpt = OpenDocument(path.c_str());
+    auto docOpt = OpenDocument(stdPath / OFS::util::utf8ToUtf16(name));
     if(!docOpt.has_value()) return false;
 
     auto doc = docOpt.value();

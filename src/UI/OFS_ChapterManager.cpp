@@ -1,5 +1,6 @@
 #include "OFS_ChapterManager.h"
 #include "state/states/ChapterState.h"
+#include "OFS_SDLUtil.h"
 
 #include "OpenFunscripter.h"
 #include "event/OFS_EventSystem.h"
@@ -125,7 +126,7 @@ bool OFS_ChapterManager::ExportClip(const Chapter& chapter, const std::string& o
     auto videoOutputPath = outputDir / clippedMedia;
     auto videoOutputString = videoOutputPath.string();
     
-    auto ffmpegPath = Util::FfmpegPath().string();
+    auto ffmpegPath = OFS::util::ffmpegPath().string();
     auto mediaPathStr = mediaPath.string();
 
     std::array<const char*, 17> args = {

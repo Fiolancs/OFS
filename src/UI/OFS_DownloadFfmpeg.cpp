@@ -1,11 +1,13 @@
-#include <sstream>
-#include <filesystem>
+#include "OFS_DownloadFfmpeg.h"
+#include "OFS_SDLUtil.h"
+
+#include "OFS_Util.h"
+#include "localization/OFS_Localization.h"
 
 #include <SDL3/SDL_thread.h>
 
-#include "OFS_DownloadFfmpeg.h"
-#include "OFS_Util.h"
-#include "localization/OFS_Localization.h"
+#include <sstream>
+#include <filesystem>
 
 
 #ifdef _WIN32
@@ -97,7 +99,7 @@ void OFS_DownloadFfmpeg::DownloadFfmpegModal() noexcept
 #ifdef WIN32
     static bool DownloadInProgress = false;
     static bool ExtractFailed = false;
-    static auto ZipExists = OFS::util::fileExists(std::filesystem::path(Util::Prefpath("ffmpeg.zip")).string());
+    static auto ZipExists = OFS::util::fileExists(OFS::util::preferredPath("ffmpeg.zip"));
 
     bool isOpen = true;
     if(ImGui::BeginPopupModal(TR_ID(OFS_DownloadFfmpeg::WindowId, Tr::DOWNLOAD_FFMPEG).c_str(), DownloadInProgress ? NULL : &isOpen, ImGuiWindowFlags_AlwaysAutoResize)) {
@@ -106,7 +108,7 @@ void OFS_DownloadFfmpeg::DownloadFfmpegModal() noexcept
             ImGui::TextUnformatted(TR(FFMPEG_WAS_NOT_FOUND_MSG));
             if(ImGui::Button(TR(YES), ImVec2(-1.f, 0.f))) {
                 auto dlThread = [](void* data) -> int {
-                    auto path = OFS::util::pathFromString(Util::Prefpath());
+                    auto path = OFS::util::preferredPath();
                     auto downloadPath =(path / "ffmpeg.zip").wstring();
                     URLDownloadToFileW(NULL, L"https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip",
                         downloadPath.c_str(), 0, &cb);
@@ -127,7 +129,7 @@ void OFS_DownloadFfmpeg::DownloadFfmpegModal() noexcept
             DownloadInProgress = false;
             ZipExists = true;
             std::wstringstream ss;
-            auto path = OFS::util::pathFromString(Util::Prefpath());
+            auto path = OFS::util::preferredPath();
             auto downloadPath = (path / "ffmpeg.zip");
 
             ss << L" -xvf ";
@@ -135,7 +137,7 @@ void OFS_DownloadFfmpeg::DownloadFfmpegModal() noexcept
             ss << L" --strip-components 2  **/ffmpeg.exe";
 
             auto params = ss.str();
-            auto dir = OFS::util::pathFromString(Util::Prefpath()).wstring();
+            auto dir = path.wstring();
             ExtractFailed = !ExecuteSynchronous(L"tar.exe", params.c_str(), dir.c_str());
 
             if(!ExtractFailed) {

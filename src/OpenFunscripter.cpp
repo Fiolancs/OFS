@@ -1,5 +1,6 @@
 ﻿#include "OpenFunscripter.h"
 
+#include "OFS_SDLUtil.h"
 #include "event/OFS_SDL_Event.h"
 #include "gl/OFS_GL.h"
 #include "gl/OFS_Shader.h"
@@ -69,12 +70,12 @@ bool OpenFunscripter::imguiSetup() noexcept
     io.ConfigViewportsNoTaskBarIcon = false;
     io.ConfigDockingTransparentPayload = true;
 
-    static auto imguiIniPath = std::filesystem::path(Util::Prefpath("imgui.ini")).string();
-    io.IniFilename = imguiIniPath.c_str();
+    static auto imguiIniPath = OFS::util::preferredPath("imgui.ini");
+    io.IniFilename = imguiIniPath.string().c_str();
 
     // NOTE: OFS_Preferences::OFS_Preferences() sets OFS_DynFontAtlas::FontOverride
     OFS_DynFontAtlas::Init();
-    OFS_Translator::Init();
+    OFS_Translator::Init(OFS::util::preferredPath()); // QQQ
     auto& prefState = PreferenceState::State(preferences->StateHandle());
     if (!prefState.languageCsv.empty()) {
         if (OFS_Translator::ptr->LoadTranslation(prefState.languageCsv.c_str())) {
@@ -125,18 +126,18 @@ bool OpenFunscripter::Init(int argc, char* argv[])
     FUN_ASSERT(!ptr, "there can only be one instance");
     ptr = this;
 
-    auto prefPath = Util::Prefpath("");
+    auto prefPath = OFS::util::preferredPath("");
     OFS::util::createDirectories(prefPath);
 
-    OFS::FileLogger::get().init((std::filesystem::path(prefPath) / "OFS.log").string());
-    Util::InMainThread();
+    OFS::FileLogger::get().init((prefPath / "OFS.log").string());
+    OFS::util::isMainThread();
 
     OFS_StateManager::Init();
     {
         auto stateMgr = OFS_StateManager::Get();
         std::vector<std::uint8_t> fileData;
-        auto statePath = std::filesystem::path(Util::Prefpath("state.ofs")).string();
-        if (OFS::util::readFile(statePath.c_str(), fileData) > 0) {
+        auto statePath = OFS::util::preferredPath("state.ofs");
+        if (OFS::util::readFile(statePath, fileData) > 0) {
             bool succ;
             auto cbor = Util::ParseCBOR(fileData, &succ);
             if (succ) {
@@ -279,7 +280,7 @@ bool OpenFunscripter::Init(int argc, char* argv[])
 
     chapterMgr = std::make_unique<OFS_ChapterManager>();
 #ifdef WIN32
-    OFS_DownloadFfmpeg::FfmpegMissing = !OFS::util::fileExists(Util::FfmpegPath().string());
+    OFS_DownloadFfmpeg::FfmpegMissing = !OFS::util::fileExists(OFS::util::ffmpegPath());
 #endif
 
     closeProject(true);
@@ -765,7 +766,7 @@ void OpenFunscripter::registerBindings()
         keys->RegisterAction(
             { "save_frame_as_image",
                 [this]() {
-                    auto screenshotDir = std::filesystem::path(Util::Prefpath("screenshot")).string();
+                    auto screenshotDir = OFS::util::preferredPath("screenshot").string();
                     player->SaveFrameToImage(screenshotDir);
                 },
                 false },
@@ -1490,7 +1491,7 @@ void OpenFunscripter::autoBackup() noexcept
     OFS_PROFILE(__FUNCTION__);
     lastBackup = std::chrono::steady_clock::now();
 
-    auto backupDir = OFS::util::pathFromString(Util::Prefpath("backup"));
+    auto backupDir = OFS::util::preferredPath("backup");
     auto name = OFS::util::filename(OFS::util::pathFromString(player->VideoPath()));
     name = OFS::util::trim(name); // this needs to be trimmed because trailing spaces
 
@@ -1714,7 +1715,7 @@ int OpenFunscripter::Run() noexcept
         if (!prefState.vsync) {
             FrameEnd = SDL_GetPerformanceCounter();
             while ((FrameEnd - FrameStart) < minFrameTime) {
-                OFS_PAUSE_INTRIN();
+                OFS_PAUSE_INTRIN;
                 FrameEnd = SDL_GetPerformanceCounter();
             }
         }
@@ -2230,7 +2231,7 @@ void OpenFunscripter::ShowMainMenuBar() noexcept
                     : Status ^ OFS_Status::OFS_AutoBackup;
             }
             if (ImGui::MenuItem(TR(OPEN_BACKUP_DIR))) {
-                OFS::util::openFileExplorer(std::filesystem::path(Util::Prefpath("backup")).string().c_str());
+                OFS::util::openFileExplorer(OFS::util::preferredPath("backup"));
             }
             ImGui::EndMenu();
         }
@@ -2326,11 +2327,11 @@ void OpenFunscripter::ShowMainMenuBar() noexcept
         }
         if (ImGui::BeginMenu(TR_ID("EDIT", Tr::EDIT).c_str())) {
             if (ImGui::MenuItem(TR(SAVE_FRAME_AS_IMAGE), BINDING_STRING("save_frame_as_image"))) {
-                auto screenshotDir = std::filesystem::path(Util::Prefpath("screenshot")).string();
+                auto screenshotDir = OFS::util::preferredPath("screenshot").string();
                 player->SaveFrameToImage(screenshotDir);
             }
             if (ImGui::MenuItem(TR(OPEN_SCREENSHOT_DIR))) {
-                auto screenshotDir = std::filesystem::path(Util::Prefpath("screenshot")).string();
+                auto screenshotDir = OFS::util::preferredPath("screenshot").string();
                 OFS::util::createDirectories(screenshotDir);
                 OFS::util::openFileExplorer(screenshotDir.c_str());
             }
@@ -2565,7 +2566,7 @@ void OpenFunscripter::ShowMainMenuBar() noexcept
             OFS::Tooltip(TR(DEV_MODE_TOOLTIP));
             if (ImGui::MenuItem(TR(SHOW_LOGS), NULL, &OFS_LuaExtensions::ShowLogs)) {}
             if (ImGui::MenuItem(TR(EXTENSION_DIR))) {
-                OFS::util::openFileExplorer(std::filesystem::path(Util::Prefpath(OFS_LuaExtensions::ExtensionDir)).string());
+                OFS::util::openFileExplorer(OFS::util::preferredPath(OFS_LuaExtensions::ExtensionDir));
             }
             ImGui::Separator();
             for (auto& ext : extensions->Extensions) {

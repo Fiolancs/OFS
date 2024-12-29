@@ -4,6 +4,7 @@
 #include "OFS_Profiling.h"
 #include "event/OFS_EventSystem.h"
 
+#include <SDL3/SDL_timer.h>
 #include <SDL3/SDL_events.h>
 #include <SDL3/SDL_gamepad.h>
 

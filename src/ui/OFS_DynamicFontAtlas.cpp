@@ -1,4 +1,5 @@
 #include "OFS_DynamicFontAtlas.h"
+#include "OFS_SDLUtil.h"
 
 #include "OFS_Util.h"
 #include "OFS_Profiling.h"
@@ -98,20 +99,20 @@ void OFS_DynFontAtlas::RebuildFont(float fontSize) noexcept
         GLuint fontTexture = (GLuint)(intptr_t)io.Fonts->TexID;
         io.Fonts->Clear();
 
-        auto roboto = Util::Resource("fonts/RobotoMono-Regular.ttf");
-        auto mainFont = FontOverride.empty() ? roboto : FontOverride;
-        auto fontawesome = Util::Resource("fonts/fontawesome-webfont.ttf");
-        auto notoCJK = Util::Resource("fonts/NotoSansCJKjp-Regular.otf");
+        auto roboto = OFS::util::resourcePath("fonts/RobotoMono-Regular.ttf");
+        auto mainFont = FontOverride.empty() ? roboto.string() : FontOverride;
+        auto fontawesome = OFS::util::resourcePath("fonts/fontawesome-webfont.ttf");
+        auto notoCJK = OFS::util::resourcePath("fonts/NotoSansCJKjp-Regular.otf");
 
         ImFont* font = nullptr;
         {
             OFS_PROFILE("Main font");
             font = AddFontFromFile(ptr, mainFont.c_str(), fontSize, false);
             if (!font) {
-                LOGF_ERROR("Failed to load \"{:s}\"", mainFont.c_str());
-                font = AddFontFromFile(ptr, roboto.c_str(), fontSize, false);
+                LOGF_ERROR("Failed to load \"{:s}\"", mainFont);
+                font = AddFontFromFile(ptr, roboto.string().c_str(), fontSize, false);
                 if (!font) {
-                    LOGF_ERROR("Failed to load \"{:s}\"", roboto.c_str());
+                    LOGF_ERROR("Failed to load \"{:s}\"", roboto.string());
                     // fallback to default font
                     io.Fonts->Clear();
                     io.Fonts->AddFontDefault();
@@ -123,16 +124,16 @@ void OFS_DynFontAtlas::RebuildFont(float fontSize) noexcept
         }
         {
             OFS_PROFILE("Load fontawesome font");
-            font = AddFontFromFile(ptr, fontawesome.c_str(), fontSize, true);
+            font = AddFontFromFile(ptr, fontawesome.string().c_str(), fontSize, true);
             if (!font) {
-                LOGF_ERROR("Failed to load \"{:s}\"", fontawesome.c_str());
+                LOGF_ERROR("Failed to load \"{:s}\"", fontawesome.string());
             }
         }
         {
             OFS_PROFILE("Load NotoSansCJK");
-            font = AddFontFromFile(ptr, notoCJK.c_str(), fontSize, true);
+            font = AddFontFromFile(ptr, notoCJK.string().c_str(), fontSize, true);
             if (!font) {
-                LOGF_ERROR("Failed to load \"{:s}\"", notoCJK.c_str());
+                LOGF_ERROR("Failed to load \"{:s}\"", notoCJK.string());
             }
         }
         {
