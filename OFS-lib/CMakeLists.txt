@@ -60,7 +60,6 @@ add_custom_command(OUTPUT "OFS_StringsGenerated.cpp" "OFS_StringsGenerated.h"
                    VERBATIM)
 
 target_link_libraries(${PROJECT_NAME} PUBLIC
-    SDL3-static
     tinyfiledialogs
     eventpp
     glaze::glaze

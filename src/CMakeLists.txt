@@ -152,10 +152,11 @@ endif()
 
 
 target_link_libraries(${PROJECT_NAME} PUBLIC
-  OFS_lib
-  civetweb
-  glad2
-  imgui
+    OFS_lib
+    civetweb
+    glad2
+    imgui
+    SDL3-static
 )
 
 if(WIN32)
