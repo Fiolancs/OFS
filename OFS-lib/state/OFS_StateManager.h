@@ -150,7 +150,7 @@ public:
         else
         {
             FUN_ASSERT(stateCollection[it->second.second].stateName == stateName, "Something went wrong");
-            LOGF_DEBUG("Loading existing state \"%s\"", stateName);
+            LOGF_DEBUG("Loading existing state \"{:s}\"", stateName);
             return it->second.second;
         }
 

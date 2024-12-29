@@ -72,9 +72,9 @@ namespace OFS
 			ImGui::SameLine();
 			Filter.Draw(TR(FILTER), -100.0f);
 
-			ImGui::Text("%s: %s", TR(USED), Util::FormatBytes(LogSizeBytes()).c_str());
+			ImGui::Text("%s: %s", TR(USED), OFS::util::formatBytes(LogSizeBytes()).c_str());
 			ImGui::SameLine();
-			ImGui::Text("%s: %s", TR(ALLOCATED), Util::FormatBytes(AllocatedSizeBytes()).c_str());
+			ImGui::Text("%s: %s", TR(ALLOCATED), OFS::util::formatBytes(AllocatedSizeBytes()).c_str());
 			ImGui::Separator();
 			ImGui::BeginChild("scrolling", ImVec2(0, 0), false, ImGuiWindowFlags_HorizontalScrollbar);
 

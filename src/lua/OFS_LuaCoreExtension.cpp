@@ -4,7 +4,7 @@
 
 #include <filesystem>
 
-static constexpr const char* Source = R"(
+static constexpr const char Source[] = R"(
 -- globals
 Jitter = {}
 Jitter.TimeMs = 10
@@ -204,20 +204,18 @@ end
 void OFS_CoreExtension::setup() noexcept
 {
     std::error_code ec;
-    auto path = Util::PathFromString(Util::Prefpath(OFS_LuaExtensions::ExtensionDir)) / "Core";
+    auto path = OFS::util::pathFromString(Util::Prefpath(OFS_LuaExtensions::ExtensionDir)) / "Core";
     #if 1
     if(true) {
     #else
     if (!std::filesystem::exists(path, ec)) {
     #endif
-        Util::CreateDirectories(path);
+        OFS::util::createDirectories(path);
         path /= "main.lua";
         auto pString = path.string();
-        auto handle = Util::OpenFile(pString.c_str(), "wb", pString.size());
+        auto handle = OFS::util::openFile(pString, std::ios::out | std::ios::binary);
         if (handle) {
-            auto size = strlen(Source);
-            SDL_WriteIO(handle, Source, size);
-            SDL_CloseIO(handle);
+            handle.write(Source, std::size(Source));
         }
     }
 }

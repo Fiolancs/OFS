@@ -28,7 +28,7 @@ static void copyTranslationHelper() noexcept
 	for(auto& pIt : langDirIt) {
 		if(pIt.path().extension() == ".csv") {
 			auto targetFile = targetDir / pIt.path().filename();
-			if(Util::FileExists(targetFile.string())) {
+			if(OFS::util::fileExists(targetFile.string())) {
 				// merge the two
 				auto input1 = pIt.path().string();
 				auto input2 = targetFile.string();
@@ -158,7 +158,7 @@ bool OFS_Preferences::ShowPreferenceWindow() noexcept
 					ImGui::SameLine();
 					if(ImGui::Button(ICON_FOLDER_OPEN "###DIRECTORY_TRANSLATION"))
 					{
-						Util::OpenFileExplorer(std::filesystem::path(Util::Prefpath(OFS_Translator::TranslationDir)).string());
+						OFS::util::openFileExplorer(std::filesystem::path(Util::Prefpath(OFS_Translator::TranslationDir)).string());
 					}
 					ImGui::EndTabItem();
 				}

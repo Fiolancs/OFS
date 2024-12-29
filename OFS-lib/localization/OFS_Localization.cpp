@@ -14,7 +14,7 @@ OFS_Translator* OFS_Translator::ptr = nullptr;
 
 OFS_Translator::OFS_Translator() noexcept
 {
-    Util::CreateDirectories(Util::Prefpath(TranslationDir));
+    OFS::util::createDirectories(Util::Prefpath(TranslationDir));
     // initialize with the default strings
     LoadDefaults();
 }
@@ -89,7 +89,7 @@ static std::optional<LanguageDoc> OpenDocument(const char8_t* path) noexcept
 
 bool OFS_Translator::LoadTranslation(const char* name) noexcept
 {
-    auto stdPath = Util::PathFromString(Util::Prefpath(TranslationDir)) / name;
+    auto stdPath = OFS::util::pathFromString(Util::Prefpath(TranslationDir)) / name;
     auto path = stdPath.u8string();
 
     auto docOpt = OpenDocument(path.c_str());
@@ -111,7 +111,7 @@ bool OFS_Translator::LoadTranslation(const char* name) noexcept
 
         auto& key   = std::get<0>(row);
         auto  value = std::get<2>(row);
-        value = Util::trim(value);
+        value = OFS::util::trim(value);
 
         if(value.empty()) {
             continue;
@@ -196,8 +196,7 @@ bool OFS_Translator::MergeIntoOne(const char* inputPath1, const char* inputPath2
 
     if (auto err = glz::write_file_csv(out, outputPath, std::string{}); err)
     {
-        // QQQ
-        //LOG_ERROR(err.custom_error_message);
+        LOG_ERROR(err.custom_error_message);
         return false;
     }
     return true;

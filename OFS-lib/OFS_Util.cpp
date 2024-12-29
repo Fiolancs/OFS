@@ -1,12 +1,14 @@
+#include <version>
 #include "OFS_Util.h"
+#include "OFS_Profiling.h"
 
-//#include "OFS_GL.h"
 #include "event/OFS_EventSystem.h"
 
-#include <tinyfiledialogs.h>
-#include <SDL3/SDL_IOStream.h>
+#include <scn/scan.h>
 #include <stb_image.h>
 #include <stb_image_write.h>
+#include <tinyfiledialogs.h>
+#include <xoshiro/xoshiro256plus.h>
 
 #if defined(_WIN32)
 #define NOMINMAX
@@ -18,21 +20,19 @@
 #undef  NOMINMAX
 #endif
 
+#include <bit>
+#include <span>
 #include <cmath>
+#include <chrono>
 #include <string>
 #include <format>
 #include <locale>
+#include <random>
 #include <codecvt>
 #include <iostream>
 #include <algorithm>
 #include <filesystem>
-
-
-// tinyfiledialogs doesn't like quotes
-static void SanitizeString(std::string& str) noexcept
-{
-    std::transform(str.begin(), str.end(), str.begin(), [](char c) { return c == '\'' || c == '\"' ? ' ' : c; });
-}
+#include <system_error>
 
 #ifdef _WIN32
 inline static int WindowsShellExecute(const wchar_t* op, const wchar_t* program, const wchar_t* params) noexcept
@@ -48,52 +48,179 @@ inline static int WindowsShellExecute(const wchar_t* op, const wchar_t* program,
 }
 #endif
 
-int Util::FormatTime(char* buf, const int bufLen, float timeSeconds, bool withMs)
+std::filesystem::path OFS::util::sanitizePath(std::filesystem::path const& path)
+{
+#if _WIN32
+    auto const& pathStr = path.native();
+    if (pathStr.size() > MAX_PATH)
+    {
+        std::filesystem::path maxPath = std::filesystem::absolute(path);
+        return std::filesystem::path(LR"(\\?\)" + maxPath.native());
+    }
+#endif
+    return path;
+}
+
+std::filesystem::path OFS::util::pathFromString(std::string const& str) noexcept
+{
+    auto result = std::filesystem::u8path(str);
+    result.make_preferred();
+    return result;
+}
+std::filesystem::path OFS::util::pathFromString(std::u8string const& str) noexcept
+{
+    auto result = std::filesystem::u8path(str);
+    result.make_preferred();
+    return result;
+}
+
+void OFS::util::concatPathSafe(std::filesystem::path& path, std::string const& element)
+{
+    path /= pathFromString(element);
+}
+
+bool OFS::util::createDirectories(std::filesystem::path const& dirs) noexcept
+{
+    std::error_code ec{};
+    std::filesystem::create_directories(sanitizePath(dirs), ec);
+    if (ec) LOGF_ERROR("Failed to create directory: {:s}", ec.message().c_str());
+    return !ec;
+}
+
+std::size_t OFS::util::writeFile(std::filesystem::path const& path, std::span<std::byte const> buffer)
+{
+    if (std::fstream file = openFile(sanitizePath(path), std::ios::out | std::ios::binary); file)
+    {
+        auto const before = file.tellp();
+        
+        if (file.write(reinterpret_cast<char const*>(buffer.data()), buffer.size()))
+            return file.tellp() - before;
+    }
+    return 0;
+}
+std::size_t OFS::util::writeFile(std::filesystem::path const& path, std::span<char const> buffer)
+{
+    if (std::fstream file = openFile(sanitizePath(path), std::ios::out | std::ios::binary); file)
+    {
+        auto const before = file.tellp();
+
+        if (file.write(reinterpret_cast<char const*>(buffer.data()), buffer.size()))
+            return file.tellp() - before;
+    }
+    return 0;
+}
+
+std::chrono::milliseconds OFS::util::parseTime(std::string_view timeStr, bool* const success)
 {
     OFS_PROFILE(__FUNCTION__);
-    namespace chrono = std::chrono;
-    FUN_ASSERT(bufLen >= 0, "wat");
-    if (std::isinf(timeSeconds) || std::isnan(timeSeconds))
-        timeSeconds = 0.f;
+    if (success) *success = false;
+    std::chrono::milliseconds result{};
+    int hours = 0;
+    int minutes = 0;
+    int seconds = 0;
+    int milliseconds = 0;
+    
+    if (auto const scan_result = scn::scan(timeStr, "{:d}:{:d}:{:d}", std::make_tuple(hours, minutes, seconds)); scan_result.has_value())
+    {
+        std::tie(hours, minutes, seconds) = scan_result.value().values();
 
-    auto duration = chrono::duration<float>(timeSeconds);
-
-    int hours = chrono::duration_cast<chrono::hours>(duration).count();
-    auto timeConsumed = chrono::duration<float>(60.f * 60.f) * hours;
-
-    int minutes = chrono::duration_cast<chrono::minutes>(duration - timeConsumed).count();
-    timeConsumed += chrono::duration<float>(60.f) * minutes;
-
-    int seconds = chrono::duration_cast<chrono::seconds>(duration - timeConsumed).count();
-
-    if (withMs) {
-        timeConsumed += chrono::duration<float>(1.f) * seconds;
-        int ms = chrono::duration_cast<chrono::milliseconds>(duration - timeConsumed).count();
-        return std::format_to_n(buf, bufLen, "{:02d}:{:02d}:{:02d}.{:03d}", hours, minutes, seconds, ms).size;
+        if (auto scan_ms_result = scn::scan(scan_result.value().range(), ".{:d}", std::make_tuple(milliseconds)); scan_ms_result.has_value())
+        {
+            milliseconds = scan_ms_result.value().value();
+        }
     }
-    else {
-        return std::format_to_n(buf, bufLen, "{:02d}:{:02d}:{:02d}", hours, minutes, seconds).size;
+
+    if (hours >= 0
+        && minutes >= 0 && minutes <= 59
+        && seconds >= 0 && seconds <= 59
+        && milliseconds >= 0 && milliseconds <= 999)
+    {
+        result = (std::chrono::hours(hours) + std::chrono::minutes(minutes))
+            + (std::chrono::seconds(seconds) + std::chrono::milliseconds(milliseconds));
+
+        if (success) *success = true;
     }
+    return result;
 }
 
-int Util::OpenFileExplorer(const std::string& str)
+std::size_t OFS::util::formatTime(std::span<char> fixedBuffer, std::chrono::seconds time)
 {
-#if defined(_WIN32)
-    auto const params = std::format(L"\"{:s}\"", Util::Utf8ToUtf16(str));
-    return WindowsShellExecute(nullptr, L"explorer", params.c_str());
-#elif defined(__APPLE__)
-    LOG_ERROR("Not implemented for this platform.");
-    return 1;
-#else
-    return OpenUrl(str);
-#endif
+    FUN_ASSERT(fixedBuffer.size(), "Buffer cannot be empty.");
+    return std::format_to_n(fixedBuffer.data(), fixedBuffer.size(), "{:%T}", time).size;
+}
+std::size_t OFS::util::formatTime(std::span<char> fixedBuffer, std::chrono::milliseconds time)
+{
+    FUN_ASSERT(fixedBuffer.size(), "Buffer cannot be empty.");
+    return std::format_to_n(fixedBuffer.data(), fixedBuffer.size(), "{:%T}", time).size;
+}
+std::size_t OFS::util::formatTime(std::span<char> fixedBuffer, float time, bool withMs)
+{
+    OFS_PROFILE(__FUNCTION__);
+
+    std::chrono::duration<float> dur(time);
+
+    if (withMs)
+        return formatTime(fixedBuffer, std::chrono::round<std::chrono::milliseconds>(dur));
+    else
+        return formatTime(fixedBuffer, std::chrono::round<std::chrono::seconds>(dur));
 }
 
-int Util::OpenUrl(const std::string& url)
+std::string OFS::util::formatBytes(std::size_t bytes) noexcept
+{
+    auto const log1024 = (std::bit_width(bytes) - 1) / 10;
+
+    switch (log1024)
+    {
+    case 0:  return std::format("{:d} bytes", bytes);                                          // bytes
+    case 1:  return std::format("{:.2f} KB", bytes / 1024.);                                   // kilobytes
+    case 2:  return std::format("{:.2f} MB", bytes / (1024. * 1024.));                         // megabytes
+    case 3:  return std::format("{:.2f} GB", bytes / (1024. * 1024. * 1024.));                 // gigabytes
+    case 4:  return std::format("{:.2f} TB", bytes / (1024. * 1024. * 1024. * 1024.));         // terabytes
+    default: return std::format("{:.2f} PB", bytes / (1024. * 1024. * 1024. * 1024. * 1024.)); // petabytes
+    }
+}
+
+bool OFS::util::fileExists(std::filesystem::path const& file) noexcept
+{
+    std::error_code ec{};
+    auto const status = std::filesystem::status(file, ec);
+    return !ec && std::filesystem::exists(status) && std::filesystem::is_regular_file(status);
+}
+
+bool OFS::util::directoryExists(std::filesystem::path const& dir) noexcept
+{
+    std::error_code ec{};
+    auto const status = std::filesystem::status(dir, ec);
+    return !ec && std::filesystem::exists(status) && std::filesystem::is_directory(status);
+}
+
+std::wstring OFS::util::utf8ToUtf16(std::string const& str) noexcept
+{
+    std::wstring wstr{};
+    try {
+        std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter{};
+        wstr = converter.from_bytes(str);
+    }
+    catch (const std::exception& ex) {
+        LOGF_ERROR("Failed to convert to UTF-16.\n{:s}", str.c_str());
+    }
+    return wstr;
+}
+
+bool OFS::util::savePNG(std::string const& path, void const* buffer, std::int32_t width, std::int32_t height, std::int32_t channels, bool flipVertical) noexcept
+{
+    stbi_flip_vertically_on_write(flipVertical);
+    bool success = stbi_write_png(path.c_str(),
+        width, height,
+        channels, buffer, 0);
+    return success;
+}
+
+int OFS::util::openUrl(const std::string& url)
 {
 #if defined(WIN32)
-    auto const params = std::format(L"\"{:s}\"", Util::Utf8ToUtf16(url));
-    return WindowsShellExecute(L"open", params.c_str(), NULL);
+    auto const params = std::format(L"\"{:s}\"", utf8ToUtf16(url));
+    return WindowsShellExecute(L"open", params.c_str(), nullptr);
 #elif defined(__APPLE__)
     LOG_ERROR("Not implemented for this platform.");
     return 1;
@@ -102,6 +229,46 @@ int Util::OpenUrl(const std::string& url)
     return std::system(params.c_str());
 #endif
 }
+
+int OFS::util::openFileExplorer(std::filesystem::path const& path)
+{
+#if defined(_WIN32)
+    auto const params = std::format(L"\"{:s}\"", path.native());
+    return WindowsShellExecute(nullptr, L"explorer", params.c_str());
+#elif defined(__APPLE__)
+    LOG_ERROR("Not implemented for this platform.");
+    return 1;
+#else
+    return OpenUrl(path.string());
+#endif
+}
+
+float OFS::util::randomFloat(void) noexcept
+{
+    return static_cast<float>(randomDouble());
+}
+
+double OFS::util::randomDouble(void) noexcept
+{
+    static thread_local xoshiro::xoshiro256plus prng{
+        [] {
+            std::uniform_int_distribution<std::uint64_t> d(std::numeric_limits<std::uint64_t>::min());
+            std::random_device rd;
+
+            return d(rd);
+        }()
+    };
+
+    return (prng() >> 11) * 0x1.p-53;
+}
+
+
+// tinyfiledialogs doesn't like quotes
+static void SanitizeString(std::string& str) noexcept
+{
+    std::transform(str.begin(), str.end(), str.begin(), [](char c) { return c == '\'' || c == '"' ? ' ' : c; });
+}
+
 
 void Util::OpenFileDialog(const std::string& title, const std::string& path, FileDialogResultHandler&& handler, bool multiple, const std::vector<const char*>& filters, const std::string& filterText) noexcept
 {
@@ -116,20 +283,20 @@ void Util::OpenFileDialog(const std::string& title, const std::string& path, Fil
     auto thread = [](void* ctx) {
         auto data = (FileDialogThreadData*)ctx;
 
-        if (!Util::DirectoryExists(data->path)) {
+        if (!OFS::util::directoryExists(data->path)) {
             data->path = "";
         }
 
 #ifdef WIN32
-        std::wstring wtitle = Util::Utf8ToUtf16(data->title);
-        std::wstring wpath = Util::Utf8ToUtf16(data->path);
-        std::wstring wfilterText = Util::Utf8ToUtf16(data->filterText);
+        std::wstring wtitle = OFS::util::utf8ToUtf16(data->title);
+        std::wstring wpath = OFS::util::utf8ToUtf16(data->path);
+        std::wstring wfilterText = OFS::util::utf8ToUtf16(data->filterText);
         std::vector<std::wstring> wfilters;
         std::vector<const wchar_t*> wc_str;
         wfilters.reserve(data->filters.size());
         wc_str.reserve(data->filters.size());
         for (auto&& filter : data->filters) {
-            wfilters.emplace_back(Util::Utf8ToUtf16(filter));
+            wfilters.emplace_back(OFS::util::utf8ToUtf16(filter));
             wc_str.push_back(wfilters.back().c_str());
         }
         auto result = tinyfd_utf16to8(tinyfd_openFileDialogW(wtitle.c_str(), wpath.c_str(), wc_str.size(), wc_str.data(), wfilterText.empty() ? NULL : wfilterText.c_str(), data->multiple));
@@ -188,7 +355,7 @@ void Util::SaveFileDialog(const std::string& title, const std::string& path, Fil
     auto thread = [](void* ctx) -> int32_t {
         auto data = (SaveFileDialogThreadData*)ctx;
 
-        auto dialogPath = Util::PathFromString(data->path);
+        auto dialogPath = OFS::util::pathFromString(data->path);
         dialogPath.remove_filename();
         std::error_code ec;
         if (!std::filesystem::exists(dialogPath, ec)) {
@@ -231,7 +398,7 @@ void Util::OpenDirectoryDialog(const std::string& title, const std::string& path
     auto thread = [](void* ctx) -> int32_t {
         auto data = (OpenDirectoryDialogThreadData*)ctx;
 
-        if (!Util::DirectoryExists(data->path)) {
+        if (!OFS::util::directoryExists(data->path)) {
             data->path = "";
         }
 
@@ -322,74 +489,21 @@ void Util::MessageBoxAlert(const std::string& title, const std::string& message)
 
 std::string Util::Resource(const std::string& path) noexcept
 {
-    auto base = Util::Basepath() / L"data" / Util::Utf8ToUtf16(path);
+    auto base = Util::Basepath() / L"data" / OFS::util::utf8ToUtf16(path);
     base.make_preferred();
     return base.string();
-}
-
-std::wstring Util::Utf8ToUtf16(const std::string& str) noexcept
-{
-    try {
-        std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
-        std::wstring wstr = converter.from_bytes(str);
-        return wstr;
-    }
-    catch (const std::exception& ex) {
-        LOGF_ERROR("Failed to convert to UTF-16.\n%s", str.c_str());
-        return std::wstring();
-    }
-}
-
-std::filesystem::path Util::PathFromString(const std::string& str) noexcept
-{
-    auto result = std::filesystem::u8path(str);
-    result.make_preferred();
-    return result;
-}
-std::filesystem::path Util::PathFromString(const std::u8string& str) noexcept
-{
-    auto result = std::filesystem::u8path(str);
-    result.make_preferred();
-    return result;
-}
-
-void Util::ConcatPathSafe(std::filesystem::path& path, const std::string& element) noexcept
-{
-    path /= Util::PathFromString(element);
-}
-
-bool Util::SavePNG(const std::string& path, void* buffer, int32_t width, int32_t height, int32_t channels, bool flipVertical) noexcept
-{
-    stbi_flip_vertically_on_write(flipVertical);
-    bool success = stbi_write_png(path.c_str(),
-        width, height,
-        channels, buffer, 0);
-    return success;
 }
 
 std::filesystem::path Util::FfmpegPath() noexcept
 {
 #if _WIN32
-    return Util::PathFromString(Util::Prefpath("ffmpeg.exe"));
+    return OFS::util::pathFromString(Util::Prefpath("ffmpeg.exe"));
 #else
     auto ffmpegPath = std::filesystem::path("ffmpeg");
     return ffmpegPath;
 #endif
 }
 
-// QQQ 
-//static rnd_pcg_t pcg;
-void Util::InitRandom() noexcept
-{
-//    time_t t = time(0);
-//    rnd_pcg_seed(&pcg, t);
-}
-
-float Util::NextFloat() noexcept
-{
-    return 0.f;
-//    return rnd_pcg_nextf(&pcg);
-}
 
 // QQQ
 std::uint32_t Util::RandomColor(float s, float v, float alpha) noexcept
@@ -397,7 +511,7 @@ std::uint32_t Util::RandomColor(float s, float v, float alpha) noexcept
     // This is cool :^)
     // https://martin.ankerl.com/2009/12/09/how-to-create-random-colors-programmatically/
     constexpr float goldenRatioConjugate = 0.618033988749895f;
-    static float H = NextFloat();
+    static float H = OFS::util::randomFloat();
 
     H += goldenRatioConjugate;
     H = std::fmodf(H, 1.f);

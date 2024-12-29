@@ -27,7 +27,7 @@ bool OFS_FunscriptMetadataEditor::ShowMetadataEditor(bool* open, Funscript::Meta
     char buffer[128]{};
     if (ImGui::BeginPopupModal(TR_ID("METADATA_EDITOR", Tr::METADATA_EDITOR).c_str(), open, ImGuiWindowFlags_NoDocking)) {
         metaDataChanged |= ImGui::InputText(TR(TITLE), &metadata.title);
-        Util::FormatTime(buffer, sizeof(buffer), (float)metadata.duration, false);
+        OFS::util::formatTime(buffer, (float)metadata.duration, false);
         ImGui::LabelText(TR(DURATION), "%s", buffer);
 
         metaDataChanged |= ImGui::InputText(TR(CREATOR), &metadata.creator);
@@ -111,7 +111,7 @@ bool OFS_FunscriptMetadataEditor::ShowMetadataEditor(bool* open, Funscript::Meta
         ImGui::TextUnformatted(TR(TAGS));
         static std::string newTag;
         auto addTag = [&metadata, &metaDataChanged, tagIdString](std::string& newTag) {
-            Util::trim(newTag);
+            OFS::util::trim(newTag);
             if (!newTag.empty()) {
                 metadata.tags.emplace_back(newTag); newTag.clear();
             }
@@ -136,7 +136,7 @@ bool OFS_FunscriptMetadataEditor::ShowMetadataEditor(bool* open, Funscript::Meta
         ImGui::TextUnformatted(TR(PERFORMERS));
         static std::string newPerformer;
         auto addPerformer = [&metadata, &metaDataChanged, performerIdString](std::string& newPerformer) {
-            Util::trim(newPerformer);
+            OFS::util::trim(newPerformer);
             if (!newPerformer.empty()) {
                 metadata.performers.emplace_back(newPerformer); newPerformer.clear(); 
             }

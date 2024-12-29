@@ -465,11 +465,11 @@ void ScriptTimeline::ShowScriptPositions(
 				std::error_code ec;
 				auto ffmpegPath = Util::FfmpegPath();
 				auto outputPath = Util::Prefpath("tmp");
-				if (!Util::CreateDirectories(outputPath)) {
+				if (!OFS::util::createDirectories(outputPath)) {
 					return 0;
 				}
 				
-				outputPath = (Util::PathFromString(outputPath) / "audio.flac").u8string();
+				outputPath = (OFS::util::pathFromString(outputPath) / "audio.flac").u8string();
 				bool succ = ctx.Wave.data.GenerateAndLoadFlac(ffmpegPath.string(), ctx.videoPath, std::filesystem::path(outputPath).string().c_str());
 				EV::Enqueue<WaveformProcessingFinishedEvent>();
 				return 0;

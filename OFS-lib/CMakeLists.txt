@@ -25,6 +25,7 @@ set(OFS_LIB_HEADERS
     "OFS_Profiling.h"
     "OFS_VectorSet.h"
     "OFS_Reflection.h"
+    "OFS_DebugBreak.h"
 
     "event/OFS_Event.h"
     "event/OFS_EventSystem.h"

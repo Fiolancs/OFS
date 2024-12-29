@@ -264,10 +264,10 @@ inline static void ProcessEvents(MpvPlayerContext* ctx) noexcept
             case MPV_EVENT_LOG_MESSAGE:
             {
                 mpv_event_log_message* msg = (mpv_event_log_message*)mp_event->data;
-                char MpvLogPrefix[48];
+                char MpvLogPrefix[48]{};
                 int len = std::format_to_n(MpvLogPrefix, sizeof(MpvLogPrefix), "[{:s}][MPV] ({:s}): ", msg->level, msg->prefix).size;
                 FUN_ASSERT(len <= sizeof(MpvLogPrefix), "buffer to small");
-                OFS::FileLogger::get().logToFile(MpvLogPrefix, msg->text);
+                OFS::FileLogger::get().logToFile(MpvLogPrefix, msg->text, false);
                 continue;
             }
             case MPV_EVENT_COMMAND_REPLY:
@@ -527,17 +527,17 @@ void OFS_Videoplayer::NotifySwap() noexcept
 void OFS_Videoplayer::SaveFrameToImage(const std::string& directory) noexcept
 {
     std::stringstream ss;
-    auto currentFile = Util::PathFromString(VideoPath());
+    auto currentFile = OFS::util::pathFromString(VideoPath());
     std::string filename = currentFile.filename().replace_extension("").string();
     std::array<char, 15> tmp;
     double time = CurrentTime();
-    Util::FormatTime(tmp.data(), tmp.size(), time, true);
+    OFS::util::formatTime(tmp, time, true);
     std::replace(tmp.begin(), tmp.end(), ':', '_');
     ss << filename << '_' << tmp.data() << ".png";
-    if(!Util::CreateDirectories(directory)) {
+    if(!OFS::util::createDirectories(directory)) {
         return;
     }
-    auto dir = Util::PathFromString(directory);
+    auto dir = OFS::util::pathFromString(directory);
     dir.make_preferred();
     std::string finalPath = (dir / ss.str()).string();
     const char* cmd[]{ "screenshot-to-file", finalPath.c_str(), NULL };

@@ -1,18 +1,17 @@
 ﻿#pragma once
-#include "OFS_Profiling.h"
+#include "OFS_DebugBreak.h"
 #include "io/OFS_FileLogging.h"
 
-#include <scn/scan.h>
 #include <SDL3/SDL_timer.h>
 #include <SDL3/SDL_thread.h>
 #include <SDL3/SDL_iostream.h>
 #include <SDL3/SDL_filesystem.h>
 
+#include <span>
 #include <chrono>
 #include <vector>
 #include <format>
 #include <string>
-#include <memory>
 #include <cstdint>
 #include <fstream>
 #include <iterator>
@@ -52,62 +51,101 @@
 #define ICON_LEAF "\xef\x81\xac"
 // when adding new ones they need to get added in OFS_DynamicFontAtlas
 
-#if defined(_WIN32)
-#define FUN_DEBUG_BREAK() __debugbreak()
-#else
-#define FUN_DEBUG_BREAK()
-#endif
-
 #ifndef NDEBUG
-#define FUN_ASSERT_F(expr, format, ...) \
-    if (expr) {} \
-    else { \
-        LOG_ERROR("============== ASSERTION FAILED =============="); \
-        LOGF_ERROR("in file: \"%s\" line: %d", __FILE__, __LINE__); \
-        LOGF_ERROR(format, __VA_ARGS__); \
-        FUN_DEBUG_BREAK(); \
+#define FUN_ASSERT_F(expr, format, ...)                                 \
+    if (!(expr)) [[unlikely]] {                                         \
+        LOG_ERROR("============== ASSERTION FAILED ==============");    \
+        LOGF_ERROR("in file: \"{:s}\" line: {:d}", __FILE__, __LINE__); \
+        LOGF_ERROR(format, __VA_ARGS__);                                \
+        OFS_DEBUGBREAK;                                                 \
     }
-
-
 // assertion without error message
-#define FUN_ASSERT(expr, msg)                                        \
-    if (!(expr)) {                                                   \
-        LOG_ERROR("============== ASSERTION FAILED =============="); \
-        LOGF_ERROR("in file: \"%s\" line: %d", __FILE__, __LINE__);  \
-        LOG_ERROR(msg);                                              \
-        FUN_DEBUG_BREAK();                                           \
+#define FUN_ASSERT(expr, msg)                                           \
+    if (!(expr)) [[unlikely]] {                                         \
+        LOG_ERROR("============== ASSERTION FAILED ==============");    \
+        LOGF_ERROR("in file: \"{:s}\" line: {:d}", __FILE__, __LINE__); \
+        LOG_ERROR(msg);                                                 \
+        OFS_DEBUGBREAK;                                                 \
     }
 #else
-
 #define FUN_ASSERT_F(expr, format, ...)
 #define FUN_ASSERT(expr, msg)
-
 #endif
 
 namespace OFS::util
 {
-#ifdef _WIN32
-    inline std::filesystem::path WindowsMaxPath(std::string_view path)
-    {
-        std::filesystem::path const maxPath = std::filesystem::path(u8"\\\\?\\").append(path);
-        return maxPath;
-    }
-#endif
+    // ====================================================================================
+    //  Path functions
+    // ====================================================================================
 
-    inline std::ifstream OpenFile(std::filesystem::path const& path, std::ios::openmode mode)
-    {
-        return std::ifstream{ path, mode };
-    }
+    std::filesystem::path sanitizePath(std::filesystem::path const& path);
 
-    template <typename Container> requires requires{ typename Container::value_type; }
-    std::size_t ReadFile(std::filesystem::path const& path, Container& buffer);
+    std::filesystem::path pathFromString(std::string const& str) noexcept;
+    std::filesystem::path pathFromString(std::u8string const& str) noexcept;
+    void concatPathSafe(std::filesystem::path& path, std::string const& element);
 
-    inline std::string ReadFileString(std::filesystem::path const& path)
-    {
-        std::string str{};
-        ReadFile(path, str);
-        return str;
-    }
+    bool fileExists(std::filesystem::path const& file) noexcept;
+    bool directoryExists(std::filesystem::path const& dir) noexcept;
+
+
+    // ====================================================================================
+    //  FILE IO functions
+    // ====================================================================================
+
+    bool createDirectories(std::filesystem::path const& dirs) noexcept;
+
+    std::fstream openFile(std::filesystem::path const& path, std::ios::openmode mode);
+
+    template <typename Container>
+    std::size_t readFile(std::filesystem::path const& path, Container& buffer);
+    std::string readFileString(std::filesystem::path const& path);
+    std::size_t writeFile(std::filesystem::path const& path, std::span<std::byte const> buffer);
+    std::size_t writeFile(std::filesystem::path const& path, std::span<char const> buffer);
+
+    std::string filename(std::string const& path) noexcept;
+    std::string filename(std::filesystem::path const& path) noexcept;
+
+
+    // ====================================================================================
+    //  Formatting functions
+    // ====================================================================================
+
+    std::chrono::milliseconds parseTime(std::string_view timeStr, bool* const success);
+
+    std::size_t formatTime(std::span<char> fixedBuffer, std::chrono::seconds time);
+    std::size_t formatTime(std::span<char> fixedBuffer, std::chrono::milliseconds time);
+    std::size_t formatTime(std::span<char> fixedBuffer, float time, bool withMs);
+
+    std::string formatBytes(std::size_t bytes) noexcept;
+
+    constexpr std::string& ltrim(std::string& str, std::string_view chars = " \t\n\r\v\f") noexcept;
+    constexpr std::string& rtrim(std::string& str, std::string_view chars = " \t\n\r\v\f") noexcept;
+    constexpr std::string&  trim(std::string& str, std::string_view chars = " \t\n\r\v\f") noexcept;
+
+    std::wstring utf8ToUtf16(const std::string& str) noexcept;
+
+
+    // ====================================================================================
+    //  Image functions
+    // ====================================================================================
+
+    bool savePNG(std::string const& path, void const* buffer, std::int32_t width, std::int32_t height, std::int32_t channels = 3, bool flipVertical = true) noexcept;
+
+
+    // ====================================================================================
+    //  OS
+    // ====================================================================================
+
+    int openUrl(const std::string& url);
+    int openFileExplorer(const std::filesystem::path& path);
+
+    // ====================================================================================
+    //  PRNG
+    // ====================================================================================
+
+    // Generates a float between [0,1)
+    float  randomFloat(void) noexcept;
+    double randomDouble(void) noexcept;
 }
 
 class Util {
@@ -141,76 +179,6 @@ public:
     inline static T Lerp(T startVal, T endVal, float t) noexcept
     {
         return startVal + ((endVal - startVal) * t);
-    }
-
-#ifdef _WIN32
-    inline static std::u8string WindowsMaxPath(std::u8string_view path) noexcept
-    {
-        std::u8string buffer(u8"\\\\?\\");
-        buffer.reserve(buffer.size() + path.size());
-        buffer.append(path);
-        return buffer;
-    }
-    inline static std::string WindowsMaxPath(char const* path, std::size_t pathLen) noexcept
-    {
-        std::string buffer("\\\\?\\");
-        buffer.reserve(buffer.size() + pathLen);
-        buffer.append(path);
-        return buffer;
-    }
-#endif
-
-    inline static SDL_IOStream* OpenFile(const char* path, const char* mode, int32_t path_len) noexcept
-    {
-#ifdef _WIN32
-        SDL_IOStream* handle = nullptr;
-        if (path_len >= _MAX_PATH) {
-            auto max = WindowsMaxPath(path, path_len);
-            handle = SDL_IOFromFile(max.c_str(), mode);
-        }
-        else {
-            handle = SDL_IOFromFile(path, mode);
-        }
-#else
-        auto handle = SDL_IOFromFile(path, mode);
-#endif
-        return handle;
-    }
-
-    inline static size_t ReadFile(const char* path, std::vector<uint8_t>& buffer) noexcept
-    {
-        auto file = OpenFile(path, "rb", std::strlen(path));
-        if (file) {
-            buffer.clear();
-            buffer.resize(SDL_GetIOSize(file));
-            SDL_ReadIO(file, buffer.data(), buffer.size());
-            SDL_CloseIO(file);
-            return buffer.size();
-        }
-        return 0;
-    }
-
-    inline static std::string ReadFileString(const char* path) noexcept
-    {
-        std::string str;
-        auto file = OpenFile(path, "rb", std::strlen(path));
-        if (file) {
-            str.resize(SDL_GetIOSize(file));
-            SDL_ReadIO(file, str.data(), str.size());
-            SDL_CloseIO(file);
-        }
-        return str;
-    }
-
-    inline static size_t WriteFile(const char* path, const void* buffer, size_t size) noexcept
-    {
-        auto file = OpenFile(path, "wb", std::strlen(path));
-        if (file) {
-            auto written = SDL_WriteIO(file, buffer, size);
-            SDL_CloseIO(file);
-            return written;
-        }
-        return 0;
     }
 
     // QQQ
@@ -263,89 +231,11 @@ public:
         //return data;
     }
 
-    inline static float ParseTime(const char* timeStr, bool* succ) noexcept
-    {
-        int hours = 0;
-        int minutes = 0;
-        int seconds = 0;
-        int milliseconds = 0;
-        *succ = false;
-        auto const result = scn::scan(std::string_view(timeStr), "{:d}:{:d}:{:d}", std::make_tuple(hours, minutes, seconds));
-        if (!result) {
-            return NAN;
-        }
-
-        std::tie(hours, minutes, seconds) = result.value().values();
-        if (auto r2 = scn::scan(result.value().range(), ".{:d}", std::make_tuple(milliseconds)); r2)
-        {
-            milliseconds = r2.value().value();
-        }
-
-        if (hours >= 0
-            && minutes >= 0 && minutes <= 59
-            && seconds >= 0 && seconds <= 59
-            && milliseconds >= 0 && milliseconds <= 999) {
-            float time = 0.f;
-            time += (float)hours * 60.f * 60.f;
-            time += (float)minutes * 60.f;
-            time += (float)seconds;
-            time += (float)milliseconds / 1000.f;
-            *succ = true;
-            return time;
-        }
-        return NAN;
-    }
-
-    static int FormatTime(char* buf, const int bufLen, float timeSeconds, bool withMs);
-
-    static int OpenUrl(const std::string& url);
-    static int OpenFileExplorer(const std::string& path);
-
     inline static std::filesystem::path Basepath() noexcept
     {
         char const* base = SDL_GetBasePath();
-        auto path = Util::PathFromString(base);
+        auto path = OFS::util::pathFromString(base);
         return path;
-    }
-
-    inline static std::u8string Filename(const std::string& path) noexcept
-    {
-        return Util::PathFromString(path)
-            .replace_extension("")
-            .filename()
-            .u8string();
-    }
-
-    inline static bool FileExists(std::filesystem::path const& file) noexcept
-    {
-        auto const status = std::filesystem::status(file);
-        return std::filesystem::exists(status) && std::filesystem::is_regular_file(status);
-    }
-
-    inline static bool DirectoryExists(const std::string& dir) noexcept
-    {
-        std::error_code ec1{}, ec2{};
-        auto const path = Util::PathFromString(dir);
-        auto const status = std::filesystem::status(path);
-        return std::filesystem::exists(status) && std::filesystem::is_directory(status);
-    }
-
-    // http://www.martinbroadhurst.com/how-to-trim-a-stdstring.html
-    static std::string& ltrim(std::string& str, const std::string& chars = "\t\n\v\f\r ") noexcept
-    {
-        str.erase(0, str.find_first_not_of(chars));
-        return str;
-    }
-
-    static std::string& rtrim(std::string& str, const std::string& chars = "\t\n\v\f\r ") noexcept
-    {
-        str.erase(str.find_last_not_of(chars) + 1);
-        return str;
-    }
-
-    static std::string& trim(std::string& str, const std::string& chars = "\t\n\v\f\r ") noexcept
-    {
-        return ltrim(rtrim(str, chars), chars);
     }
 
     inline static bool StringEqualsInsensitive(const std::string& string1, const std::string string2) noexcept
@@ -366,19 +256,6 @@ public:
         return false;
     }
 
-    inline static bool StringEndsWith(std::string_view string, std::string_view ending) noexcept
-    {
-        return string.ends_with(ending);
-    }
-
-    inline static bool StringStartsWith(std::string_view string, std::string_view start) noexcept
-    {
-        return string.starts_with(start);
-    }
-    inline static bool StringStartsWith(std::u8string_view string, std::u8string_view start) noexcept
-    {
-        return string.starts_with(start);
-    }
 
     struct FileDialogResult {
         std::vector<std::string> files;
@@ -419,63 +296,16 @@ public:
     static std::u8string Prefpath(const std::string& path = std::string()) noexcept
     {
         static const char* cachedPref = SDL_GetPrefPath("OFS", "OFS3_data");
-        static std::filesystem::path prefPath = Util::PathFromString(cachedPref);
+        static std::filesystem::path prefPath = OFS::util::pathFromString(cachedPref);
         if (!path.empty()) {
-            std::filesystem::path rel = Util::PathFromString(path);
+            std::filesystem::path rel = OFS::util::pathFromString(path);
             rel.make_preferred();
             return (prefPath / rel).u8string();
         }
         return prefPath.u8string();
     }
 
-    static bool CreateDirectories(const std::filesystem::path& dirs) noexcept
-    {
-        std::error_code ec;
-#ifdef _WIN32
-        if (auto pString = dirs.u8string(); pString.size() >= _MAX_PATH) {
-            
-            auto max = WindowsMaxPath(pString);
-            std::filesystem::create_directories(max, ec);
-            if (ec) {
-                LOGF_ERROR("Failed to create directory: %s", ec.message().c_str());
-                return false;
-            }
-            return true;
-        }
-#endif
-        std::filesystem::create_directories(dirs, ec);
-        if (ec) {
-            LOGF_ERROR("Failed to create directory: %s", ec.message().c_str());
-            return false;
-        }
-        return true;
-    }
-
-    static std::wstring Utf8ToUtf16(const std::string& str) noexcept;
-
-    static std::filesystem::path PathFromString(const std::string& str) noexcept;
-    static std::filesystem::path PathFromString(const std::u8string& str) noexcept;
-    static void ConcatPathSafe(std::filesystem::path& path, const std::string& element) noexcept;
-
-    static bool SavePNG(const std::string& path, void* buffer, int32_t width, int32_t height, int32_t channels = 3, bool flipVertical = true) noexcept;
-
     static std::filesystem::path FfmpegPath() noexcept;
-
-    inline static std::string FormatBytes(size_t bytes) noexcept
-    {
-        if (bytes < 1024) {
-            return std::format("{:d} bytes", bytes); // bytes
-        }
-        else if (bytes >= 1024 && bytes < size_t(1024 * 1024)) {
-            return std::format("{:.2f} KB", bytes / 1024.0); // kilobytes
-        }
-        else if (bytes >= (1024 * 1024) && bytes < size_t(1024 * 1024 * 1024)) {
-            return std::format("{:.2f} MB", bytes / (1024.0 * 1024.0)); // megabytes
-        }
-        else /*if (bytes > (1024 * 1024 * 1024))*/ {
-            return std::format("{:.2f} GB", bytes / (1024.0 * 1024.0 * 1024.0)); // gigabytes
-        }
-    }
 
     inline static bool InMainThread() noexcept
     {
@@ -483,29 +313,55 @@ public:
         return SDL_ThreadID() == Main;
     }
 
-    // https://stackoverflow.com/questions/56940199/how-to-capture-a-unique-ptr-in-a-stdfunction
-    template<class F>
-    auto static MakeSharedFunction(F&& f)
-    {
-        return
-            [pf = std::make_shared<std::decay_t<F>>(std::forward<F>(f))](auto&&... args) -> decltype(auto) {
-                return (*pf)(decltype(args)(args)...);
-            };
-    }
-
-    static void InitRandom() noexcept;
-    static float NextFloat() noexcept;
     static std::uint32_t RandomColor(float s, float v, float alpha = 1.f) noexcept;
 };
 
-template <typename Container> requires requires{ typename Container::value_type; }
-std::size_t OFS::util::ReadFile(std::filesystem::path const& path, Container& buffer)
+
+inline std::fstream OFS::util::openFile(std::filesystem::path const& path, std::ios::openmode mode)
 {
-    if (auto file = OpenFile(path, std::ios::in); file)
+    return std::fstream{ sanitizePath(path), mode };
+}
+
+template <typename Container>
+std::size_t OFS::util::readFile(std::filesystem::path const& path, Container& buffer)
+{
+    if (auto file = openFile(sanitizePath(path), std::ios::in | std::ios::binary); file)
     {
-        using iterator_t = decltype(std::istreambuf_iterator(file));
-        buffer.assign(iterator_t{ file }, iterator_t{});
+        buffer.assign(std::istreambuf_iterator(file), {});
         return buffer.size();
     }
     return 0;
+}
+
+inline std::string OFS::util::readFileString(std::filesystem::path const& path)
+{
+    std::string str{};
+    readFile(path, str);
+    return str;
+}
+
+inline std::string OFS::util::filename(std::string const& path) noexcept
+{
+    return filename(pathFromString(path));
+}
+
+inline std::string OFS::util::filename(std::filesystem::path const& path) noexcept
+{
+    return path.stem().string();
+}
+
+// http://www.martinbroadhurst.com/how-to-trim-a-stdstring.html
+constexpr std::string& OFS::util::ltrim(std::string& str, std::string_view chars) noexcept
+{
+    return str.erase(0, str.find_first_not_of(chars));
+}
+
+constexpr std::string& OFS::util::rtrim(std::string& str, std::string_view chars) noexcept
+{
+    return str.erase(str.find_last_not_of(chars) + 1);
+}
+
+constexpr std::string& OFS::util::trim(std::string& str, std::string_view chars) noexcept
+{
+    return ltrim(rtrim(str, chars), chars);
 }

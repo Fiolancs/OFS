@@ -68,7 +68,7 @@ void OFS_LuaExtension::Update() noexcept
 bool OFS_LuaExtension::Load() noexcept
 {
 	// QQQ
-    //auto directory = Util::PathFromString(this->Directory);
+    //auto directory = OFS::util::pathFromString(this->Directory);
     //auto mainFile = directory / OFS_LuaExtension::MainFile;
 	//
 	//NameId = directory.filename().string();
@@ -78,7 +78,7 @@ bool OFS_LuaExtension::Load() noexcept
 	//std::string extensionText;
 	//{
 	//	std::vector<uint8_t> dataBuf;
-	//	if (!Util::ReadFile(mainFile.string().c_str(), dataBuf)) {
+	//	if (!OFS::util::readFile(mainFile.string().c_str(), dataBuf)) {
 	//		FUN_ASSERT(false, "no file");
 	//		return false;
 	//	}
@@ -118,7 +118,7 @@ bool OFS_LuaExtension::Load() noexcept
 			lua_setfield(L, -2, "path"); // set the field "path" in table at -2 with value at top of stack
 			lua_pop(L, 1); // get rid of package table from top of stack
 		};
-		auto dirPath = Util::PathFromString(Directory);
+		auto dirPath = OFS::util::pathFromString(Directory);
 		addToLuaPath(L.lua_state(), (dirPath / "?.lua").u8string().c_str());
 		addToLuaPath(L.lua_state(), (dirPath / "lib" / "?.lua").u8string().c_str());
 	}

@@ -130,10 +130,10 @@ bool OFS_VideoplayerControls::DrawTimelineWidget(const char* label, float* posit
                 float timeSeconds = player->Duration() * relTimelinePos;
                 float timeDelta = timeSeconds - player->CurrentTime();
 
-                char timeBuf1[16];
-                char timeBuf2[16];
-                Util::FormatTime(timeBuf1, sizeof(timeBuf1), timeSeconds, false);
-                Util::FormatTime(timeBuf2, sizeof(timeBuf2), (timeDelta > 0) ? timeDelta : -timeDelta, false);
+                char timeBuf1[16]{};
+                char timeBuf2[16]{};
+                OFS::util::formatTime(timeBuf1, timeSeconds, false);
+                OFS::util::formatTime(timeBuf2, (timeDelta > 0) ? timeDelta : -timeDelta, false);
                 if (timeDelta > 0)
                     ImGui::Text("%s (+%s)", timeBuf1, timeBuf2);
                 else
@@ -288,8 +288,8 @@ bool OFS_VideoplayerControls::DrawChapter(ImDrawList* drawList, const ImRect& fr
         contextMenuOpen = true;
         char timeBuf1[16];
         char timeBuf2[16];
-        Util::FormatTime(timeBuf1, sizeof(timeBuf1), chapter.startTime, true);
-        Util::FormatTime(timeBuf2, sizeof(timeBuf2), chapter.endTime, true);
+        OFS::util::formatTime(timeBuf1, chapter.startTime, true);
+        OFS::util::formatTime(timeBuf2, chapter.endTime, true);
 
         ImGui::Text("%s - %s", timeBuf1, timeBuf2);
         ImGui::SetNextItemWidth(ImGui::GetItemRectSize().x);
@@ -392,8 +392,8 @@ bool OFS_VideoplayerControls::DrawBookmark(ImDrawList* drawList, const ImRect& f
     if(ImGui::BeginPopup("BookmarkContextMenu"))
     {
         contextMenuOpen = true;
-        char timeBuf[16];
-        Util::FormatTime(timeBuf, sizeof(timeBuf), bookmark.time, true);
+        char timeBuf[16]{};
+        OFS::util::formatTime(timeBuf, bookmark.time, true);
         ImGui::TextUnformatted(timeBuf);
         ImGui::SetNextItemWidth(ImGui::GetItemRectSize().x);
         bool bookmarkChange = ImGui::InputTextWithHint("##bookmarkName", TR(NAME), &bookmark.name);
@@ -540,8 +540,8 @@ void OFS_VideoplayerControls::DrawTimeline() noexcept
         char timeBuf2[16]{};
 
         float time = player->CurrentTime();
-        Util::FormatTime(timeBuf1, sizeof(timeBuf1), time, true);
-        Util::FormatTime(timeBuf2, sizeof(timeBuf2), player->Duration(), true);
+        OFS::util::formatTime(timeBuf1, time, true);
+        OFS::util::formatTime(timeBuf2, player->Duration(), true);
 
         ImGui::Text(" %s / %s (x%.03f)", timeBuf1, timeBuf2, actualPlaybackSpeed);
         ImGui::NextColumn();

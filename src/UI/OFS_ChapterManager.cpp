@@ -40,7 +40,7 @@ void OFS_ChapterManager::ShowWindow(bool* open) noexcept
 
         bool chapterStateChange = false;
         int deleteIdx = -1;
-        char timeBuf[16];
+        char timeBuf[16]{};
         for(int i=0, size=chapterState.chapters.size(); i < size; i += 1)
         {
             auto& chapter = chapterState.chapters[i];
@@ -54,11 +54,11 @@ void OFS_ChapterManager::ShowWindow(bool* open) noexcept
             chapterStateChange |= ImGui::InputText("##chapterName", &chapter.name);
             ImGui::TableNextColumn();
 
-            Util::FormatTime(timeBuf, sizeof(timeBuf), chapter.startTime, true);
+            OFS::util::formatTime(timeBuf, chapter.startTime, true);
             ImGui::TextUnformatted(timeBuf);
 
             ImGui::TableNextColumn();
-            Util::FormatTime(timeBuf, sizeof(timeBuf), chapter.endTime, true);
+            OFS::util::formatTime(timeBuf, chapter.endTime, true);
             ImGui::TextUnformatted(timeBuf);
 
             ImGui::TableNextColumn();
@@ -93,8 +93,8 @@ bool OFS_ChapterManager::ExportClip(const Chapter& chapter, const std::string& o
     std::format_to_n(startTimeChar, sizeof(startTimeChar), "{:f}", chapter.startTime);
     std::format_to_n(endTimeChar, sizeof(endTimeChar), "{:f}", chapter.endTime);
     
-    auto outputDir = Util::PathFromString(outputDirStr);
-    auto mediaPath = Util::PathFromString(app->player->VideoPath());
+    auto outputDir = OFS::util::pathFromString(outputDirStr);
+    auto mediaPath = OFS::util::pathFromString(app->player->VideoPath());
 
     auto& projectState = app->LoadedProject->State();
 
@@ -115,10 +115,10 @@ bool OFS_ChapterManager::ExportClip(const Chapter& chapter, const std::string& o
         // FIXME: chapters and bookmarks are not included
         auto funscriptJson = clippedScript.Serialize(projectState.metadata, false);
         auto funscriptText = Util::SerializeJson(funscriptJson);
-        Util::WriteFile(scriptOutputPathStr.c_str(), funscriptText.data(), funscriptText.size());
+        OFS::util::writeFile(scriptOutputPathStr.c_str(), funscriptText);
     }
 
-    auto clippedMedia = Util::PathFromString("");
+    auto clippedMedia = OFS::util::pathFromString("");
     clippedMedia.replace_filename(chapter.name + "_" + mediaPath.filename().string());
     clippedMedia.replace_extension(mediaPath.extension());
     

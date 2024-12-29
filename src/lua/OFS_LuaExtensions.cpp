@@ -49,7 +49,7 @@ void OFS_LuaExtensions::load(const std::string& path) noexcept
 {
 	LastConfigPath = path;
 	bool succ;
-	auto jsonText = Util::ReadFileString(path.c_str());
+	auto jsonText = OFS::util::readFileString(path.c_str());
 	auto json = Util::ParseJson(jsonText, &succ);
 	if (succ) {
 		OFS::Serializer<false>::Deserialize(*this, json);
@@ -71,21 +71,21 @@ void OFS_LuaExtensions::save() noexcept
 	//nlohmann::json json;
 	//OFS::Serializer<false>::Serialize(*this, json);
 	//auto jsonText = Util::SerializeJson(json, true);
-	//Util::WriteFile(LastConfigPath.c_str(), jsonText.data(), jsonText.size());
+	//OFS::util::writeFile(LastConfigPath.c_str(), jsonText.data(), jsonText.size());
 }
 
 void OFS_LuaExtensions::removeNonExisting() noexcept
 {
 	Extensions.erase(std::remove_if(Extensions.begin(), Extensions.end(), 
 		[](auto& ext) {
-			return !Util::DirectoryExists(ext.Directory);
+			return !OFS::util::directoryExists(ext.Directory);
 		}), Extensions.end());
 }
 
 void OFS_LuaExtensions::UpdateExtensionList() noexcept
 {
 	auto extensionDir = Util::Prefpath(ExtensionDir);
-	Util::CreateDirectories(extensionDir);
+	OFS::util::createDirectories(extensionDir);
 	std::error_code ec;
 	std::filesystem::directory_iterator dirIt(extensionDir, ec);
 	

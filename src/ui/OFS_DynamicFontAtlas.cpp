@@ -108,10 +108,10 @@ void OFS_DynFontAtlas::RebuildFont(float fontSize) noexcept
             OFS_PROFILE("Main font");
             font = AddFontFromFile(ptr, mainFont.c_str(), fontSize, false);
             if (!font) {
-                LOGF_ERROR("Failed to load \"%s\"", mainFont.c_str());
+                LOGF_ERROR("Failed to load \"{:s}\"", mainFont.c_str());
                 font = AddFontFromFile(ptr, roboto.c_str(), fontSize, false);
                 if (!font) {
-                    LOGF_ERROR("Failed to load \"%s\"", roboto.c_str());
+                    LOGF_ERROR("Failed to load \"{:s}\"", roboto.c_str());
                     // fallback to default font
                     io.Fonts->Clear();
                     io.Fonts->AddFontDefault();
@@ -125,14 +125,14 @@ void OFS_DynFontAtlas::RebuildFont(float fontSize) noexcept
             OFS_PROFILE("Load fontawesome font");
             font = AddFontFromFile(ptr, fontawesome.c_str(), fontSize, true);
             if (!font) {
-                LOGF_ERROR("Failed to load \"%s\"", fontawesome.c_str());
+                LOGF_ERROR("Failed to load \"{:s}\"", fontawesome.c_str());
             }
         }
         {
             OFS_PROFILE("Load NotoSansCJK");
             font = AddFontFromFile(ptr, notoCJK.c_str(), fontSize, true);
             if (!font) {
-                LOGF_ERROR("Failed to load \"%s\"", notoCJK.c_str());
+                LOGF_ERROR("Failed to load \"{:s}\"", notoCJK.c_str());
             }
         }
         {
@@ -167,7 +167,7 @@ default_font_end:
         io.Fonts->ClearTexData();
         io.Fonts->SetTexID((ImTextureID)fontTexture);
 
-        LOGF_INFO("Font atlas was rebuilt. Took %0.3lf seconds.", fontBuildDuration);
-        LOGF_INFO("New font atlas size: %dx%d", width, height);
+        LOGF_INFO("Font atlas was rebuilt. Took {:0.3f} seconds.", fontBuildDuration);
+        LOGF_INFO("New font atlas size: {:d}x{:d}", width, height);
     }
 }
