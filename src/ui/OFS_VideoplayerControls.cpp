@@ -6,6 +6,7 @@
 #include "gl/OFS_GL.h"
 #include "ui/OFS_ImGui.h"
 #include "ui/OFS_DynamicFontAtlas.h"
+#include "io/OFS_FileDialogs.h"
 #include "event/OFS_EventSystem.h"
 #include "videoplayer/OFS_Videoplayer.h"
 #include "videoplayer/OFS_VideoplayerEvents.h"
@@ -324,11 +325,11 @@ bool OFS_VideoplayerControls::DrawChapter(ImDrawList* drawList, const ImRect& fr
 
         if(ImGui::MenuItem(TR(REMOVE)))
         {
-            Util::YesNoCancelDialog(TR(REMOVE_CHAPTER), 
+            OFS::util::YesNoCancelDialog(TR(REMOVE_CHAPTER), 
                 std::string(TR(REMOVE_CHAPTER_MSG)) + std::format("\n[{:s}]", chapter.name.c_str()),
                 [chapterPtr = &chapter, stateHandle = chapterStateHandle](auto result)
                 {
-                    if(result == Util::YesNoCancel::Yes)
+                    if(result == OFS::util::YesNoCancel::YES)
                     {
                         auto& state = ChapterState::State(stateHandle);
                         auto it = std::find_if(state.chapters.begin(), state.chapters.end(),
@@ -400,11 +401,11 @@ bool OFS_VideoplayerControls::DrawBookmark(ImDrawList* drawList, const ImRect& f
         
         if(ImGui::MenuItem(TR(REMOVE)))
         {
-            Util::YesNoCancelDialog(TR(REMOVE_BOOKMARK), 
+            OFS::util::YesNoCancelDialog(TR(REMOVE_BOOKMARK), 
                 std::string(TR(REMOVE_BOOKMARK_MSG)) + std::format("\n[{:s}]", bookmark.name.c_str()),
                 [bookmarkPtr = &bookmark, stateHandle = chapterStateHandle](auto result)
                 {
-                    if(result == Util::YesNoCancel::Yes)
+                    if(result == OFS::util::YesNoCancel::YES)
                     {
                         auto& state = ChapterState::State(stateHandle);
                         auto it = std::find_if(state.bookmarks.begin(), state.bookmarks.end(),

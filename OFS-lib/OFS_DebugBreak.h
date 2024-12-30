@@ -1,13 +1,14 @@
 #pragma once
 
 #ifndef NDEBUG
+#include <version>
 
 #if defined(__cpp_lib_debugging) 
 #   include <debugging>
 #   define OFS_DEBUGBREAK std::breakpoint_if_debugging()
 #elif defined(__has_builtin)
 #   if  __has_builtin(__builtin_debugtrap)
-#       define OFS_DEBUGBREAK __builtin_debugtrap
+#       define OFS_DEBUGBREAK __builtin_debugtrap()
 #   elif __has_builtin(__debugbreak)
 #       define OFS_DEBUGBREAK __debugbreak()
 #   endif

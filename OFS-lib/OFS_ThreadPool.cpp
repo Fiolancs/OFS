@@ -25,7 +25,7 @@ static std::unique_ptr<OFS::ThreadPool> gThreadPool = nullptr;
 
 OFS::ThreadPool& OFS::ThreadPool::get(void) noexcept
 {
-    static const int nonce = [] { 
+    static const int _ = [] { 
         gThreadPool = std::make_unique<OFS::ThreadPool>(std::thread::hardware_concurrency(), "OFS gThreadPool"); 
         return 1; 
     }();
@@ -33,7 +33,7 @@ OFS::ThreadPool& OFS::ThreadPool::get(void) noexcept
     return *gThreadPool;
 }
 
-void OFS::ThreadPool::detachTask(std::function<void(void)> f)
+void OFS::ThreadPool::detachTask(std::move_only_function<void(void)> f)
 {
     auto& impl = getPoolImpl(pImpl);
     impl.detach_task(std::move(f));

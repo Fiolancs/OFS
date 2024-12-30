@@ -4,11 +4,12 @@
 #include <filesystem>
 
 
-#include "localization/OFS_Localization.h"
 #include "ui/OFS_ImGui.h"
 #include "ui/OFS_DynamicFontAtlas.h"
 #include "ui/OFS_BlockingTask.h"
+#include "io/OFS_FileDialogs.h"
 #include "event/OFS_EventSystem.h"
+#include "localization/OFS_Localization.h"
 
 //#include "subprocess.h"
 
@@ -107,7 +108,7 @@ bool OFS_Project::Load(const std::string& path) noexcept
     FUN_ASSERT(!valid, "Can't import if project is already loaded.");
 #if 1
     std::vector<uint8_t> projectBin;
-    if (OFS::util::readFile(path.c_str(), projectBin) > 0) {
+    if (OFS::util::readFile(OFS::util::pathFromString(path), projectBin) > 0) {
         bool succ;
         auto projectState = Util::ParseCBOR(projectBin, &succ);
         if (succ) {
@@ -311,7 +312,7 @@ void OFS_Project::ShowProjectWindow(bool* open) noexcept
         ImGui::TextDisabled(TR(SCRIPTS));
         for (auto& script : Funscripts) {
             if (ImGui::Button(script->Title().c_str(), ImVec2(-1.f, 0.f))) {
-                Util::SaveFileDialog(TR(CHANGE_DEFAULT_LOCATION),
+                OFS::util::saveFileDialog(TR(CHANGE_DEFAULT_LOCATION),
                     MakePathAbsolute(script->RelativePath().string()),
                     [&](auto result) {
                         if (!result.files.empty()) {

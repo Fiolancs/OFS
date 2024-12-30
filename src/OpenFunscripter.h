@@ -17,6 +17,7 @@
 
 #include "ui/GradientBar.h"
 #include "ui/OFS_DynamicFontAtlas.h"
+#include "io/OFS_FileDialogs.h"
 #include "event/OFS_EventSystem.h"
 #include "state/OFS_StateManager.h"
 #include "ui/OFS_VideoplayerControls.h"
@@ -191,15 +192,15 @@ template <typename OnCloseAction>
 inline void OpenFunscripter::closeWithoutSavingDialog(OnCloseAction&& onProjectCloseHandler) noexcept
 {
     if (LoadedProject->HasUnsavedEdits()) {
-        Util::YesNoCancelDialog(TR(PROJECT_HAS_UNSAVED_EDITS),
+        OFS::util::YesNoCancelDialog(TR(PROJECT_HAS_UNSAVED_EDITS),
             TR(CLOSE_WITHOUT_SAVING_MSG),
-            [this, onProjectCloseHandler = std::move(onProjectCloseHandler)](Util::YesNoCancel result) mutable {
-                if (result == Util::YesNoCancel::Yes) {
+            [this, onProjectCloseHandler = std::move(onProjectCloseHandler)](OFS::util::YesNoCancel result) mutable {
+                if (result == OFS::util::YesNoCancel::YES) {
                     LoadedProject->Save(true);
                     closeProject(true);
                     onProjectCloseHandler();
                 }
-                else if (result == Util::YesNoCancel::No) {
+                else if (result == OFS::util::YesNoCancel::NO) {
                     /* don't save */
                     closeProject(true);
                     onProjectCloseHandler();

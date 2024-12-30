@@ -4,6 +4,7 @@
 
 #include "OFS_Util.h"
 #include "ui/OFS_ImGui.h"
+#include "io/OFS_FileDialogs.h"
 #include "Funscript/Funscript.h"
 #include "OFS_DynamicFontAtlas.h"
 #include "event/OFS_EventSystem.h"
@@ -162,10 +163,10 @@ void ScriptSimulator::ShowSimulator(bool* open, std::shared_ptr<Funscript>& acti
     }
     ImGui::NextColumn();
     if (ImGui::Button(TR(SAVE_CONFIG), ImVec2(-1.f, 0.f))) { 
-        Util::YesNoCancelDialog(TR(SAVE_SIMULATOR_CONFIG),
+        OFS::util::YesNoCancelDialog(TR(SAVE_SIMULATOR_CONFIG),
             TR(SAVE_SIMULATOR_CONFIG_MSG), 
-            [this](Util::YesNoCancel result) {
-                if(result == Util::YesNoCancel::Yes) {
+            [this](OFS::util::YesNoCancel result) {
+                if(result == OFS::util::YesNoCancel::YES) {
                     auto& dState = SimulatorDefaultConfigState::StaticStateSlow();
                     auto& state = SimulatorState::State(stateHandle);
                     dState.defaultState = state;

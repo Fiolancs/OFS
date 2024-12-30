@@ -2,6 +2,7 @@
 #include "OFS_SDLUtil.h"
 
 #include "OFS_Util.h"
+#include "io/OFS_FileDialogs.h"
 #include "localization/OFS_Localization.h"
 
 #include <SDL3/SDL_thread.h>
@@ -120,7 +121,7 @@ void OFS_DownloadFfmpeg::DownloadFfmpegModal() noexcept
         }
 
         if(cb.Stopped && (cb.Progress < 1.f || std::isnan(cb.Progress))) {
-            Util::MessageBoxAlert(TR(ERROR_STR), TR(FFMPEG_FAILED_TO_DOWNLOAD_MSG));
+            OFS::util::MessageBoxAlert(TR(ERROR_STR), TR(FFMPEG_FAILED_TO_DOWNLOAD_MSG));
             FfmpegMissing = false;
             ImGui::CloseCurrentPopup();
         }
@@ -143,7 +144,7 @@ void OFS_DownloadFfmpeg::DownloadFfmpegModal() noexcept
             if(!ExtractFailed) {
                 FfmpegMissing = false;
                 ImGui::CloseCurrentPopup();
-                Util::MessageBoxAlert(TR(DONE), TR(DONE_MSG));
+                OFS::util::MessageBoxAlert(TR(DONE), TR(DONE_MSG));
                 std::error_code ec;
                 std::filesystem::remove(downloadPath, ec);
             }

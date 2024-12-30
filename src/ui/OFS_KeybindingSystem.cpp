@@ -2,6 +2,7 @@
 #include "OFS_SDLUtil.h"
 
 #include "OFS_Util.h"
+#include "io/OFS_FileDialogs.h"
 #include "localization/OFS_Localization.h"
 
 #include <imgui.h>
@@ -222,11 +223,11 @@ void OFS_KeybindingSystem::addTrigger(const OFS_ActionTrigger& newTrigger) noexc
         ss << '\n' << "Do you want to remove the existing trigger?";
         
 
-        Util::YesNoCancelDialog("Trigger is already in use",
+        OFS::util::YesNoCancelDialog("Trigger is already in use",
             ss.str(),
             [stateHandle = stateHandle, newTrigger](auto result)
             {
-                if(result == Util::YesNoCancel::Yes)
+                if(result == OFS::util::YesNoCancel::YES)
                 {
                     auto& state = OFS_KeybindingState::State(stateHandle);
                     auto it = state.Triggers.find(newTrigger);
@@ -457,7 +458,7 @@ void OFS_KeybindingSystem::RenderKeybindingWindow() noexcept
             findOrphanTriggers(state, actions, orphanTriggers);
             if(orphanTriggers.empty())
             {
-                Util::MessageBoxAlert(TR(OK_RESULT), TR(OK_RESULT));
+                OFS::util::MessageBoxAlert(TR(OK_RESULT), TR(OK_RESULT));
             }
         }
 

@@ -13,6 +13,8 @@
 
 #include "OFS_Util.h"
 #include "OFS_Profiling.h"
+#include "OFS_ThreadPool.h"
+#include "io/OFS_FileDialogs.h"
 #include "localization/OFS_Localization.h"
 
 #include "state/states/ChapterState.h"
@@ -1361,7 +1363,7 @@ void OpenFunscripter::processEvents() noexcept
 void OpenFunscripter::ExportClip(const ExportClipForChapter* ev) noexcept
 {
     const auto& ofsState = OpenFunscripterState::State(stateHandle);
-    Util::OpenDirectoryDialog(TR(CHOOSE_OUTPUT_DIR), ofsState.lastPath,
+    OFS::util::openDirectoryDialog(TR(CHOOSE_OUTPUT_DIR), ofsState.lastPath,
         [chapter = ev->chapter](auto& result) {
             if (!result.files.empty()) {
                 OFS_ChapterManager::ExportClip(chapter, result.files[0]);
@@ -1539,13 +1541,13 @@ void OpenFunscripter::exitApp(bool force) noexcept
     bool unsavedChanges = LoadedProject->HasUnsavedEdits();
 
     if (unsavedChanges) {
-        Util::YesNoCancelDialog(TR(UNSAVED_CHANGES), TR(UNSAVED_CHANGES_MSG),
-            [&](Util::YesNoCancel result) {
-                if (result == Util::YesNoCancel::Yes) {
+        OFS::util::YesNoCancelDialog(TR(UNSAVED_CHANGES), TR(UNSAVED_CHANGES_MSG),
+            [&](OFS::util::YesNoCancel result) {
+                if (result == OFS::util::YesNoCancel::YES) {
                     saveProject();
                     Status |= OFS_Status::OFS_ShouldExit;
                 }
-                else if (result == Util::YesNoCancel::No) {
+                else if (result == OFS::util::YesNoCancel::NO) {
                     Status |= OFS_Status::OFS_ShouldExit;
                 }
                 else {
@@ -1708,10 +1710,17 @@ int OpenFunscripter::Run() noexcept
         float frameLimit = IdleMode ? 10.f : (float)prefState.framerateLimit;
         const float minFrameTime = (float)PerfFreq / frameLimit;
 
+        // QQQ
         int32_t sleepMs = ((minFrameTime - (float)(FrameEnd - FrameStart)) / minFrameTime) * (1000.f / frameLimit);
         if (!IdleMode) sleepMs -= 1;
-        if (sleepMs > 0) SDL_Delay(sleepMs);
+        if (OFS::ThreadPool::get().waitDetachedTasks(std::chrono::milliseconds(sleepMs)))
+        {
+            FrameEnd = SDL_GetPerformanceCounter();
+            int32_t extraSleepMs = ((minFrameTime - (float)(FrameEnd - FrameStart)) / minFrameTime) * (1000.f / frameLimit);
+            if (extraSleepMs > 0) SDL_Delay(extraSleepMs);
+        }
 
+        // QQQ
         if (!prefState.vsync) {
             FrameEnd = SDL_GetPerformanceCounter();
             while ((FrameEnd - FrameStart) < minFrameTime) {
@@ -1767,8 +1776,8 @@ void OpenFunscripter::Redo() noexcept
 void OpenFunscripter::openFile(const std::string& file) noexcept
 {
     OFS_PROFILE(__FUNCTION__);
-    if (!OFS::util::fileExists(file)) {
-        Util::MessageBoxAlert(TR(FILE_NOT_FOUND), std::string(TR(COULDNT_FIND_FILE)) + "\n" + file);
+    if (!OFS::util::fileExists(OFS::util::pathFromString(file))) {
+        OFS::util::MessageBoxAlert(TR(FILE_NOT_FOUND), std::string(TR(COULDNT_FIND_FILE)) + "\n" + file);
         return;
     }
 
@@ -1776,7 +1785,7 @@ void OpenFunscripter::openFile(const std::string& file) noexcept
     auto testProjectPath = OFS::util::pathFromString(file);
     if (testProjectPath.extension().string() != OFS_Project::Extension) {
         testProjectPath.replace_extension(OFS_Project::Extension);
-        if (OFS::util::fileExists(testProjectPath.string())) {
+        if (OFS::util::fileExists(testProjectPath)) {
             openFile(testProjectPath.string());
             return;
         }
@@ -1806,7 +1815,7 @@ void OpenFunscripter::openFile(const std::string& file) noexcept
                 initProject();
             }
             else {
-                Util::MessageBoxAlert("Failed to open file.", LoadedProject->NotValidError());
+                OFS::util::MessageBoxAlert("Failed to open file.", LoadedProject->NotValidError());
             }
         });
 }
@@ -1899,7 +1908,7 @@ void OpenFunscripter::pickDifferentMedia() noexcept
 {
     if (LoadedProject->IsValid()) {
         auto& projectState = LoadedProject->State();
-        Util::OpenFileDialog(
+        OFS::util::openFileDialog(
             TR(PICK_DIFFERENT_MEDIA), LoadedProject->MediaPath(),
             [this](auto& result) {
                 auto& projectState = LoadedProject->State();
@@ -2109,7 +2118,8 @@ void OpenFunscripter::repeatLastStroke() noexcept
 
 void OpenFunscripter::saveActiveScriptAs()
 {
-    Util::SaveFileDialog(TR(SAVE),
+    const char* ext[]{ "Funscript", "*.funscript" };
+    OFS::util::saveFileDialog(TR(SAVE),
         LoadedProject->MakePathAbsolute(ActiveFunscript()->RelativePath().string()),
         [this](auto& result) {
             if (result.files.size() > 0) {
@@ -2120,7 +2130,7 @@ void OpenFunscripter::saveActiveScriptAs()
                 ofsState.lastPath = dir.string();
             }
         },
-        { "Funscript", "*.funscript" });
+        ext);
 }
 
 void OpenFunscripter::ShowMainMenuBar() noexcept
@@ -2144,7 +2154,7 @@ void OpenFunscripter::ShowMainMenuBar() noexcept
         auto& ofsState = OpenFunscripterState::State(stateHandle);
         if (ImGui::BeginMenu(TR_ID("FILE", Tr::FILE).c_str())) {
             if (ImGui::MenuItem(TR(GENERIC_OPEN))) {
-                Util::OpenFileDialog(
+                OFS::util::openFileDialog(
                     TR(GENERIC_OPEN), ofsState.lastPath,
                     [this](auto& result) {
                         if (result.files.size() > 0) {
@@ -2195,8 +2205,9 @@ void OpenFunscripter::ShowMainMenuBar() noexcept
                 }
                 if (ImGui::MenuItem(std::format(ICON_SHARE " {:s}", TR(EXPORT_ALL)).c_str())) {
                     if (LoadedFunscripts().size() == 1) {
+                        const char* ext[]{ "Funscript", "*.funscript" };
                         auto savePath = OFS::util::pathFromString(ofsState.lastPath) / (ActiveFunscript()->Title() + ".funscript");
-                        Util::SaveFileDialog(TR(EXPORT_MENU), savePath.string(),
+                        OFS::util::saveFileDialog(TR(EXPORT_MENU), savePath.string(),
                             [this](auto& result) {
                                 if (result.files.size() > 0) {
                                     LoadedProject->ExportFunscript(result.files[0], LoadedProject->ActiveIdx());
@@ -2206,10 +2217,10 @@ void OpenFunscripter::ShowMainMenuBar() noexcept
                                     ofsState.lastPath = dir.string();
                                 }
                             },
-                            { "Funscript", "*.funscript" });
+                            ext);
                     }
                     else if (LoadedFunscripts().size() > 1) {
-                        Util::OpenDirectoryDialog(TR(EXPORT_MENU), ofsState.lastPath,
+                        OFS::util::openDirectoryDialog(TR(EXPORT_MENU), ofsState.lastPath,
                             [this](auto& result) {
                                 if (result.files.size() > 0) {
                                     LoadedProject->ExportFunscripts(result.files[0]);
@@ -2242,6 +2253,7 @@ void OpenFunscripter::ShowMainMenuBar() noexcept
                 pickDifferentMedia();
             }
             if (ImGui::BeginMenu(TR(ADD_MENU), LoadedProject->IsValid())) {
+                const char* ext[]{ "Funscript", "*.funscript" };
                 auto fileAlreadyLoaded = [](const std::string& path) noexcept -> bool {
                     auto app = OpenFunscripter::ptr;
                     auto it = std::find_if(app->LoadedFunscripts().begin(), app->LoadedFunscripts().end(),
@@ -2272,7 +2284,7 @@ void OpenFunscripter::ShowMainMenuBar() noexcept
                     ImGui::EndMenu();
                 }
                 if (ImGui::MenuItem(TR(ADD_NEW))) {
-                    Util::SaveFileDialog(TR(ADD_NEW_FUNSCRIPT), ofsState.lastPath,
+                    OFS::util::saveFileDialog(TR(ADD_NEW_FUNSCRIPT), ofsState.lastPath,
                         [fileAlreadyLoaded](auto& result) noexcept {
                             if (result.files.size() > 0) {
                                 auto app = OpenFunscripter::ptr;
@@ -2281,10 +2293,10 @@ void OpenFunscripter::ShowMainMenuBar() noexcept
                                 }
                             }
                         },
-                        { "Funscript", "*.funscript" });
+                        ext);
                 }
                 if (ImGui::MenuItem(TR(ADD_EXISTING))) {
-                    Util::OpenFileDialog(
+                    OFS::util::openFileDialog(
                         TR(ADD_EXISTING_FUNSCRIPTS), ofsState.lastPath,
                         [fileAlreadyLoaded](auto& result) noexcept {
                             if (result.files.size() > 0) {
@@ -2296,7 +2308,7 @@ void OpenFunscripter::ShowMainMenuBar() noexcept
                                 }
                             }
                         },
-                        true, { "*.funscript" }, "Funscript");
+                        true, ext);
                 }
                 ImGui::EndMenu();
             }
@@ -2308,10 +2320,10 @@ void OpenFunscripter::ShowMainMenuBar() noexcept
                     }
                 }
                 if (unloadIndex >= 0) {
-                    Util::YesNoCancelDialog(TR(REMOVE_SCRIPT),
+                    OFS::util::YesNoCancelDialog(TR(REMOVE_SCRIPT),
                         TR(REMOVE_SCRIPT_CONFIRM_MSG),
-                        [this, unloadIndex](Util::YesNoCancel result) {
-                            if (result == Util::YesNoCancel::Yes) {
+                        [this, unloadIndex](OFS::util::YesNoCancel result) {
+                            if (result == OFS::util::YesNoCancel::YES) {
                                 LoadedProject->RemoveFunscript(unloadIndex);
                                 auto activeIdx = LoadedProject->ActiveIdx();
                                 if (activeIdx > 0) {
@@ -2345,11 +2357,12 @@ void OpenFunscripter::ShowMainMenuBar() noexcept
             ImGui::SameLine();
             ImGui::SetNextItemWidth(ImGui::GetFontSize() * 6.f);
             ImGui::InputInt("##height", &ofsState.heatmapSettings.defaultHeight);
+            char const* ext[]{ "*.png" };
             if (ImGui::MenuItem(TR(SAVE_HEATMAP))) {
                 std::string filename = ActiveFunscript()->Title() + "_Heatmap.png";
                 auto defaultPath = OFS::util::pathFromString(ofsState.heatmapSettings.defaultPath);
                OFS::util::concatPathSafe(defaultPath, filename);
-                Util::SaveFileDialog(
+                OFS::util::saveFileDialog(
                     TR(SAVE_HEATMAP), defaultPath.string(),
                     [this](auto& result) {
                         if (result.files.size() > 0) {
@@ -2362,13 +2375,13 @@ void OpenFunscripter::ShowMainMenuBar() noexcept
                             }
                         }
                     },
-                    { "*.png" }, "PNG");
+                    ext, "PNG");
             }
             if (ImGui::MenuItem(TR(SAVE_HEATMAP_WITH_CHAPTERS))) {
                 std::string filename = ActiveFunscript()->Title() + "_Heatmap.png";
                 auto defaultPath = OFS::util::pathFromString(ofsState.heatmapSettings.defaultPath);
                OFS::util::concatPathSafe(defaultPath, filename);
-                Util::SaveFileDialog(
+                OFS::util::saveFileDialog(
                     TR(SAVE_HEATMAP), defaultPath.string(),
                     [this](auto& result) {
                         if (result.files.size() > 0) {
@@ -2381,7 +2394,7 @@ void OpenFunscripter::ShowMainMenuBar() noexcept
                             }
                         }
                     },
-                    { "*.png" }, "PNG");
+                    ext, "PNG");
             }
             ImGui::Separator();
             if (ImGui::MenuItem(TR(UNDO), BINDING_STRING("undo"), false, !undoSystem->UndoEmpty())) {
@@ -2575,7 +2588,7 @@ void OpenFunscripter::ShowMainMenuBar() noexcept
                     if (ImGui::MenuItem(TR(ENABLED), NULL, &isActive)) {
                         ext.Toggle();
                         if (ext.HasError()) {
-                            Util::MessageBoxAlert(TR(UNKNOWN_ERROR), ext.Error);
+                            OFS::util::MessageBoxAlert(TR(UNKNOWN_ERROR), ext.Error);
                         }
                     }
                     if (ImGui::MenuItem(std::vformat(TR(SHOW_WINDOW), std::make_format_args(ext.NameId)).c_str(), NULL, &ext.WindowOpen, ext.Active)) {}

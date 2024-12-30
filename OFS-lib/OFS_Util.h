@@ -5,13 +5,11 @@
 #include <span>
 #include <chrono>
 #include <vector>
-#include <format>
 #include <string>
 #include <cstdint>
 #include <fstream>
 #include <iterator>
 #include <filesystem>
-#include <functional>
 
 #if __has_include("emmintrin.h")
 #   include "emmintrin.h" // for _mm_pause
@@ -144,6 +142,9 @@ namespace OFS::util
     // Generates a float between [0,1)
     float  randomFloat(void) noexcept;
     double randomDouble(void) noexcept;
+
+    // Returns a ABGR8 u32 colour (ImGui friendly)
+    std::uint32_t randomColor(float s, float v, float alpha = 1.f) noexcept;
 }
 
 class Util {
@@ -228,43 +229,6 @@ public:
         //auto data = nlohmann::json::to_cbor(json);
         //return data;
     }
-
-
-    struct FileDialogResult {
-        std::vector<std::string> files;
-    };
-
-    using FileDialogResultHandler = std::function<void(FileDialogResult&)>;
-
-    static void OpenFileDialog(const std::string& title,
-        const std::string& path,
-        FileDialogResultHandler&& handler,
-        bool multiple = false,
-        const std::vector<const char*>& filters = {},
-        const std::string& filterText = "") noexcept;
-
-    static void SaveFileDialog(const std::string& title,
-        const std::string& path,
-        FileDialogResultHandler&& handler,
-        const std::vector<const char*>& filters = {},
-        const std::string& filterText = "") noexcept;
-
-    static void OpenDirectoryDialog(const std::string& title,
-        const std::string& path,
-        FileDialogResultHandler&& handler) noexcept;
-
-    enum class YesNoCancel {
-        Yes,
-        No,
-        Cancel
-    };
-
-    using YesNoDialogResultHandler = std::function<void(YesNoCancel)>;
-    static void YesNoCancelDialog(const std::string& title, const std::string& message, YesNoDialogResultHandler&& handler);
-
-    static void MessageBoxAlert(const std::string& title, const std::string& message) noexcept;
-
-    static std::uint32_t RandomColor(float s, float v, float alpha = 1.f) noexcept;
 };
 
 

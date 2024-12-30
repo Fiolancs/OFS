@@ -3,6 +3,7 @@
 #include "localization/OFS_Localization.h"
 
 #include <cstdint>
+#include <functional>
 #include <unordered_map>
 
 using ActionFireFn = std::function<void()>;

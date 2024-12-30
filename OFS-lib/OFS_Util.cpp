@@ -1,13 +1,8 @@
-#include <version>
 #include "OFS_Util.h"
 #include "OFS_Profiling.h"
 
-#include "event/OFS_EventSystem.h"
-
 #include <scn/scan.h>
-#include <stb_image.h>
 #include <stb_image_write.h>
-#include <tinyfiledialogs.h>
 #include <xoshiro/xoshiro256plus.h>
 
 #if defined(_WIN32)
@@ -29,10 +24,9 @@
 #include <locale>
 #include <random>
 #include <codecvt>
-#include <iostream>
-#include <algorithm>
 #include <filesystem>
 #include <system_error>
+
 
 #ifdef _WIN32
 inline static int WindowsShellExecute(const wchar_t* op, const wchar_t* program, const wchar_t* params) noexcept
@@ -263,248 +257,40 @@ double OFS::util::randomDouble(void) noexcept
 }
 
 
-// tinyfiledialogs doesn't like quotes
-static void SanitizeString(std::string& str) noexcept
+static std::uint32_t convertHSV_ABGR8(float h, float s, float v, float alpha)
 {
-    std::transform(str.begin(), str.end(), str.begin(), [](char c) { return c == '\'' || c == '"' ? ' ' : c; });
+    std::uint8_t r, g, b, a;
+
+    a = static_cast<std::uint8_t>(alpha * 0xFF + .5f);
+    if (s == 0.f)
+    {
+        r = g = b = v;
+    }
+    else
+    {
+        h = std::fmodf(h, 1.f) * 6.f;
+        int   const i = static_cast<int>(h);
+        float const f = h - i;
+        float const p = v * (1.f - s);
+        float const q = v * (1.f - (s * f));
+        float const t = v * (1.f - (s * (1.f - f)));
+
+        auto constexpr roundf = [](float f) { return std::uint8_t(f + .5f); };
+        switch (i)
+        {
+        default:
+        case  5: r = roundf(v * 255); g = roundf(p * 255); b = roundf(q * 255); break;
+        case  4: r = roundf(t * 255); g = roundf(p * 255); b = roundf(v * 255); break;
+        case  3: r = roundf(p * 255); g = roundf(q * 255); b = roundf(v * 255); break;
+        case  2: r = roundf(p * 255); g = roundf(v * 255); b = roundf(t * 255); break;
+        case  1: r = roundf(q * 255); g = roundf(v * 255); b = roundf(p * 255); break;
+        case  0: r = roundf(v * 255); g = roundf(t * 255); b = roundf(p * 255); break;
+        }
+    }
+    return (std::uint32_t(a) << 24) | (std::uint32_t(b) << 16) | (std::uint32_t(g) << 8) | std::uint32_t(r);
 }
 
-
-void Util::OpenFileDialog(const std::string& title, const std::string& path, FileDialogResultHandler&& handler, bool multiple, const std::vector<const char*>& filters, const std::string& filterText) noexcept
-{
-    struct FileDialogThreadData {
-        bool multiple = false;
-        std::string title;
-        std::string path;
-        std::vector<const char*> filters;
-        std::string filterText;
-        FileDialogResultHandler handler;
-    };
-    auto thread = [](void* ctx) {
-        auto data = (FileDialogThreadData*)ctx;
-
-        if (!OFS::util::directoryExists(data->path)) {
-            data->path = "";
-        }
-
-#ifdef WIN32
-        std::wstring wtitle = OFS::util::utf8ToUtf16(data->title);
-        std::wstring wpath = OFS::util::utf8ToUtf16(data->path);
-        std::wstring wfilterText = OFS::util::utf8ToUtf16(data->filterText);
-        std::vector<std::wstring> wfilters;
-        std::vector<const wchar_t*> wc_str;
-        wfilters.reserve(data->filters.size());
-        wc_str.reserve(data->filters.size());
-        for (auto&& filter : data->filters) {
-            wfilters.emplace_back(OFS::util::utf8ToUtf16(filter));
-            wc_str.push_back(wfilters.back().c_str());
-        }
-        auto result = tinyfd_utf16to8(tinyfd_openFileDialogW(wtitle.c_str(), wpath.c_str(), wc_str.size(), wc_str.data(), wfilterText.empty() ? NULL : wfilterText.c_str(), data->multiple));
-#elif __APPLE__
-        auto result = tinyfd_openFileDialog(data->title.c_str(), data->path.c_str(), 0, nullptr, data->filterText.empty() ? NULL : data->filterText.c_str(), data->multiple);
-#else
-        auto result = tinyfd_openFileDialog(data->title.c_str(), data->path.c_str(), data->filters.size(), data->filters.data(), data->filterText.empty() ? NULL : data->filterText.c_str(), data->multiple);
-#endif
-        auto dialogResult = new FileDialogResult;
-        if (result != nullptr) {
-            if (data->multiple) {
-                int last = 0;
-                int index = 0;
-                for (char c : std::string(result)) {
-                    if (c == '|') {
-                        dialogResult->files.emplace_back(std::string(result + last, index - last));
-                        last = index + 1;
-                    }
-                    index += 1;
-                }
-                dialogResult->files.emplace_back(std::string(result + last, index - last));
-            }
-            else {
-                dialogResult->files.emplace_back(result);
-            }
-        }
-
-        EV::Enqueue<OFS_DeferEvent>(
-            [resultHandler = std::move(data->handler), dialogResult]() {
-                resultHandler(*dialogResult);
-                delete dialogResult;
-            });
-        delete data;
-        return 0;
-    };
-    auto threadData = new FileDialogThreadData;
-    threadData->handler = std::move(handler);
-    threadData->filters = filters;
-    threadData->filterText = filterText;
-    threadData->multiple = multiple;
-    threadData->path = path;
-    threadData->title = title;
-    auto handle = std::thread(thread, threadData);
-    handle.detach();
-    // QQQ
-    //auto handle = SDL_CreateThread(thread, "OpenFileDialog", threadData);
-    //SDL_DetachThread(handle);
-}
-
-void Util::SaveFileDialog(const std::string& title, const std::string& path, FileDialogResultHandler&& handler, const std::vector<const char*>& filters, const std::string& filterText) noexcept
-{
-    struct SaveFileDialogThreadData {
-        std::string title;
-        std::string path;
-        std::vector<const char*> filters;
-        std::string filterText;
-        FileDialogResultHandler handler;
-    };
-    auto thread = [](void* ctx) -> int32_t {
-        auto data = (SaveFileDialogThreadData*)ctx;
-
-        auto dialogPath = OFS::util::pathFromString(data->path);
-        dialogPath.remove_filename();
-        std::error_code ec;
-        if (!std::filesystem::exists(dialogPath, ec)) {
-            data->path = "";
-        }
-
-        SanitizeString(data->path);
-
-        auto result = tinyfd_saveFileDialog(data->title.c_str(), data->path.c_str(), data->filters.size(), data->filters.data(), !data->filterText.empty() ? data->filterText.c_str() : NULL);
-
-        FUN_ASSERT(result, "Ignore this if you pressed cancel.");
-        auto saveDialogResult = new FileDialogResult;
-        if (result != nullptr) {
-            saveDialogResult->files.emplace_back(result);
-        }
-        EV::Enqueue<OFS_DeferEvent>([resultHandler = std::move(data->handler), saveDialogResult]() {
-            resultHandler(*saveDialogResult);
-            delete saveDialogResult;
-        });
-        delete data;
-        return 0;
-    };
-    auto threadData = new SaveFileDialogThreadData;
-    threadData->title = title;
-    threadData->path = path;
-    threadData->filters = filters;
-    threadData->filterText = filterText;
-    threadData->handler = std::move(handler);
-    auto handle = std::thread(thread, threadData);
-    handle.detach();
-    // QQQ
-    //auto handle = SDL_CreateThread(thread, "SaveFileDialog", threadData);
-    //SDL_DetachThread(handle);
-}
-
-void Util::OpenDirectoryDialog(const std::string& title, const std::string& path, FileDialogResultHandler&& handler) noexcept
-{
-    struct OpenDirectoryDialogThreadData {
-        std::string title;
-        std::string path;
-        FileDialogResultHandler handler;
-    };
-    auto thread = [](void* ctx) -> int32_t {
-        auto data = (OpenDirectoryDialogThreadData*)ctx;
-
-        if (!OFS::util::directoryExists(data->path)) {
-            data->path = "";
-        }
-
-        auto result = tinyfd_selectFolderDialog(data->title.c_str(), data->path.c_str());
-
-        FUN_ASSERT(result, "Ignore this if you pressed cancel.");
-        auto directoryDialogResult = new FileDialogResult;
-        if (result != nullptr) {
-            directoryDialogResult->files.emplace_back(result);
-        }
-
-        EV::Enqueue<OFS_DeferEvent>([resultHandler = std::move(data->handler), directoryDialogResult]() {
-            resultHandler(*directoryDialogResult);
-            delete directoryDialogResult;
-        });
-        delete data;
-        return 0;
-    };
-    auto threadData = new OpenDirectoryDialogThreadData;
-    threadData->title = title;
-    threadData->path = path;
-    threadData->handler = std::move(handler);
-    auto handle = std::thread(thread, threadData);
-    handle.detach();
-    // QQQ
-    //auto handle = SDL_CreateThread(thread, "SaveFileDialog", threadData);
-    //SDL_DetachThread(handle);
-}
-
-void Util::YesNoCancelDialog(const std::string& title, const std::string& message, YesNoDialogResultHandler&& handler)
-{
-    struct YesNoCancelThreadData {
-        std::string title;
-        std::string message;
-        YesNoDialogResultHandler handler;
-    };
-    auto thread = [](void* user) -> int {
-        YesNoCancelThreadData* data = (YesNoCancelThreadData*)user;
-        auto result = tinyfd_messageBox(data->title.c_str(), data->message.c_str(), "yesnocancel", NULL, 1);
-        Util::YesNoCancel enumResult;
-        switch (result) {
-            case 0:
-                enumResult = Util::YesNoCancel::Cancel;
-                break;
-            case 1:
-                enumResult = Util::YesNoCancel::Yes;
-                break;
-            case 2:
-                enumResult = Util::YesNoCancel::No;
-                break;
-        }
-        EV::Enqueue<OFS_DeferEvent>([resultHandler = std::move(data->handler), enumResult]() {
-            resultHandler(enumResult);
-        });
-        delete data;
-        return 0;
-    };
-
-    auto threadData = new YesNoCancelThreadData;
-    threadData->title = title;
-    threadData->message = message;
-    threadData->handler = std::move(handler);
-    auto handle = std::thread(thread, threadData);
-    handle.detach();
-    // QQQ
-    //auto handle = SDL_CreateThread(thread, "YesNoCancelDialog", threadData);
-    //SDL_DetachThread(handle);
-}
-
-void Util::MessageBoxAlert(const std::string& title, const std::string& message) noexcept
-{
-    struct MessageBoxData {
-        std::string title;
-        std::string message;
-    };
-
-    auto thread = [](void* data) -> int {
-        MessageBoxData* msg = (MessageBoxData*)data;
-
-        SanitizeString(msg->title);
-        SanitizeString(msg->message);
-        tinyfd_messageBox(msg->title.c_str(), msg->message.c_str(), "ok", "info", 1);
-
-        delete msg;
-        return 0;
-    };
-
-    auto threadData = new MessageBoxData;
-    threadData->title = title;
-    threadData->message = message;
-    auto handle = std::thread(thread, threadData);
-    handle.detach();
-    // QQQ
-    //auto handle = SDL_CreateThread(thread, "MessageBoxAlert", threadData);
-    //SDL_DetachThread(handle);
-}
-
-
-// QQQ
-std::uint32_t Util::RandomColor(float s, float v, float alpha) noexcept
+std::uint32_t OFS::util::randomColor(float s, float v, float alpha) noexcept
 {
     // This is cool :^)
     // https://martin.ankerl.com/2009/12/09/how-to-create-random-colors-programmatically/
@@ -514,8 +300,5 @@ std::uint32_t Util::RandomColor(float s, float v, float alpha) noexcept
     H += goldenRatioConjugate;
     H = std::fmodf(H, 1.f);
 
-    //ImColor color;
-    //color.SetHSV(H, s, v, alpha);
-    //return ImGui::ColorConvertFloat4ToU32(color);
-    return {};
+    return convertHSV_ABGR8(H, s, v, alpha);
 }

@@ -11,6 +11,7 @@ set(OFS_LIB_SOURCES
     "funscript/FunscriptAction.cpp"
     "funscript/FunscriptUndoSystem.cpp"
     
+    "io/OFS_FileDialogs.cpp"
     "io/OFS_FileLogging.cpp"
     "io/OFS_Serialization.cpp"
     
@@ -37,6 +38,7 @@ set(OFS_LIB_HEADERS
     "funscript/FunscriptSpline.h"
     "funscript/FunscriptUndoSystem.h"
 
+    "io/OFS_FileDialogs.h"
     "io/OFS_FileLogging.h"
     "io/OFS_Serialization.h"
     "io/OFS_BinarySerialization.h"
