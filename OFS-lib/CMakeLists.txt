@@ -2,6 +2,7 @@ project(OFS_lib)
 
 set(OFS_LIB_SOURCES
     "OFS_Util.cpp"
+    "OFS_ThreadPool.cpp"
 
     "event/OFS_EventSystem.cpp"
     "event/OFS_Event.cpp"
@@ -26,6 +27,7 @@ set(OFS_LIB_HEADERS
     "OFS_VectorSet.h"
     "OFS_Reflection.h"
     "OFS_DebugBreak.h"
+    "OFS_ThreadPool.h"
 
     "event/OFS_Event.h"
     "event/OFS_EventSystem.h"
@@ -60,16 +62,17 @@ add_custom_command(OUTPUT "OFS_StringsGenerated.cpp" "OFS_StringsGenerated.h"
                    VERBATIM)
 
 target_link_libraries(${PROJECT_NAME} PUBLIC
-    tinyfiledialogs
+    dr_libs
     eventpp
     glaze::glaze
-    scn::scn
-    zpp_bits
-    dr_libs
-    stb
-    tracy
     nlohmann_json
+    scn::scn
+    stb
+    threadpool
+    tinyfiledialogs
+    tracy
     xoshiro
+    zpp_bits
 )
 
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_23)

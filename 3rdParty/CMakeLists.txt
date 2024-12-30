@@ -138,15 +138,6 @@ target_compile_definitions(imgui PUBLIC "IMGUI_DISABLE_OBSOLETE_FUNCTIONS=1")
 target_compile_definitions(imgui PUBLIC "IMGUI_DISABLE_OBSOLETE_KEYIO=1")
 target_compile_features(imgui PUBLIC cxx_std_20)
 
-# ===================
-# = tinifiledialogs = 
-# ===================
-set(tiny_SRC "tinyfiledialogs/tinyfiledialogs.c")
-set(tiny_HEADER "tinyfiledialogs/tinyfiledialogs.h")
-add_library(tinyfiledialogs STATIC ${tiny_SRC} ${tiny_HEADER})
-target_include_directories(tinyfiledialogs PUBLIC "tinyfiledialogs/")
-set_source_files_properties(tiny_SRC PROPERTIES LANGUAGE CXX )
-
 # =============
 # === glaze ===
 # =============
@@ -163,6 +154,23 @@ set(JSON_Install OFF CACHE BOOL "" FORCE)
 set(JSON_BuildTests OFF CACHE BOOL "" FORCE)
 set(JSON_MultipleHeaders ON CACHE BOOL "" FORCE)
 add_subdirectory("json/")
+
+
+# ==============
+# = threadpool =
+# ==============
+add_library(threadpool INTERFACE)
+target_include_directories(threadpool INTERFACE "thread-pool/include/")
+target_compile_definitions(threadpool INTERFACE "BS_THREAD_POOL_NATIVE_EXTENSIONS")
+
+# ===================
+# = tinyfiledialogs = 
+# ===================
+set(tiny_SRC "tinyfiledialogs/tinyfiledialogs.c")
+set(tiny_HEADER "tinyfiledialogs/tinyfiledialogs.h")
+add_library(tinyfiledialogs STATIC ${tiny_SRC} ${tiny_HEADER})
+target_include_directories(tinyfiledialogs PUBLIC "tinyfiledialogs/")
+set_source_files_properties(tiny_SRC PROPERTIES LANGUAGE CXX )
 
 # =============
 # === tracy ===
