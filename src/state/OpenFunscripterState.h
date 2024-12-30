@@ -5,12 +5,13 @@
 
 #include <string>
 #include <vector>
+#include <filesystem>
 
 
 struct RecentFile 
 {
 	std::string name;
-	std::string projectPath;
+	std::filesystem::path projectPath;
 };
 
 //REFL_TYPE(RecentFile)
@@ -23,7 +24,7 @@ struct OpenFunscripterState
 	static constexpr auto StateName = "OpenFunscripter";
 
 	std::vector<RecentFile> recentFiles;
-    std::string lastPath;
+    std::filesystem::path lastPath;
 
 	struct HeatmapSettings {
 		int32_t defaultWidth = 2000;

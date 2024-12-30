@@ -1,9 +1,10 @@
 #pragma once
-
-#include <cstdint>
-#include <string>
-
 #include "OFS_VideoplayerEvents.h"
+
+#include <string>
+#include <cstdint>
+#include <filesystem>
+
 
 class OFS_Videoplayer
 {
@@ -26,7 +27,7 @@ class OFS_Videoplayer
 	static constexpr float MaxPlaybackSpeed = 3.0f;
 
     bool Init(bool hwAccel) noexcept;
-    void OpenVideo(const std::string& path) noexcept;
+    void OpenVideo(std::filesystem::path const& path) noexcept;
     void SetSpeed(float speed) noexcept;
 	void AddSpeed(float speed) noexcept;
     void SetVolume(float volume) noexcept;

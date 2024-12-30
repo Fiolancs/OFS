@@ -96,10 +96,10 @@ bool OFS_Preferences::ShowPreferenceWindow() noexcept
 					ImGui::SameLine();
 					if (ImGui::Button(TR(CHANGE))) {
 						char const* ext[]{ "*.ttf", "*.otf" };
-						OFS::util::openFileDialog(TR(CHOOSE_FONT), "",
+						OFS::util::openFileDialog(TR(CHOOSE_FONT), std::filesystem::path(""),
 							[&](auto& result) {
 								if (result.files.size() > 0) {
-									state.fontOverride = result.files.back();
+									state.fontOverride = result.files.back().string();
 									OpenFunscripter::ptr->LoadOverrideFont(state.fontOverride);
 									save = true;
 								}

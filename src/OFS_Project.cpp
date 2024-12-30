@@ -30,37 +30,34 @@ static std::array<const char*, 4> AudioExtensions{
     ".wav",
 };
 
-inline bool static HasMediaExtension(const std::string& pathStr) noexcept
+inline bool static HasMediaExtension(std::filesystem::path const& path) noexcept
 {
-    auto path = OFS::util::pathFromString(pathStr);
     auto ext = path.extension().string();
 
     bool hasMediaExt = std::any_of(VideoExtensions.begin(), VideoExtensions.end(),
         [&ext](auto validExt) noexcept {
-            return strcmp(ext.c_str(), validExt) == 0;
+            return ext == validExt;
         });
 
     if (!hasMediaExt) {
         hasMediaExt = std::any_of(AudioExtensions.begin(), AudioExtensions.end(),
             [&ext](auto validExt) noexcept {
-                return strcmp(ext.c_str(), validExt) == 0;
+                return ext == validExt;
             });
     }
 
     return hasMediaExt;
 }
 
-inline bool FindMedia(const std::string& pathStr, std::string* outMedia) noexcept
+inline bool FindMedia(std::filesystem::path const& path, std::string* outMedia) noexcept
 {
-    auto path = OFS::util::pathFromString(pathStr);
     auto pathDir = path.parent_path();
-
-    auto filename = path.stem().u8string();
+    auto filename = path.stem().string();
 
     std::error_code ec;
     std::filesystem::directory_iterator dirIt(pathDir, ec);
     for (auto& entry : dirIt) {
-        auto entryName = entry.path().stem().u8string();
+        auto entryName = entry.path().stem().string();
         if (entryName == filename) {
             auto entryPathStr = entry.path().string();
 
@@ -100,15 +97,15 @@ void OFS_Project::loadNecessaryGlyphs() noexcept
     OFS_DynFontAtlas::AddText(metadata.license);
     OFS_DynFontAtlas::AddText(metadata.notes);
     for (auto& script : Funscripts) OFS_DynFontAtlas::AddText(script->Title().c_str());
-    OFS_DynFontAtlas::AddText(lastPath);
+    OFS_DynFontAtlas::AddText(lastPath.string());
 }
 
-bool OFS_Project::Load(const std::string& path) noexcept
+bool OFS_Project::Load(std::filesystem::path const& path) noexcept
 {
     FUN_ASSERT(!valid, "Can't import if project is already loaded.");
 #if 1
     std::vector<uint8_t> projectBin;
-    if (OFS::util::readFile(OFS::util::pathFromString(path), projectBin) > 0) {
+    if (OFS::util::readFile(path, projectBin) > 0) {
         bool succ;
         auto projectState = Util::ParseCBOR(projectBin, &succ);
         if (succ) {
@@ -140,13 +137,13 @@ bool OFS_Project::Load(const std::string& path) noexcept
     return valid;
 }
 
-bool OFS_Project::ImportFromFunscript(const std::string& file) noexcept
+bool OFS_Project::ImportFromFunscript(std::filesystem::path const& file) noexcept
 {
     FUN_ASSERT(!valid, "Can't import if project is already loaded.");
 
     auto& projectState = State();
-    auto basePath = OFS::util::pathFromString(file);
-    lastPath = basePath.replace_extension(OFS_Project::Extension).string();
+    auto basePath = file;
+    lastPath = basePath.replace_extension(OFS_Project::Extension);
 
     if (OFS::util::fileExists(file)) {
         Funscripts.clear();
@@ -171,7 +168,7 @@ bool OFS_Project::ImportFromFunscript(const std::string& file) noexcept
     return valid;
 }
 
-bool OFS_Project::ImportFromMedia(const std::string& file) noexcept
+bool OFS_Project::ImportFromMedia(std::filesystem::path const& file) noexcept
 {
     FUN_ASSERT(!valid, "Can't import if project is already loaded.");
 
@@ -182,18 +179,18 @@ bool OFS_Project::ImportFromMedia(const std::string& file) noexcept
     }
 
     auto& projectState = State();
-    auto basePath = OFS::util::pathFromString(file);
-    lastPath = basePath.replace_extension(OFS_Project::Extension).string();
+    auto basePath = file;
+    lastPath = basePath.replace_extension(OFS_Project::Extension);
 
-    basePath = OFS::util::pathFromString(file);
+    basePath = file;
     if (OFS::util::fileExists(file)) {
         projectState.relativeMediaPath = MakePathRelative(file);
         auto funscriptPath = basePath;
-        auto funscriptPathStr = funscriptPath.replace_extension(".funscript").string();
+        funscriptPath.replace_extension(".funscript");
 
         Funscripts.clear();
-        AddFunscript(funscriptPathStr);
-        loadMultiAxis(funscriptPathStr);
+        AddFunscript(funscriptPath);
+        loadMultiAxis(funscriptPath);
         valid = true;
         loadNecessaryGlyphs();
     }
@@ -201,12 +198,12 @@ bool OFS_Project::ImportFromMedia(const std::string& file) noexcept
     return valid;
 }
 
-bool OFS_Project::AddFunscript(const std::string& path) noexcept
+bool OFS_Project::AddFunscript(std::filesystem::path const& path) noexcept
 {
     bool loadedScript = false;
 
     bool succ = false;
-    auto jsonText = OFS::util::readFileString(path.c_str());
+    auto jsonText = OFS::util::readFileString(path);
     auto json = Util::ParseJson(jsonText, &succ);
 
     auto script = std::make_shared<Funscript>();
@@ -241,7 +238,7 @@ void OFS_Project::RemoveFunscript(int32_t idx) noexcept
     }
 }
 
-void OFS_Project::Save(const std::string& path, bool clearUnsavedChanges) noexcept
+void OFS_Project::Save(std::filesystem::path const& path, bool clearUnsavedChanges) noexcept
 {
     {
         auto& projectState = State();
@@ -316,7 +313,7 @@ void OFS_Project::ShowProjectWindow(bool* open) noexcept
                     MakePathAbsolute(script->RelativePath().string()),
                     [&](auto result) {
                         if (!result.files.empty()) {
-                            auto newPath = OFS::util::pathFromString(result.files[0]);
+                            auto newPath = result.files[0];
                             if (newPath.extension().string() == ".funscript") {
                                 script->UpdateRelativePath(MakePathRelative(newPath.string()));
                             }
@@ -344,14 +341,14 @@ void OFS_Project::ExportFunscripts() noexcept
     }
 }
 
-void OFS_Project::ExportFunscripts(const std::string& outputDir) noexcept
+void OFS_Project::ExportFunscripts(std::filesystem::path const& outputDir) noexcept
 {
     auto& state = State();
     for (auto& script : Funscripts) {
         FUN_ASSERT(!script->RelativePath().empty(), "path is empty");
         if (!script->RelativePath().empty()) {
-            auto filename = OFS::util::pathFromString(script->RelativePath().string()).filename();
-            auto outputPath = (OFS::util::pathFromString(outputDir) / filename).string();
+            auto filename = script->RelativePath().filename();
+            auto outputPath = outputDir / filename;
             auto json = script->Serialize(state.metadata, true);
             script->ClearUnsavedEdits();
             auto jsonText = Util::SerializeJson(json, false);
@@ -360,7 +357,7 @@ void OFS_Project::ExportFunscripts(const std::string& outputDir) noexcept
     }
 }
 
-void OFS_Project::ExportFunscript(const std::string& outputPath, int32_t idx) noexcept
+void OFS_Project::ExportFunscript(std::filesystem::path const& outputPath, int32_t idx) noexcept
 {
     FUN_ASSERT(idx >= 0 && idx < Funscripts.size(), "out of bounds");
     auto& state = State();
@@ -372,12 +369,12 @@ void OFS_Project::ExportFunscript(const std::string& outputPath, int32_t idx) no
     OFS::util::writeFile(outputPath, jsonText);
 }
 
-void OFS_Project::loadMultiAxis(const std::string& rootScript) noexcept
+void OFS_Project::loadMultiAxis(std::filesystem::path const& rootScript) noexcept
 {
     std::vector<std::filesystem::path> relatedFiles;
     {
-        auto filename = rootScript + '.';
-        auto searchDirectory = OFS::util::pathFromString(rootScript);
+        auto filename = rootScript.string() + '.';
+        auto searchDirectory = rootScript;
         searchDirectory.remove_filename();
 
         std::error_code ec;
@@ -423,23 +420,21 @@ void OFS_Project::loadMultiAxis(const std::string& rootScript) noexcept
     }
 }
 
-std::string OFS_Project::MakePathAbsolute(const std::string& relPathStr) const noexcept
+std::filesystem::path OFS_Project::MakePathAbsolute(std::filesystem::path const& relPath) const noexcept
 {
-    auto relPath = OFS::util::pathFromString(relPathStr);
     FUN_ASSERT(relPath.is_relative(), "Path isn't relative");
     if (relPath.is_absolute()) {
-        LOGF_ERROR("Path was already absolute. \"%s\"", relPathStr.c_str());
-        return relPathStr;
+        LOGF_ERROR("Path was already absolute. \"{:s}\"", relPath.string());
+        return relPath;
     }
     else {
-        auto projectDir = OFS::util::pathFromString(lastPath);
+        auto projectDir = lastPath;
         projectDir.remove_filename();
         std::error_code ec;
         auto absPath = std::filesystem::absolute(projectDir / relPath, ec);
         if (!ec) {
-            auto absPathStr = absPath.string();
-            LOGF_INFO("Convert relative path \"%s\" to absolute \"%s\"", relPath.string(), absPathStr);
-            return absPathStr;
+            LOGF_INFO("Convert relative path \"%s\" to absolute \"%s\"", relPath.string(), absPath.string());
+            return absPath;
         }
         FUN_ASSERT(false, "This must not happen.");
         LOG_ERROR("Failed to convert path to absolute path.");
@@ -447,17 +442,15 @@ std::string OFS_Project::MakePathAbsolute(const std::string& relPathStr) const n
     }
 }
 
-std::string OFS_Project::MakePathRelative(const std::string& absPathStr) const noexcept
+std::filesystem::path OFS_Project::MakePathRelative(std::filesystem::path const& absPath) const noexcept
 {
-    auto absPath = OFS::util::pathFromString(absPathStr);
-    auto projectDir = OFS::util::pathFromString(lastPath).parent_path();
+    auto projectDir = lastPath.parent_path();
     auto relPath = absPath.lexically_relative(projectDir);
-    auto relPathStr = relPath.string();
-    LOGF_INFO("Convert absolute path \"%s\" to relative \"%s\"", absPathStr.c_str(), relPathStr.c_str());
-    return relPathStr;
+    LOGF_INFO("Convert absolute path \"{:s}\" to relative \"{:s}\"", absPath.string(), relPath.string());
+    return relPath;
 }
 
-std::string OFS_Project::MediaPath() const noexcept
+std::filesystem::path OFS_Project::MediaPath() const noexcept
 {
     auto& projectState = State();
     return MakePathAbsolute(projectState.relativeMediaPath);

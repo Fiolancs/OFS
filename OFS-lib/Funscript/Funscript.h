@@ -203,7 +203,7 @@ namespace OFS
 			bool Enabled = true;
 			std::unique_ptr<FunscriptUndoSystem> undoSystem;
 
-			void UpdateRelativePath(const std::string& path) noexcept;
+			void UpdateRelativePath(std::filesystem::path const& path) noexcept;
 			inline void ClearUnsavedEdits() noexcept { unsavedEdits = false; }
 			inline const std::filesystem::path& RelativePath() const noexcept { return currentPathRelative; }
 			inline const std::string& Title() const noexcept { return title; }

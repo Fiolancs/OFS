@@ -862,7 +862,7 @@ void Funscript::InvertSelection() noexcept
 	data.Selection = copySelection;
 }
 
-void Funscript::UpdateRelativePath(const std::string& path) noexcept
+void Funscript::UpdateRelativePath(std::filesystem::path const& path) noexcept
 {
 	currentPathRelative = path;
 
@@ -870,10 +870,7 @@ void Funscript::UpdateRelativePath(const std::string& path) noexcept
 	{
 		EV::Enqueue<FunscriptNameChangedEvent>(this, title);
 	}
-	title = currentPathRelative
-		.replace_extension("")
-		.filename()
-		.string();
+	title = currentPathRelative.stem() .string();
 }
 
 // QQQ

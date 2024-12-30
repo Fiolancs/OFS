@@ -117,7 +117,7 @@ private:
 
     void saveActiveScriptAs();
 
-    void openFile(const std::string& file) noexcept;
+    void openFile(std::filesystem::path const& file) noexcept;
     void initProject() noexcept;
     bool closeProject(bool closeWithUnsavedChanges) noexcept;
 

@@ -10,7 +10,7 @@
 std::filesystem::path OFS::util::basePath(void) noexcept
 {
     char const* base = SDL_GetBasePath();
-    return OFS::util::pathFromString(base);
+    return OFS::util::pathFromU8String(base);
 }
 
 std::filesystem::path OFS::util::resourcePath(std::string_view path) noexcept
@@ -22,11 +22,11 @@ std::filesystem::path OFS::util::resourcePath(std::string_view path) noexcept
 
 std::filesystem::path OFS::util::preferredPath(std::string_view path) noexcept
 {
-    static std::filesystem::path prefPath = OFS::util::pathFromString(SDL_GetPrefPath("OFS", "OFS3_data"));
+    static std::filesystem::path prefPath = OFS::util::pathFromU8String(SDL_GetPrefPath("OFS", "OFS3_data"));
     
     if (!path.empty())
     {
-        std::filesystem::path rel = OFS::util::pathFromString(path);
+        std::filesystem::path rel = OFS::util::pathFromU8String(path);
         rel.make_preferred();
         return prefPath / rel;
     }

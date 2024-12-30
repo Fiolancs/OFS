@@ -10,6 +10,9 @@
 #include <imgui.h>
 #include <misc/cpp/imgui_stdlib.h>
 
+#include <filesystem>
+
+
 OFS_ChapterManager::OFS_ChapterManager() noexcept
 {
     stateHandle = OFS_ProjectState<ChapterState>::Register(ChapterState::StateName, ChapterState::StateName);
@@ -86,7 +89,7 @@ void OFS_ChapterManager::ShowWindow(bool* open) noexcept
     ImGui::End();
 }
 
-bool OFS_ChapterManager::ExportClip(const Chapter& chapter, const std::string& outputDirStr) noexcept
+bool OFS_ChapterManager::ExportClip(const Chapter& chapter, std::filesystem::path const& outputDir) noexcept
 {
     auto app = OpenFunscripter::ptr;
     char startTimeChar[16]{};
@@ -94,8 +97,7 @@ bool OFS_ChapterManager::ExportClip(const Chapter& chapter, const std::string& o
     std::format_to_n(startTimeChar, sizeof(startTimeChar), "{:f}", chapter.startTime);
     std::format_to_n(endTimeChar, sizeof(endTimeChar), "{:f}", chapter.endTime);
     
-    auto outputDir = OFS::util::pathFromString(outputDirStr);
-    auto mediaPath = OFS::util::pathFromString(app->player->VideoPath());
+    auto mediaPath = OFS::util::pathFromU8String(app->player->VideoPath());
 
     auto& projectState = app->LoadedProject->State();
 
@@ -119,7 +121,7 @@ bool OFS_ChapterManager::ExportClip(const Chapter& chapter, const std::string& o
         OFS::util::writeFile(scriptOutputPathStr.c_str(), funscriptText);
     }
 
-    auto clippedMedia = OFS::util::pathFromString("");
+    auto clippedMedia = OFS::util::pathFromU8String("");
     clippedMedia.replace_filename(chapter.name + "_" + mediaPath.filename().string());
     clippedMedia.replace_extension(mediaPath.extension());
     
@@ -129,19 +131,19 @@ bool OFS_ChapterManager::ExportClip(const Chapter& chapter, const std::string& o
     auto ffmpegPath = OFS::util::ffmpegPath().string();
     auto mediaPathStr = mediaPath.string();
 
-    std::array<const char*, 17> args = {
-        ffmpegPath.c_str(),
-        "-y",
-        "-ss", startTimeChar,
-        "-to", endTimeChar,
-        "-i", mediaPathStr.c_str(),
-        "-vcodec", "copy",
-        "-acodec", "copy",
-        videoOutputString.c_str(),
-        nullptr
-    };
-
     // QQQ
+    //std::array<const char*, 17> args = {
+    //    ffmpegPath.c_str(),
+    //    "-y",
+    //    "-ss", startTimeChar,
+    //    "-to", endTimeChar,
+    //    "-i", mediaPathStr.c_str(),
+    //    "-vcodec", "copy",
+    //    "-acodec", "copy",
+    //    videoOutputString.c_str(),
+    //    nullptr
+    //};
+    //
     //struct subprocess_s proc;
     //if (subprocess_create(args.data(), subprocess_option_no_window, &proc) != 0) {
     //    return false;

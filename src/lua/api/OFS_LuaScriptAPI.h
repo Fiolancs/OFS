@@ -9,6 +9,7 @@
 #include <memory>
 #include <vector>
 #include <optional>
+#include <filesystem>
 
 struct LuaFunscriptAction
 {
@@ -97,7 +98,7 @@ public:
         bool HasSelection() const noexcept;
         std::vector<lua_Integer> SelectedIndices() const noexcept;
 
-        std::string Path() const noexcept;
+        std::filesystem::path Path() const noexcept;
         const char* Name() const noexcept;
 
         std::optional<std::tuple<LuaFunscriptAction, lua_Integer>> ClosestAction(lua_Number time) noexcept;

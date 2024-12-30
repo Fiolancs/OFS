@@ -76,8 +76,8 @@ namespace OFS::util
 
     std::filesystem::path sanitizePath(std::filesystem::path const& path);
 
-    std::filesystem::path pathFromString(std::string_view str) noexcept;
-    std::filesystem::path pathFromString(std::u8string_view str) noexcept;
+    std::filesystem::path pathFromU8String(std::string_view str) noexcept;
+    std::filesystem::path pathFromU8String(std::u8string_view str) noexcept;
     void concatPathSafe(std::filesystem::path& path, std::string const& element);
 
     bool fileExists(std::filesystem::path const& file) noexcept;
@@ -257,7 +257,7 @@ inline std::string OFS::util::readFileString(std::filesystem::path const& path)
 
 inline std::string OFS::util::filename(std::string_view path) noexcept
 {
-    return filename(pathFromString(path));
+    return filename(pathFromU8String(path));
 }
 
 inline std::string OFS::util::filename(std::filesystem::path const& path) noexcept

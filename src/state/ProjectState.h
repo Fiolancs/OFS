@@ -31,7 +31,7 @@ struct ProjectState
     static constexpr auto StateName = "ProjectState";
 
     Funscript::Metadata metadata;
-    std::string relativeMediaPath;
+    std::filesystem::path relativeMediaPath;
     float activeTimer = 0.f;
     float lastPlayerPosition = 0.f;
     uint32_t activeScriptIdx = 0;

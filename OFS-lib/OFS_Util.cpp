@@ -55,13 +55,13 @@ std::filesystem::path OFS::util::sanitizePath(std::filesystem::path const& path)
     return path;
 }
 
-std::filesystem::path OFS::util::pathFromString(std::string_view str) noexcept
+std::filesystem::path OFS::util::pathFromU8String(std::string_view str) noexcept
 {
     auto result = std::filesystem::u8path(str);
     result.make_preferred();
     return result;
 }
-std::filesystem::path OFS::util::pathFromString(std::u8string_view str) noexcept
+std::filesystem::path OFS::util::pathFromU8String(std::u8string_view str) noexcept
 {
     auto result = std::filesystem::u8path(str);
     result.make_preferred();
@@ -70,7 +70,7 @@ std::filesystem::path OFS::util::pathFromString(std::u8string_view str) noexcept
 
 void OFS::util::concatPathSafe(std::filesystem::path& path, std::string const& element)
 {
-    path /= pathFromString(element);
+    path /= pathFromU8String(element);
 }
 
 bool OFS::util::createDirectories(std::filesystem::path const& dirs) noexcept

@@ -1,7 +1,8 @@
 #pragma once
 
-#include <cstdint>
 #include <string>
+#include <cstdint>
+#include <filesystem>
 
 class OFS_ChapterManager
 {
@@ -14,7 +15,7 @@ class OFS_ChapterManager
     OFS_ChapterManager(OFS_ChapterManager&&) = delete;
     ~OFS_ChapterManager() noexcept;
 
-    static bool ExportClip(const class Chapter& chapter, const std::string& outputDirStr) noexcept;
+    static bool ExportClip(const class Chapter& chapter, std::filesystem::path const& outputDirStr) noexcept;
     void ShowWindow(bool* open) noexcept;
 
     class ChapterState& State() noexcept;

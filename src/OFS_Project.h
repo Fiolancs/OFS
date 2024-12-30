@@ -20,7 +20,7 @@ private:
     uint32_t stateHandle = 0xFFFF'FFFF;
     uint32_t bookmarkStateHandle = 0xFFFF'FFFF;
 
-    std::string lastPath;
+    std::filesystem::path lastPath;
 
     std::string notValidError;
     bool valid = false;
@@ -32,7 +32,7 @@ private:
         notValidError += error;
     }
     void loadNecessaryGlyphs() noexcept;
-    void loadMultiAxis(const std::string& rootScript) noexcept;
+    void loadMultiAxis(std::filesystem::path const& rootScript) noexcept;
 
 public:
     static constexpr auto Extension = OFS_PROJECT_EXT;
@@ -44,14 +44,14 @@ public:
 
     std::vector<std::shared_ptr<Funscript>> Funscripts;
 
-    bool Load(const std::string& path) noexcept;
+    bool Load(std::filesystem::path const& path) noexcept;
     void Save(bool clearUnsavedChanges) noexcept { Save(lastPath, clearUnsavedChanges); }
-    void Save(const std::string& path, bool clearUnsavedChanges) noexcept;
+    void Save(std::filesystem::path const& path, bool clearUnsavedChanges) noexcept;
 
-    bool ImportFromFunscript(const std::string& path) noexcept;
-    bool ImportFromMedia(const std::string& path) noexcept;
+    bool ImportFromFunscript(std::filesystem::path const& path) noexcept;
+    bool ImportFromMedia(std::filesystem::path const& path) noexcept;
 
-    bool AddFunscript(const std::string& path) noexcept;
+    bool AddFunscript(std::filesystem::path const& path) noexcept;
     void RemoveFunscript(int32_t idx) noexcept;
 
     void Update(float delta, bool idleMode) noexcept;
@@ -63,18 +63,18 @@ public:
     inline uint32_t ActiveIdx() const noexcept { return State().activeScriptIdx; }
     inline std::shared_ptr<Funscript>& ActiveScript() noexcept { return Funscripts[ActiveIdx()]; }
 
-    inline const std::string& Path() const noexcept { return lastPath; }
+    inline std::filesystem::path const& Path() const noexcept { return lastPath; }
     inline bool IsValid() const noexcept { return valid; }
     inline const std::string& NotValidError() const noexcept { return notValidError; }
     inline ProjectState& State() const noexcept { return ProjectState::State(stateHandle); }
 
     void ExportFunscripts() noexcept;
-    void ExportFunscripts(const std::string& outputDir) noexcept;
-    void ExportFunscript(const std::string& outputPath, int32_t idx) noexcept;
+    void ExportFunscripts(std::filesystem::path const& outputDir) noexcept;
+    void ExportFunscript(std::filesystem::path const& outputPath, int32_t idx) noexcept;
 
-    std::string MakePathAbsolute(const std::string& relPath) const noexcept;
-    std::string MakePathRelative(const std::string& absPath) const noexcept;
-    std::string MediaPath() const noexcept;
+    std::filesystem::path MakePathAbsolute(std::filesystem::path const& relPath) const noexcept;
+    std::filesystem::path MakePathRelative(std::filesystem::path const& absPath) const noexcept;
+    std::filesystem::path MediaPath() const noexcept;
 
     template<typename S>
     void serialize(S& s)

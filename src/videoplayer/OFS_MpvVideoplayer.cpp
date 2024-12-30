@@ -425,12 +425,13 @@ void OFS_Videoplayer::PreviousFrame() noexcept
     }
 }
 
-void OFS_Videoplayer::OpenVideo(const std::string& path) noexcept
+void OFS_Videoplayer::OpenVideo(std::filesystem::path const& path) noexcept
 {
-    LOGF_INFO("Opening video: \"%s\"", path.c_str());
+    LOGF_INFO("Opening video: \"{:s}\"", path.string());
     CloseVideo();
     
-    const char* cmd[] = { "loadfile", path.c_str(), NULL };
+    auto pathStr = path.string();
+    const char* cmd[] = { "loadfile", pathStr.c_str(), nullptr };
     mpv_command_async(CTX->mpv, 0, cmd);
     
     MpvDataCache newCache;
@@ -528,7 +529,7 @@ void OFS_Videoplayer::NotifySwap() noexcept
 void OFS_Videoplayer::SaveFrameToImage(const std::string& directory) noexcept
 {
     std::stringstream ss;
-    auto currentFile = OFS::util::pathFromString(VideoPath());
+    auto currentFile = OFS::util::pathFromU8String(VideoPath());
     std::string filename = currentFile.filename().replace_extension("").string();
     std::array<char, 15> tmp;
     double time = CurrentTime();
@@ -538,7 +539,7 @@ void OFS_Videoplayer::SaveFrameToImage(const std::string& directory) noexcept
     if(!OFS::util::createDirectories(directory)) {
         return;
     }
-    auto dir = OFS::util::pathFromString(directory);
+    auto dir = OFS::util::pathFromU8String(directory);
     dir.make_preferred();
     std::string finalPath = (dir / ss.str()).string();
     const char* cmd[]{ "screenshot-to-file", finalPath.c_str(), NULL };

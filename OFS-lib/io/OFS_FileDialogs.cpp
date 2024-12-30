@@ -11,9 +11,9 @@
 #include <ranges>
 #include <vector>
 #include <string>
-#include <string_view>
-#include <filesystem>
 #include <algorithm>
+#include <filesystem>
+#include <string_view>
 
 
 namespace
@@ -41,14 +41,14 @@ namespace
     {
         OFS::util::FileDialogCallback callback;
         std::string title;
-        std::string path;
+        std::filesystem::path path;
     };
 
     struct FileDialogThreadData
     {
         OFS::util::FileDialogCallback callback;
         std::string title;
-        std::string path;
+        std::filesystem::path path;
         std::vector<const char*> filters;
         std::string filterText;
         bool multiple;
@@ -58,13 +58,17 @@ namespace
 
 void OFS::util::openFileDialog(std::string_view title, std::string_view path, FileDialogCallback&& handler, bool multiple, std::span<const char*> filters, std::string_view filterText)
 {
+    openFileDialog(title, OFS::util::pathFromU8String(path), std::move(handler), multiple, filters, filterText);
+}
+
+void OFS::util::openFileDialog(std::string_view title, std::filesystem::path const& path, FileDialogCallback&& handler, bool multiple, std::span<const char*> filters, std::string_view filterText)
+{
     auto thread = [](std::unique_ptr<FileDialogThreadData> data) {
-        if (!OFS::util::directoryExists(OFS::util::pathFromString(data->path)))
+        if (!OFS::util::directoryExists(data->path))
             data->path = "";
 
 #ifdef _WIN32
-        std::wstring wtitle      = OFS::util::utf8ToUtf16(data->title);
-        std::wstring wpath       = OFS::util::utf8ToUtf16(data->path);
+        std::wstring wtitle = OFS::util::utf8ToUtf16(data->title);
         std::wstring wfilterText = OFS::util::utf8ToUtf16(data->filterText);
 
         std::vector<std::wstring> wfilters;
@@ -76,7 +80,7 @@ void OFS::util::openFileDialog(std::string_view title, std::string_view path, Fi
             wfilters.emplace_back(OFS::util::utf8ToUtf16(filter));
             wc_str.push_back(wfilters.back().c_str());
         }
-        auto result = tinyfd_utf16to8(tinyfd_openFileDialogW(wtitle.c_str(), wpath.c_str(), wc_str.size(), wc_str.data(), wfilterText.empty() ? nullptr : wfilterText.c_str(), data->multiple));
+        auto result = tinyfd_utf16to8(tinyfd_openFileDialogW(wtitle.c_str(), data->path.c_str(), wc_str.size(), wc_str.data(), wfilterText.empty() ? nullptr : wfilterText.c_str(), data->multiple));
 #elif __APPLE__
         auto result = tinyfd_openFileDialog(data->title.c_str(), data->path.c_str(), 0, nullptr, data->filterText.empty() ? nullptr : data->filterText.c_str(), data->multiple);
 #else
@@ -89,7 +93,7 @@ void OFS::util::openFileDialog(std::string_view title, std::string_view path, Fi
             {
                 for (auto file : std::views::split(std::string_view(result), '|'))
                 {
-                    dialogResult->files.emplace_back(std::string_view(file));
+                    dialogResult->files.emplace_back(OFS::util::pathFromU8String(std::string_view(file)));
                 }
             }
             else
@@ -108,7 +112,7 @@ void OFS::util::openFileDialog(std::string_view title, std::string_view path, Fi
         tinyfd_openFileDialogW(nullptr, nullptr, 0, nullptr, nullptr, -1);
 #endif
         };
-    OFS::ThreadPool::get().detachTask(thread, std::make_unique<FileDialogThreadData>(std::move(handler), std::string(title), std::string(path),
+    OFS::ThreadPool::get().detachTask(thread, std::make_unique<FileDialogThreadData>(std::move(handler), std::string(title), path,
         std::vector(filters.begin(), filters.end()),
         std::string(filterText),
         multiple
@@ -117,29 +121,35 @@ void OFS::util::openFileDialog(std::string_view title, std::string_view path, Fi
 
 void OFS::util::saveFileDialog(std::string_view title, std::string_view path, FileDialogCallback&& handler, std::span<const char*> filters, std::string_view filterText)
 {
+    saveFileDialog(title, OFS::util::pathFromU8String(path), std::move(handler), filters, filterText);
+}
+
+void OFS::util::saveFileDialog(std::string_view title, std::filesystem::path const& path, FileDialogCallback&& handler, std::span<const char*> filters, std::string_view filterText)
+{
     OFS::ThreadPool::get().detachTask(
         [](std::unique_ptr<FileDialogThreadData> data) {
-            auto dialogPath = OFS::util::pathFromString(data->path);
+            auto dialogPath = data->path;
             dialogPath.remove_filename();
             std::error_code ec;
             if (!std::filesystem::exists(dialogPath, ec)) {
                 data->path = "";
             }
 
-            sanitizeString(data->path);
+            auto pathStr = data->path.string();
+            sanitizeString(pathStr);
 
-            auto result = tinyfd_saveFileDialog(data->title.c_str(), data->path.c_str(), data->filters.size(), data->filters.data(), !data->filterText.empty() ? data->filterText.c_str() : nullptr);
+            auto result = tinyfd_saveFileDialog(data->title.c_str(), pathStr.c_str(), data->filters.size(), data->filters.data(), !data->filterText.empty() ? data->filterText.c_str() : nullptr);
 
             auto saveDialogResult = std::make_shared<FileDialogResult>();
             if (result != nullptr) {
-                saveDialogResult->files.emplace_back(result);
+                saveDialogResult->files.emplace_back(OFS::util::pathFromU8String(std::string_view(result)));
             }
             EV::Enqueue<OFS_DeferEvent>(
                 [callback = std::move(data->callback), saveDialogResult = std::move(saveDialogResult)]() {
                     callback(*saveDialogResult);
                 });
         }
-        , std::make_unique<FileDialogThreadData>(std::move(handler), std::string(title), std::string(path),
+        , std::make_unique<FileDialogThreadData>(std::move(handler), std::string(title), path,
             std::vector(filters.begin(), filters.end()),
             std::string(filterText),
             false
@@ -148,24 +158,29 @@ void OFS::util::saveFileDialog(std::string_view title, std::string_view path, Fi
 
 void OFS::util::openDirectoryDialog(std::string_view title, std::string_view path, FileDialogCallback&& handler)
 {
+    openDirectoryDialog(title, OFS::util::pathFromU8String(path), std::move(handler));
+}
+
+void OFS::util::openDirectoryDialog(std::string_view title, std::filesystem::path const& path, FileDialogCallback&& handler)
+{
     OFS::ThreadPool::get().detachTask(
         [](std::unique_ptr<DirectoryDialogData> data) {
             if (!OFS::util::directoryExists(data->path)) {
                 data->path = "";
             }
 
-            auto result = tinyfd_selectFolderDialog(data->title.c_str(), data->path.c_str());
+            auto result = tinyfd_selectFolderDialog(data->title.c_str(), data->path.string().c_str());
 
             auto directoryDialogResult = std::make_shared<FileDialogResult>();
             if (result != nullptr) {
-                directoryDialogResult->files.emplace_back(result);
+                directoryDialogResult->files.emplace_back(OFS::util::pathFromU8String(std::string_view(result)));
             }
 
             EV::Enqueue<OFS_DeferEvent>([callback = std::move(data->callback), directoryDialogResult]() {
                 callback(*directoryDialogResult);
             });
         }
-        , std::make_unique<DirectoryDialogData>(std::move(handler), std::string(title), std::string(path)));
+        , std::make_unique<DirectoryDialogData>(std::move(handler), std::string(title), path));
 }
 
 void OFS::util::YesNoCancelDialog(std::string_view title, std::string_view message, YesNoDialogCallback&& handler)
