@@ -6,7 +6,6 @@
 
 int main(int argc, char* argv[])
 {
-    OFS_LibState::RegisterAll();
     OpenFunscripterState::RegisterAll();
 
     OpenFunscripter app;

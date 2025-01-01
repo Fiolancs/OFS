@@ -16,7 +16,6 @@ set(OFS_LIB_SOURCES
     "io/OFS_Serialization.cpp"
     "io/OFS_BinarySerialization.cpp"
     
-    "state/OFS_LibState.cpp"
     "state/OFS_StateManager.cpp"
 
     "localization/OFS_Localization.cpp"
@@ -48,7 +47,6 @@ set(OFS_LIB_HEADERS
     "localization/OFS_Localization.h"
     "localization/OFS_StringsGenerated.h"
 
-    "state/OFS_LibState.h"
     "state/OFS_StateHandle.h"
     "state/OFS_StateManager.h"
 )
