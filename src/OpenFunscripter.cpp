@@ -1863,7 +1863,10 @@ void OpenFunscripter::updateTitle() noexcept
         {
             constexpr std::string_view title = "OpenFunscripter " OFS_LATEST_GIT_TAG "@" OFS_LATEST_GIT_HASH;
             if (LoadedProject->IsValid())
-                return std::format("{:s} - \"{:s}\"", title, LoadedProject->Path().string());
+            {
+                std::u8string loadedFile = LoadedProject->Path().u8string(); // guarantee u8 for SDL
+                return std::format("{:s} - \"{:s}\"", title, std::string(loadedFile.begin(), loadedFile.end()));
+            }
             return std::string(title);
         } ().c_str()
     );

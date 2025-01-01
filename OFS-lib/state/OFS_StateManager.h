@@ -23,7 +23,7 @@ namespace OFS
         auto *value = std::any_cast<T>(std::addressof(state));
         if (nullptr == value) [[unlikely]]
         {
-            FUN_ASSERT(false, "State serialization failed. Serialize function state type mismatch.")
+            FUN_ASSERT(false, "State serialization failed. Serialize function state type mismatch.");
             return;
         }
 
@@ -37,15 +37,13 @@ namespace OFS
     {
         if (nullptr == std::any_cast<T>(std::addressof(state))) [[unlikely]]
         {
-            FUN_ASSERT(false, "State serialization failed. deserialize function state type mismatch.")
+            FUN_ASSERT(false, "State serialization failed. deserialize function state type mismatch.");
+            state.emplace<T>();
             return;
         }
 
-        T value{};
-        if (auto const err = glz::read<glz::opts{ .error_on_unknown_keys = false }>(value, json); err)
+        if (auto const err = glz::read<glz::opts{ .error_on_unknown_keys = false }>(state.emplace<T>(), json); err)
             [[unlikely]] FUN_ASSERT(false, "State serialization failed.");
-
-        state = std::move(value);
     }
 
     struct StateMeta

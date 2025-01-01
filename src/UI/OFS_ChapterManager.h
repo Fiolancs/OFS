@@ -1,9 +1,10 @@
 #pragma once
-#include "state/OFS_StateHandle.h"
+#include "state/OFS_StateManager.h"
 
-#include <string>
-#include <cstdint>
 #include <filesystem>
+
+struct Chapter;
+struct ChapterState;
 
 class OFS_ChapterManager
 {
@@ -16,8 +17,8 @@ class OFS_ChapterManager
     OFS_ChapterManager(OFS_ChapterManager&&) = delete;
     ~OFS_ChapterManager() noexcept;
 
-    static bool ExportClip(const class Chapter& chapter, std::filesystem::path const& outputDirStr) noexcept;
+    static bool ExportClip(const Chapter& chapter, std::filesystem::path const& outputDirStr) noexcept;
     void ShowWindow(bool* open) noexcept;
 
-    class ChapterState& State() noexcept;
+    ChapterState& State() noexcept;
 };

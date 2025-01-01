@@ -430,7 +430,8 @@ void OFS_Videoplayer::OpenVideo(std::filesystem::path const& path) noexcept
     LOGF_INFO("Opening video: \"{:s}\"", path.string());
     CloseVideo();
     
-    auto pathStr = path.string();
+    auto u8Str = path.u8string();
+    auto pathStr = std::string(u8Str.begin(), u8Str.end());
     const char* cmd[] = { "loadfile", pathStr.c_str(), nullptr };
     mpv_command_async(CTX->mpv, 0, cmd);
     

@@ -25,7 +25,9 @@ void OFS_VideoplayerControls::VideoLoaded(const VideoLoadedEvent* ev) noexcept
 {
     OFS_PROFILE(__FUNCTION__);
     if(ev->playerType != VideoplayerType::Main) return;
-    videoPreview->PreviewVideo(ev->videoPath, 0.f);
+
+    // QQQ
+    videoPreview->PreviewVideo(OFS::util::pathFromU8String(ev->videoPath).string(), 0.f);
 }
 
 void OFS_VideoplayerControls::Init(OFS_Videoplayer* player, bool hwAccel) noexcept

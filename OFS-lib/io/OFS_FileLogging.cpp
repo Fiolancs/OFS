@@ -87,6 +87,7 @@ void OFS::FileLogger::shutdown(void) noexcept
     if (pImpl->logThread.joinable())
     {
         pImpl->threadData->shouldExit.store(true, std::memory_order_relaxed);
+        logToFile(LogLevel::OFS_LOG_INFO, "File log shutdown requested");
         flush();
 
         pImpl->logThread.join();
