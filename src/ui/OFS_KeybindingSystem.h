@@ -2,6 +2,8 @@
 #include "state/states/KeybindingState.h"
 #include "localization/OFS_Localization.h"
 
+#include "state/OFS_StateManager.h"
+
 #include <cstdint>
 #include <functional>
 #include <unordered_map>
@@ -51,7 +53,7 @@ enum class KeyModalType : uint8_t
 class OFS_KeybindingSystem
 {
     private:
-    uint32_t stateHandle = 0xFFFF'FFFF;
+    OFS::StateHandle stateHandle = OFS::StateManager::INVALID_ID;
     std::vector<OFS_ActionGroup> actionGroups;
     std::vector<OFS_ActionUI> actionUI;
     std::unordered_map<std::string, OFS_Action> actions;

@@ -9,9 +9,9 @@ struct WebsocketApiState
     std::string port = "8080";
     bool serverActive = false;
 
-    static inline WebsocketApiState& State(uint32_t stateHandle) noexcept
+    static inline WebsocketApiState& State(OFS::StateHandle stateHandle) noexcept
     {
-        return OFS_AppState<WebsocketApiState>(stateHandle).Get();
+        return OFS::AppState<WebsocketApiState>(stateHandle).get();
     }
 };
 

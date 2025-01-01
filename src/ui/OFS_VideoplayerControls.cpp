@@ -32,7 +32,7 @@ void OFS_VideoplayerControls::Init(OFS_Videoplayer* player, bool hwAccel) noexce
 {
     if(this->player) return;
     this->player = player;
-    chapterStateHandle = OFS_ProjectState<ChapterState>::Register(ChapterState::StateName, ChapterState::StateName);
+    chapterStateHandle = OFS::ProjectState<ChapterState>::registerState(ChapterState::StateName, ChapterState::StateName);
     Heatmap = std::make_unique<FunscriptHeatmap>();
     videoPreview = std::make_unique<VideoPreview>(hwAccel);
     videoPreview->Init();

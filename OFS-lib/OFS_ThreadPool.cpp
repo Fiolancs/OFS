@@ -21,16 +21,10 @@ namespace
     }
 }
 
-static std::unique_ptr<OFS::ThreadPool> gThreadPool = nullptr;
-
 OFS::ThreadPool& OFS::ThreadPool::get(void) noexcept
 {
-    static const int _ = [] { 
-        gThreadPool = std::make_unique<OFS::ThreadPool>(std::thread::hardware_concurrency(), "OFS gThreadPool"); 
-        return 1; 
-    }();
-
-    return *gThreadPool;
+    static OFS::ThreadPool gThreadPool{ std::thread::hardware_concurrency(), "OFS ThreadPool" };
+    return gThreadPool;
 }
 
 void OFS::ThreadPool::detachTask(std::move_only_function<void(void)> f)

@@ -2,9 +2,10 @@
 #include "event/OFS_SDL_Event.h"
 
 #include "OFS_Reflection.h"
-#include "io/OFS_BinarySerialization.h"
 #include "event/OFS_Event.h"
+#include "io/OFS_BinarySerialization.h"
 #include "Funscript/Funscript.h"
+#include "state/OFS_StateHandle.h"
 
 #include <imgui.h>
 
@@ -16,7 +17,7 @@ private:
 	ImVec2 startDragP2;
 	ImVec2* dragging = nullptr;
 	float mouseValue;
-	uint32_t stateHandle = 0xFFFF'FFFF;
+	OFS::StateHandle stateHandle = OFS::StateManager::INVALID_ID;
 	bool IsMovingSimulator = false;
 	bool EnableVanilla = false;
 	bool MouseOnSimulator = false;

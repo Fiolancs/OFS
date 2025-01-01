@@ -38,7 +38,7 @@ inline static uint32_t GetColor(const ImColor& col, float opacity) noexcept
 
 void ScriptSimulator::Init() noexcept
 {
-    stateHandle = OFS_ProjectState<SimulatorState>::Register(SimulatorState::StateName, SimulatorState::StateName);
+    stateHandle = OFS::ProjectState<SimulatorState>::registerState(SimulatorState::StateName, SimulatorState::StateName);
     EV::Queue().appendListener(SDL_EVENT_MOUSE_MOTION,
         OFS_SDL_Event::HandleEvent(EVENT_SYSTEM_BIND(this, &ScriptSimulator::MouseMovement)));
 }

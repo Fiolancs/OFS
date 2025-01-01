@@ -7,9 +7,9 @@ struct ScriptingModeState
 
     int32_t actionInsertDelayMs = 0;
 
-    inline static ScriptingModeState& State(uint32_t stateHandle) noexcept
+    inline static ScriptingModeState& State(OFS::StateHandle stateHandle) noexcept
     {
-        return OFS_AppState<ScriptingModeState>(stateHandle).Get();
+        return OFS::AppState<ScriptingModeState>(stateHandle).get();
     }
 };
 

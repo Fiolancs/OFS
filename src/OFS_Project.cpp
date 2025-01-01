@@ -73,7 +73,7 @@ inline bool FindMedia(std::filesystem::path const& path, std::string* outMedia) 
 
 OFS_Project::OFS_Project() noexcept
 {
-    stateHandle = OFS_ProjectState<ProjectState>::Register(ProjectState::StateName, ProjectState::StateName);
+    stateHandle = OFS::ProjectState<ProjectState>::registerState(ProjectState::StateName, ProjectState::StateName);
     Funscripts.emplace_back(std::move(std::make_shared<Funscript>()));
 }
 
@@ -104,12 +104,12 @@ bool OFS_Project::Load(std::filesystem::path const& path) noexcept
 {
     FUN_ASSERT(!valid, "Can't import if project is already loaded.");
 #if 1
-    std::vector<uint8_t> projectBin;
-    if (OFS::util::readFile(path, projectBin) > 0) {
-        bool succ;
-        auto projectState = Util::ParseCBOR(projectBin, &succ);
-        if (succ) {
-            valid = OFS_StateManager::Get()->DeserializeProjectAll(/*projectState,*/ true);
+    std::vector<char> projectBin;
+    if (OFS::util::readFile(path, projectBin) > 0)
+    {
+        if (auto projectState = OFS::util::convertCBORtoJSON(projectBin); !projectState.empty()) 
+        {
+            valid = OFS::StateManager::get()->deserializeStateGroup<OFS::ProjectState<void>::STATE_GROUP>(projectState);
         }
     }
 #else
@@ -204,7 +204,9 @@ bool OFS_Project::AddFunscript(std::filesystem::path const& path) noexcept
 
     bool succ = false;
     auto jsonText = OFS::util::readFileString(path);
-    auto json = Util::ParseJson(jsonText, &succ);
+
+    // QQQ
+    auto json = std::string{};// Util::ParseJson(jsonText, &succ);
 
     auto script = std::make_shared<Funscript>();
     auto metadata = Funscript::Metadata();
@@ -335,8 +337,9 @@ void OFS_Project::ExportFunscripts() noexcept
         if (!script->RelativePath().empty()) {
             auto json = script->Serialize(state.metadata, true);
             script->ClearUnsavedEdits();
-            auto jsonText = Util::SerializeJson(json, false);
-            OFS::util::writeFile(MakePathAbsolute(script->RelativePath().string()), jsonText);
+            // QQQ
+            auto jsonText = std::string{};// Util::SerializeJson(json, false);
+            OFS::util::writeFile(MakePathAbsolute(script->RelativePath()), jsonText);
         }
     }
 }
@@ -351,7 +354,8 @@ void OFS_Project::ExportFunscripts(std::filesystem::path const& outputDir) noexc
             auto outputPath = outputDir / filename;
             auto json = script->Serialize(state.metadata, true);
             script->ClearUnsavedEdits();
-            auto jsonText = Util::SerializeJson(json, false);
+            // QQQ
+            auto jsonText = std::string{};// Util::SerializeJson(json, false);
             OFS::util::writeFile(outputPath, jsonText);
         }
     }
@@ -365,7 +369,8 @@ void OFS_Project::ExportFunscript(std::filesystem::path const& outputPath, int32
     Funscripts[idx]->ClearUnsavedEdits();
     // Using this function changes the default path
     Funscripts[idx]->UpdateRelativePath(MakePathRelative(outputPath));
-    auto jsonText = Util::SerializeJson(json, false);
+    // QQQ
+    auto jsonText = std::string{};// Util::SerializeJson(json, false);
     OFS::util::writeFile(outputPath, jsonText);
 }
 
@@ -423,17 +428,19 @@ void OFS_Project::loadMultiAxis(std::filesystem::path const& rootScript) noexcep
 std::filesystem::path OFS_Project::MakePathAbsolute(std::filesystem::path const& relPath) const noexcept
 {
     FUN_ASSERT(relPath.is_relative(), "Path isn't relative");
-    if (relPath.is_absolute()) {
+    if (relPath.is_absolute())
+    {
         LOGF_ERROR("Path was already absolute. \"{:s}\"", relPath.string());
         return relPath;
     }
-    else {
+    else
+    {
         auto projectDir = lastPath;
         projectDir.remove_filename();
         std::error_code ec;
         auto absPath = std::filesystem::absolute(projectDir / relPath, ec);
         if (!ec) {
-            LOGF_INFO("Convert relative path \"%s\" to absolute \"%s\"", relPath.string(), absPath.string());
+            LOGF_INFO("Convert relative path \"{:s}\" to absolute \"{:s}\"", relPath.string(), absPath.string());
             return absPath;
         }
         FUN_ASSERT(false, "This must not happen.");

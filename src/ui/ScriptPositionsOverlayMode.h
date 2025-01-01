@@ -48,7 +48,7 @@ class BaseOverlay
 {
 protected:
 	class ScriptTimeline* timeline;
-	static std::uint32_t StateHandle;
+	static OFS::StateHandle StateHandle;
 
 	static void drawActionLinesSpline(const OverlayDrawingCtx& ctx, const BaseOverlayState& state) noexcept;
 	static void drawActionLinesLinear(const OverlayDrawingCtx& ctx, const BaseOverlayState& state) noexcept;

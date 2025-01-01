@@ -14,9 +14,9 @@ struct TempoOverlayState
     float beatOffsetSeconds = 0.f;
     uint32_t measureIndex = 0;
 
-    inline static TempoOverlayState& State(uint32_t stateHandle) noexcept
+    inline static TempoOverlayState& State(OFS::StateHandle stateHandle) noexcept
     {
-        return OFS_ProjectState<TempoOverlayState>(stateHandle).Get();
+        return OFS::ProjectState<TempoOverlayState>(stateHandle).get();
     }
 };
 
@@ -39,9 +39,9 @@ struct ProjectState
 
     std::vector<uint8_t> binaryFunscriptData;
 
-    inline static ProjectState& State(uint32_t stateHandle) noexcept
+    inline static ProjectState& State(OFS::StateHandle stateHandle) noexcept
     {
-        return OFS_ProjectState<ProjectState>(stateHandle).Get();
+        return OFS::ProjectState<ProjectState>(stateHandle).get();
     }
 };
 

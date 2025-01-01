@@ -10,6 +10,7 @@
 #include <vector>
 #include <cstdint>
 
+// QQQ
 struct WaveformState
 {
     static constexpr auto StateName = "WaveformState";
@@ -19,6 +20,7 @@ struct WaveformState
 
     std::vector<float> GetSamples() noexcept
     {
+        // QQQ
         //if(UncompressedSize == 0) 
         //    return {};
         //std::vector<uint8_t> decompressed;
@@ -40,6 +42,7 @@ struct WaveformState
 
     void SetSamples(const std::vector<float>& samples)
     {
+        // QQQ
         //std::vector<uint16_t> u16Samples;
         //u16Samples.reserve(samples.size());
         //for(auto sample : samples)
@@ -63,8 +66,8 @@ struct WaveformState
     inline static WaveformState& StaticStateSlow() noexcept
     {
         // This shouldn't be done in hot paths but shouldn't be a problem otherwise.
-        uint32_t handle = OFS_ProjectState<WaveformState>::Register(StateName, StateName);
-        return OFS_ProjectState<WaveformState>(handle).Get();
+        auto handle = OFS::ProjectState<WaveformState>::registerState(StateName, StateName);
+        return OFS::ProjectState<WaveformState>(handle).get();
     }
 };
 

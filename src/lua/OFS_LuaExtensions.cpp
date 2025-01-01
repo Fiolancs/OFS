@@ -49,9 +49,10 @@ bool OFS_LuaExtensions::Init() noexcept
 void OFS_LuaExtensions::load(const std::string& path) noexcept
 {
 	LastConfigPath = path;
-	bool succ;
+	bool succ = false;
 	auto jsonText = OFS::util::readFileString(path);
-	auto json = Util::ParseJson(jsonText, &succ);
+	// QQQ
+	auto json = std::string{};// Util::ParseJson(jsonText, &succ);
 	if (succ) {
 		OFS::Serializer<false>::Deserialize(*this, json);
 		removeNonExisting();		

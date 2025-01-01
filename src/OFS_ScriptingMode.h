@@ -119,7 +119,7 @@ private:
     ScriptingOverlayModes activeOverlay;
     std::array<std::unique_ptr<ScriptingModeBase>, ScriptingModeEnum::COUNT> modes;
     std::unique_ptr<BaseOverlay> overlayImpl = nullptr;
-    uint32_t stateHandle = 0xFFFF'FFFF;
+    OFS::StateHandle stateHandle = OFS::StateManager::INVALID_ID;
 
 public:
     inline ScriptingModeEnum ActiveMode() const noexcept { return activeMode; }

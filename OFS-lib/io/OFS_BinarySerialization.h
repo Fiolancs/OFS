@@ -2,10 +2,18 @@
 #include "OFS_Profiling.h"
 #include "OFS_VectorSet.h"
 
-#include <zpp_bits.h>
-
+#include <span>
+#include <string>
 #include <vector>
 #include <cstdint>
+#include <string_view>
+
+namespace OFS::util
+{
+    std::vector<char> convertJSONtoCBOR(std::string_view jsonString);
+    std::string       convertCBORtoJSON(std::span<char> jsonString);
+}
+
 
 // QQQ
 
@@ -18,7 +26,8 @@ using ByteBuffer = std::vector<std::uint8_t>;
 //using ContextSerializer = bitsery::Serializer<OutputAdapter, TContext>;
 //using ContextDeserializer = bitsery::Deserializer<InputAdapter, TContext>;
 
-struct OFS_Binary {
+struct OFS_Binary
+{
 
     template<typename T>
     static size_t Serialize(ByteBuffer& buffer, T& obj) noexcept

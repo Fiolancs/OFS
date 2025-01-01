@@ -179,56 +179,6 @@ public:
     {
         return startVal + ((endVal - startVal) * t);
     }
-
-    // QQQ
-    inline static std::string ParseJson(const std::string& jsonText, bool* success) noexcept
-    {
-        //nlohmann::json json;
-        //*success = false;
-        //if (!jsonText.empty()) {
-        //    try {
-        //        json = nlohmann::json::parse(jsonText, nullptr, false, true);
-        //        *success = !json.is_discarded();
-        //    }
-        //    catch (const std::exception& e) {
-        //        *success = false;
-        //        LOGF_ERROR("%s", e.what());
-        //    }
-        //}
-        //return json;
-        return {};
-    }
-
-    // QQQ
-    inline static std::string ParseCBOR(const std::vector<uint8_t>& data, bool* success) noexcept
-    {
-        //try {
-        //    auto json = nlohmann::json::from_cbor(data);
-        //    *success = !json.is_discarded();
-        //    return json;
-        //}
-        //catch (const std::exception& e) {
-        //    *success = false;
-        //    LOGF_ERROR("%s", e.what());
-        //}
-        return {};
-    }
-
-    // QQQ
-    inline static std::string SerializeJson(/*const nlohmann::json& json, bool pretty = false*/...) noexcept
-    {
-        return {};
-        //auto jsonText = json.dump(pretty ? 4 : -1, ' ');
-        //return jsonText;
-    }
-
-    // QQQ
-    inline static std::vector<uint8_t> SerializeCBOR(/*const nlohmann::json& json*/...) noexcept
-    {
-        return {};
-        //auto data = nlohmann::json::to_cbor(json);
-        //return data;
-    }
 };
 
 

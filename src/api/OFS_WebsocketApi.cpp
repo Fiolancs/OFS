@@ -144,7 +144,7 @@ static int EventSerializationThread(void* user) noexcept
 				// QQQ
 				//nlohmann::json json;
 				//toJson->Serialize(json);
-				auto jsonText = Util::SerializeJson(/*json*/);
+				auto jsonText = std::string{};// Util::SerializeJson(/*json*/);
 				EV::Queue().directDispatch(WsSerializedEvent::EventType, 
 					std::move(EV::Make<WsSerializedEvent>(std::move(jsonText))));
 			}
@@ -159,7 +159,7 @@ static int EventSerializationThread(void* user) noexcept
 
 OFS_WebsocketApi::OFS_WebsocketApi() noexcept
 {
-	stateHandle = OFS_AppState<WebsocketApiState>::Register(WebsocketApiState::StateName, WebsocketApiState::StateName);
+	stateHandle = OFS::AppState<WebsocketApiState>::registerState(WebsocketApiState::StateName, WebsocketApiState::StateName);
 	eventSerializationCtx = std::make_unique<EventSerializationContext>();
 
 	auto serializationThread = SDL_CreateThread(

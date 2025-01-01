@@ -15,7 +15,7 @@
 
 OFS_ChapterManager::OFS_ChapterManager() noexcept
 {
-    stateHandle = OFS_ProjectState<ChapterState>::Register(ChapterState::StateName, ChapterState::StateName);
+    stateHandle = OFS::ProjectState<ChapterState>::registerState(ChapterState::StateName, ChapterState::StateName);
 }
 
 OFS_ChapterManager::~OFS_ChapterManager() noexcept
@@ -105,7 +105,6 @@ bool OFS_ChapterManager::ExportClip(const Chapter& chapter, std::filesystem::pat
     {
         auto scriptOutputPath = (outputDir / (chapter.name + "_" + script->Title()));
         scriptOutputPath.replace_extension(".funscript");
-        auto scriptOutputPathStr = scriptOutputPath.string();
 
         auto clippedScript = Funscript();
         auto slice = script->GetSelection(chapter.startTime, chapter.endTime);
@@ -117,8 +116,9 @@ bool OFS_ChapterManager::ExportClip(const Chapter& chapter, std::filesystem::pat
 
         // FIXME: chapters and bookmarks are not included
         auto funscriptJson = clippedScript.Serialize(projectState.metadata, false);
-        auto funscriptText = Util::SerializeJson(funscriptJson);
-        OFS::util::writeFile(scriptOutputPathStr.c_str(), funscriptText);
+        // QQQ
+        auto funscriptText = std::string{};// Util::SerializeJson(funscriptJson);
+        OFS::util::writeFile(scriptOutputPath, funscriptText);
     }
 
     auto clippedMedia = OFS::util::pathFromU8String("");

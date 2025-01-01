@@ -16,11 +16,11 @@ class MetadataChanged : public OFS_Event<MetadataChanged>
 class OFS_FunscriptMetadataEditor
 {
 public:
-    inline std::uint32_t StateHandle() const noexcept { return stateHandle; }
+    inline OFS::StateHandle StateHandle() const noexcept { return stateHandle; }
 
     OFS_FunscriptMetadataEditor() noexcept;
     bool ShowMetadataEditor(bool* open, Funscript::Metadata& metadata) noexcept;
 
 private:
-    std::uint32_t stateHandle = 0xFFFF'FFFF;
+    OFS::StateHandle stateHandle = OFS::StateManager::INVALID_ID;
 };

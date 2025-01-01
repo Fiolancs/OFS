@@ -44,7 +44,7 @@ private:
     SDL_Window* window;
     SDL_GLContext glContext;
 
-    uint32_t stateHandle = 0xFFFF'FFFF;
+    OFS::StateHandle stateHandle = OFS::StateManager::INVALID_ID;
     bool ShowMetadataEditor = false;
     bool ShowProjectEditor = false;
 #ifndef NDEBUG

@@ -1,4 +1,5 @@
 #pragma once
+#include "state/OFS_StateHandle.h"
 #include "ui/ScriptPositionsOverlayMode.h"
 #include "localization/OFS_Localization.h"
 
@@ -54,7 +55,7 @@ private:
 		Tr::TEMPO_48TH_MEASURES,
 		Tr::TEMPO_64TH_MEASURES,
 	};
-	uint32_t stateHandle = 0xFFFF'FFFF;
+	OFS::StateHandle stateHandle = OFS::StateManager::INVALID_ID;
 public:
 	TempoOverlay(ScriptTimeline* timeline) noexcept;
 	virtual void DrawSettings() noexcept override;

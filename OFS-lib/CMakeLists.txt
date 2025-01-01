@@ -14,6 +14,7 @@ set(OFS_LIB_SOURCES
     "io/OFS_FileDialogs.cpp"
     "io/OFS_FileLogging.cpp"
     "io/OFS_Serialization.cpp"
+    "io/OFS_BinarySerialization.cpp"
     
     "state/OFS_LibState.cpp"
     "state/OFS_StateManager.cpp"
@@ -24,6 +25,7 @@ set(OFS_LIB_SOURCES
 
 set(OFS_LIB_HEADERS 
     "OFS_Util.h"
+    "OFS_TypedID.h"
     "OFS_Profiling.h"
     "OFS_VectorSet.h"
     "OFS_Reflection.h"

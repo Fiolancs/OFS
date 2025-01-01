@@ -27,8 +27,8 @@ struct PreferenceState
 	bool forceHwDecoding = false;
 	bool showMetaOnNew = true;
 
-	static inline PreferenceState& State(uint32_t stateHandle) noexcept {
-		return OFS_AppState<PreferenceState>(stateHandle).Get();
+	static inline PreferenceState& State(OFS::StateHandle stateHandle) noexcept {
+		return OFS::AppState<PreferenceState>(stateHandle).get();
 	}
 };
 

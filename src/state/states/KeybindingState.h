@@ -1,6 +1,7 @@
 #pragma once
 #include "OFS_VectorSet.h"
 #include "state/OFS_StateHandle.h"
+#include "io/OFS_SerializeHelper.h"
 
 #include <imgui.h>
 
@@ -73,13 +74,13 @@ struct OFS_KeybindingState
 
     inline static OFS_KeybindingState& StateSlow() noexcept
     {
-        auto stateHandle = OFS_AppState<OFS_KeybindingState>::Register(StateName, "OFS_KeybindingState");
+        auto stateHandle = OFS::AppState<OFS_KeybindingState>::registerState(StateName, "OFS_KeybindingState");
         return State(stateHandle);
     }
 
-    inline static OFS_KeybindingState& State(uint32_t stateHandle) noexcept
+    inline static OFS_KeybindingState& State(OFS::StateHandle stateHandle) noexcept
     {
-        return OFS_AppState<OFS_KeybindingState>(stateHandle).Get();
+        return OFS::AppState<OFS_KeybindingState>(stateHandle).get();
     }
 };
 

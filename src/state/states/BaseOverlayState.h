@@ -1,6 +1,8 @@
 #pragma once
-
+#include "io/OFS_SerializeHelper.h"
 #include "state/OFS_StateHandle.h"
+
+#include <imgui.h>
 
 struct BaseOverlayState
 {
@@ -12,14 +14,14 @@ struct BaseOverlayState
     bool SyncLineEnable = false;
     bool SplineMode = false;
 
-    inline static uint32_t RegisterStatic() noexcept
+    inline static OFS::StateHandle RegisterStatic() noexcept
     {
-        return OFS_AppState<BaseOverlayState>::Register(StateName, StateName);
+        return OFS::AppState<BaseOverlayState>::registerState(StateName, StateName);
     }
 
-    inline static BaseOverlayState& State(uint32_t stateHandle) noexcept
+    inline static BaseOverlayState& State(OFS::StateHandle stateHandle) noexcept
     {
-        return OFS_AppState<BaseOverlayState>(stateHandle).Get();
+        return OFS::AppState<BaseOverlayState>(stateHandle).get();
     }
 };
 

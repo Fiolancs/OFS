@@ -5,54 +5,48 @@
 #include <cstdint>
 #include <string_view>
 
-template <typename T>
-class OFS_AppState
+namespace OFS
 {
-public:
-    OFS_AppState(std::uint32_t stateID = OFS_StateManager::INVALID_ID) noexcept
-        : id(stateID)
-    {}
-
-    T& Get(void) noexcept
+    namespace detail
     {
-        OFS_PROFILE(__FUNCTION__);
-        auto mgr = OFS_StateManager::Get();
-        return mgr->template GetApp<T>(id);
+        template <typename T, std::size_t GROUP_IDX>
+        class StateGroupHandle
+        {
+        public:
+            StateGroupHandle(OFS::StateHandle stateID = StateManager::INVALID_ID) noexcept
+                : id{ stateID }
+            {}
+
+            T& get(void) const noexcept
+            {
+                OFS_PROFILE(__FUNCTION__);
+                auto const stateManager = OFS::StateManager::get();
+                return stateManager->getState<T, GROUP_IDX>(id);
+            }
+
+            static auto registerState(std::string_view stateName, std::string_view typeName) noexcept
+            {
+                auto const stateManager = OFS::StateManager::get();
+                return stateManager->registerState<T, GROUP_IDX>(stateName, typeName);
+            }
+
+            inline static constexpr auto STATE_GROUP = GROUP_IDX;
+
+        private:
+            OFS::StateHandle id;
+        };
+
+        template <std::size_t GROUP_IDX>
+        class StateGroupHandle<void, GROUP_IDX>
+        {
+        public:
+            inline static constexpr auto STATE_GROUP = GROUP_IDX;
+        };
     }
 
-    static std::uint32_t Register(std::string_view stateName, std::string_view typeName) noexcept
-    {
-        auto mgr = OFS_StateManager::Get();
-        return mgr->RegisterApp<T>(stateName, typeName);
-    }
+    template <typename T>
+    using AppState = detail::StateGroupHandle<T, 0>;
 
-private:
-    std::uint32_t id;
-};
-
-template <typename T>
-class OFS_ProjectState
-{
-public:
-    static constexpr std::uint32_t INVALID_ID = 0xFFFF'FFFF;
-
-    inline OFS_ProjectState(std::uint32_t stateID = OFS_StateManager::INVALID_ID) noexcept
-        : id(stateID)
-    {}
-
-    T& Get(void) noexcept
-    {
-        OFS_PROFILE(__FUNCTION__);
-        auto mgr = OFS_StateManager::Get();
-        return mgr->template GetProject<T>(id);
-    }
-
-    static std::uint32_t Register(std::string_view stateName, std::string_view typeName) noexcept
-    {
-        auto mgr = OFS_StateManager::Get();
-        return mgr->RegisterProject<T>(stateName, typeName);
-    }
-
-private:
-    std::uint32_t id;
-};
+    template <typename T>
+    using ProjectState = detail::StateGroupHandle<T, 1>;
+}

@@ -15,7 +15,7 @@
 
 OFS_FunscriptMetadataEditor::OFS_FunscriptMetadataEditor() noexcept
 {
-    stateHandle = OFS_AppState<FunscriptMetadataState>::Register(FunscriptMetadataState::StateName, FunscriptMetadataState::StateName);
+    stateHandle = OFS::AppState<FunscriptMetadataState>::registerState(FunscriptMetadataState::StateName, FunscriptMetadataState::StateName);
 }
 
 bool OFS_FunscriptMetadataEditor::ShowMetadataEditor(bool* open, Funscript::Metadata& metadata) noexcept

@@ -2,6 +2,7 @@
 #include "state/SpecialFunctionsState.h"
 
 #include "Funscript/Funscript.h"
+#include "state/OFS_StateHandle.h"
 
 #include <memory>
 
@@ -42,7 +43,7 @@ public:
 class SpecialFunctionsWindow {
 private:
 	FunctionBase* function = nullptr;
-	uint32_t stateHandle = 0xFFFF'FFFF;
+	OFS::StateHandle stateHandle = OFS::StateManager::INVALID_ID;
 public:
 	static constexpr const char* WindowId = "###SPECIAL_FUNCTIONS";
 	SpecialFunctionsWindow() noexcept;

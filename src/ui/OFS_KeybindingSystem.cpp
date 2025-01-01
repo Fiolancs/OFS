@@ -84,7 +84,7 @@ inline static std::string getTriggerText(const OFS_ActionTrigger& trigger) noexc
 
 OFS_KeybindingSystem::OFS_KeybindingSystem() noexcept
 {
-    stateHandle = OFS_AppState<OFS_KeybindingState>::Register(OFS_KeybindingState::StateName, "OFS_KeybindingState");
+    stateHandle = OFS::AppState<OFS_KeybindingState>::registerState(OFS_KeybindingState::StateName, "OFS_KeybindingState");
     auto& state = OFS_KeybindingState::State(stateHandle);
     if(!state.convertedToImGui)
     {

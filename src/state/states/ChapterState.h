@@ -1,4 +1,6 @@
 #pragma once
+#include "io/OFS_SerializeHelper.h"
+
 #include "event/OFS_Event.h"
 #include "state/OFS_StateHandle.h"
 
@@ -33,14 +35,14 @@ struct ChapterState
     std::vector<Chapter> chapters;
     std::vector<Bookmark> bookmarks;
 
-    inline static ChapterState& State(uint32_t stateHandle) noexcept
+    inline static ChapterState& State(OFS::StateHandle stateHandle) noexcept
     {
-        return OFS_ProjectState<ChapterState>(stateHandle).Get();
+        return OFS::ProjectState<ChapterState>(stateHandle).get();
     }
 
     inline static ChapterState& StaticStateSlow() noexcept
     {
-        auto handle = OFS_ProjectState<ChapterState>::Register(StateName, StateName);
+        auto handle = OFS::ProjectState<ChapterState>::registerState(StateName, StateName);
         return State(handle);
     }
 

@@ -1,4 +1,5 @@
 #pragma once
+#include "state/OFS_StateHandle.h"
 
 #include <string>
 #include <cstdint>
@@ -7,7 +8,7 @@
 class OFS_ChapterManager
 {
     private:
-    uint32_t stateHandle = 0xFFFF'FFFF;
+    OFS::StateHandle stateHandle = OFS::StateManager::INVALID_ID;
 
     public:
     OFS_ChapterManager() noexcept;

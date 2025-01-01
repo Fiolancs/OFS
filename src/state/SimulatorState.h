@@ -1,4 +1,6 @@
 #pragma once
+#include "io/OFS_SerializeHelper.h"
+
 #include "state/OFS_StateHandle.h"
 
 #include <imgui.h>
@@ -28,9 +30,9 @@ struct SimulatorState
     bool EnableHeightLines = true;
     bool LockedPosition = false;
 
-    inline static SimulatorState& State(uint32_t stateHandle) noexcept
+    inline static SimulatorState& State(OFS::StateHandle stateHandle) noexcept
     {
-        return OFS_ProjectState<SimulatorState>(stateHandle).Get();
+        return OFS::ProjectState<SimulatorState>(stateHandle).get();
     }
 };
 
@@ -42,8 +44,8 @@ struct SimulatorDefaultConfigState
     inline static SimulatorDefaultConfigState& StaticStateSlow() noexcept
     {
         // This shouldn't be done in hot paths but shouldn't be a problem otherwise.
-        uint32_t handle = OFS_AppState<SimulatorDefaultConfigState>::Register(StateName, StateName);
-        return OFS_AppState<SimulatorDefaultConfigState>(handle).Get();
+        auto handle = OFS::AppState<SimulatorDefaultConfigState>::registerState(StateName, StateName);
+        return OFS::AppState<SimulatorDefaultConfigState>(handle).get();
     }
 };
 

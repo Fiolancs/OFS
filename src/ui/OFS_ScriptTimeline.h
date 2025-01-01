@@ -8,6 +8,8 @@
 #include "videoplayer/OFS_VideoplayerEvents.h"
 #include "event/OFS_SDL_Event.h"
 
+#include "state/OFS_StateHandle.h"
+
 #include <vector>
 #include <memory>
 #include <string>
@@ -19,7 +21,7 @@ class BaseOverlay;
 class ScriptTimeline
 {
 public:
-	std::uint32_t overlayStateHandle = 0xFFFF'FFFF;
+	OFS::StateHandle overlayStateHandle = OFS::StateManager::INVALID_ID;
 	float absSel1 = 0.f; // absolute selection start
 	float relSel2 = 0.f; // relative selection end
 

@@ -16,7 +16,7 @@
 
 OFS_Preferences::OFS_Preferences() noexcept
 {
-	prefStateHandle = OFS_AppState<PreferenceState>::Register(PreferenceState::StateName, PreferenceState::StateName);
+	prefStateHandle = OFS::AppState<PreferenceState>::registerState(PreferenceState::StateName, PreferenceState::StateName);
 	auto& state = PreferenceState::State(prefStateHandle);
     OFS_DynFontAtlas::FontOverride = state.fontOverride;
 }
@@ -30,7 +30,7 @@ static void copyTranslationHelper() noexcept
 	for(auto& pIt : langDirIt) {
 		if(pIt.path().extension() == ".csv") {
 			auto targetFile = targetDir / pIt.path().filename();
-			if(OFS::util::fileExists(targetFile.string())) {
+			if(OFS::util::fileExists(targetFile)) {
 				// merge the two
 				auto input1 = pIt.path().string();
 				auto input2 = targetFile.string();

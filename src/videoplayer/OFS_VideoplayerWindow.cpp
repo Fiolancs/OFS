@@ -20,7 +20,7 @@
 
 bool OFS_VideoplayerWindow::Init(OFS_Videoplayer* player) noexcept
 {
-	stateHandle = OFS_ProjectState<VideoPlayerWindowState>::Register(VideoPlayerWindowState::StateName, VideoPlayerWindowState::StateName);
+	stateHandle = OFS::ProjectState<VideoPlayerWindowState>::registerState(VideoPlayerWindowState::StateName, VideoPlayerWindowState::StateName);
 
 	this->player = player;
 	this->vrShader = std::make_unique<VrShader>();

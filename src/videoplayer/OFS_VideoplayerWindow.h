@@ -1,7 +1,8 @@
 #pragma once
+#include "gl/OFS_Shader.h"
 #include "event/OFS_SDL_Event.h"
 
-#include "gl/OFS_Shader.h"
+#include "state/OFS_StateManager.h"
 
 #include <imgui.h>
 
@@ -13,7 +14,7 @@ class OFS_VideoplayerWindow
 {
 public:
 	~OFS_VideoplayerWindow() noexcept;
-	std::uint32_t StateHandle() const noexcept { return stateHandle; }
+	OFS::StateHandle StateHandle() const noexcept { return stateHandle; }
 private:
 	class OFS_Videoplayer* player = nullptr;
 	std::unique_ptr<VrShader> vrShader;
@@ -23,7 +24,7 @@ private:
 	ImVec2 viewportPos;
 	ImVec2 windowPos;
 
-	std::uint32_t stateHandle = 0xFFFF'FFFF;
+	OFS::StateHandle stateHandle = OFS::StateManager::INVALID_ID;
 
 	float baseScaleFactor = 1.f;
 

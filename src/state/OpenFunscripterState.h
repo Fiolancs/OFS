@@ -44,9 +44,9 @@ struct OpenFunscripterState
     bool showWsApi = false;
     bool showChapterManager = false;
 
-    inline static OpenFunscripterState& State(uint32_t stateHandle) noexcept
+    inline static OpenFunscripterState& State(OFS::StateHandle stateHandle) noexcept
     {
-        return OFS_AppState<OpenFunscripterState>(stateHandle).Get();
+        return OFS::AppState<OpenFunscripterState>(stateHandle).get();
     }
 
     void addRecentFile(const RecentFile& recentFile) noexcept;

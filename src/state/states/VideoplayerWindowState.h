@@ -1,4 +1,6 @@
 #pragma once
+#include "io/OFS_SerializeHelper.h"
+
 #include "state/OFS_StateHandle.h"
 
 #include <imgui.h>
@@ -30,8 +32,8 @@ struct VideoPlayerWindowState
     float zoomFactor = 1.f;
     bool lockedPosition = false;
 
-	inline static VideoPlayerWindowState& State(std::uint32_t stateHandle) noexcept {
-		return OFS_ProjectState<VideoPlayerWindowState>(stateHandle).Get();
+	inline static VideoPlayerWindowState& State(OFS::StateHandle stateHandle) noexcept {
+		return OFS::ProjectState<VideoPlayerWindowState>(stateHandle).get();
 	}
 };
 

@@ -1,11 +1,12 @@
 #include "ScriptPositionsOverlayMode.h"
+#include "state/states/BaseOverlayState.h"
 
 #include "OFS_Profiling.h"
 #include "OFS_ScriptTimeline.h"
+#include "state/OFS_StateManager.h"
 #include "Funscript/FunscriptHeatmap.h"
 #include "localization/OFS_Localization.h"
 
-#include "state/states/BaseOverlayState.h"
 
 #include <cmath>
 
@@ -14,7 +15,7 @@ std::vector<BaseOverlay::ColoredLine> BaseOverlay::ColoredLines;
 constexpr float MaxPointSize = 8.f;
 float BaseOverlay::PointSize = MaxPointSize;
 
-uint32_t BaseOverlay::StateHandle = 0xFFFF'FFFF;
+OFS::StateHandle BaseOverlay::StateHandle = OFS::StateManager::INVALID_ID;
 
 bool BaseOverlay::ShowLines = true;
 bool BaseOverlay::ShowPoints = true;

@@ -1,10 +1,10 @@
 #pragma once
 #include "event/OFS_Event.h"
+#include "state/OFS_StateManager.h"
 
 #include <SDL3/SDL_timer.h>
 #include <SDL3/SDL_mutex.h>
 #include <SDL3/SDL_atomic.h>
-#include <SDL3/SDL_thread.h>
 
 #include <vector>
 #include <memory>
@@ -63,7 +63,7 @@ class OFS_WebsocketApi
 {
     private:
     void* ctx = nullptr;
-    uint32_t stateHandle = 0xFFFF'FFFF;
+    OFS::StateHandle stateHandle = OFS::StateManager::INVALID_ID;
     std::vector<uint32_t> scriptUpdateCooldown;
     std::unique_ptr<EventSerializationContext> eventSerializationCtx;
 

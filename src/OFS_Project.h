@@ -15,25 +15,8 @@ public:
 
 #define OFS_PROJECT_EXT ".ofsp"
 
-class OFS_Project {
-private:
-    uint32_t stateHandle = 0xFFFF'FFFF;
-    uint32_t bookmarkStateHandle = 0xFFFF'FFFF;
-
-    std::filesystem::path lastPath;
-
-    std::string notValidError;
-    bool valid = false;
-
-    void addError(const std::string& error) noexcept
-    {
-        valid = false;
-        notValidError += "\n";
-        notValidError += error;
-    }
-    void loadNecessaryGlyphs() noexcept;
-    void loadMultiAxis(std::filesystem::path const& rootScript) noexcept;
-
+class OFS_Project
+{
 public:
     static constexpr auto Extension = OFS_PROJECT_EXT;
 
@@ -87,4 +70,23 @@ public:
         //            });
         //    });
     }
+
+private:
+    OFS::StateHandle stateHandle = OFS::StateManager::INVALID_ID;
+    OFS::StateHandle bookmarkStateHandle = OFS::StateManager::INVALID_ID;
+
+    std::filesystem::path lastPath;
+
+    std::string notValidError;
+    bool valid = false;
+
+    void addError(const std::string& error) noexcept
+    {
+        valid = false;
+        notValidError += "\n";
+        notValidError += error;
+    }
+    void loadNecessaryGlyphs() noexcept;
+    void loadMultiAxis(std::filesystem::path const& rootScript) noexcept;
+
 };

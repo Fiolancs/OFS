@@ -8,9 +8,9 @@ struct FunscriptMetadataState
 
     Funscript::Metadata defaultMetadata;
 
-    static inline FunscriptMetadataState& State(uint32_t stateHandle) noexcept
+    static inline FunscriptMetadataState& State(OFS::StateHandle stateHandle) noexcept
     {
-        return OFS_AppState<FunscriptMetadataState>(stateHandle).Get();
+        return OFS::AppState<FunscriptMetadataState>(stateHandle).get();
     }
 };
 

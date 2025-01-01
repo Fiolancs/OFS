@@ -19,6 +19,8 @@ set(OPEN_FUNSCRIPTER_SOURCES
     "gl/OFS_GPU.cpp"
     "gl/OFS_Shader.cpp"
 
+    "io/OFS_SerializeHelper.cpp"
+
     "lua/OFS_LuaExtensions.cpp"
     "lua/OFS_LuaExtension.cpp"
     "lua/OFS_LuaCoreExtension.cpp"
@@ -74,6 +76,8 @@ set(OPEN_FUNSCRIPTER_HEADERS
 
     "gl/OFS_GL.h"
     "gl/OFS_Shader.h"
+
+    "io/OFS_SerializeHelper.h"
 
     "lua/OFS_Lua.h"
     "lua/OFS_LuaCoreExtension.h"

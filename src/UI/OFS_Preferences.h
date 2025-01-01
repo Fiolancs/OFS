@@ -5,6 +5,7 @@
 
 #include "OFS_Util.h"
 #include "OFS_Reflection.h"
+#include "state/OFS_StateManager.h"
 
 #include <imgui.h>
 
@@ -16,10 +17,10 @@
 class OFS_Preferences
 {
 private:
-	uint32_t prefStateHandle = 0xFFFF'FFFF;
+	OFS::StateHandle prefStateHandle = OFS::StateManager::INVALID_ID;
 	std::vector<std::string> translationFiles;
 public:
-	inline uint32_t StateHandle() const noexcept { return prefStateHandle; }
+	inline OFS::StateHandle StateHandle() const noexcept { return prefStateHandle; }
 public:
 	bool ShowWindow = false;
 	OFS_Preferences() noexcept;

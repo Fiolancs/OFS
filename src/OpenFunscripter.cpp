@@ -7,6 +7,7 @@
 #include "ui/OFS_ImGui.h"
 #include "ui/GradientBar.h"
 #include "ui/OFS_DownloadFfmpeg.h"
+#include "io/OFS_BinarySerialization.h"
 #include "state/OpenFunscripterState.h"
 #include "videoplayer/OFS_MpvLoader.h"
 #include "Funscript/FunscriptHeatmap.h"
@@ -72,8 +73,8 @@ bool OpenFunscripter::imguiSetup() noexcept
     io.ConfigViewportsNoTaskBarIcon = false;
     io.ConfigDockingTransparentPayload = true;
 
-    static auto imguiIniPath = OFS::util::preferredPath("imgui.ini");
-    io.IniFilename = imguiIniPath.string().c_str();
+    static auto imguiIniPath = OFS::util::preferredPath("imgui.ini").string();
+    io.IniFilename = imguiIniPath.c_str();
 
     // NOTE: OFS_Preferences::OFS_Preferences() sets OFS_DynFontAtlas::FontOverride
     OFS_DynFontAtlas::Init();
@@ -134,24 +135,24 @@ bool OpenFunscripter::Init(int argc, char* argv[])
     OFS::FileLogger::get().init((prefPath / "OFS.log").string());
     OFS::util::isMainThread();
 
-    OFS_StateManager::Init();
+    stateHandle = OFS::AppState<OpenFunscripterState>::registerState(OpenFunscripterState::StateName, "OpenFunscripterState");
+    preferences = std::make_unique<OFS_Preferences>();
+    keys = std::make_unique<OFS_KeybindingSystem>();
+
     {
-        auto stateMgr = OFS_StateManager::Get();
-        std::vector<std::uint8_t> fileData;
+        auto stateMgr = OFS::StateManager::get();
+        std::vector<char> fileData;
         auto statePath = OFS::util::preferredPath("state.ofs");
-        if (OFS::util::readFile(statePath, fileData) > 0) {
-            bool succ;
-            auto cbor = Util::ParseCBOR(fileData, &succ);
-            if (succ) {
-                stateMgr->DeserializeAppAll(/*cbor,*/ true);
+        if (OFS::util::readFile(statePath, fileData) > 0)
+        {
+            if (auto json = OFS::util::convertCBORtoJSON(fileData); !json.empty())
+            {
+                stateMgr->deserializeStateGroup<OFS::AppState<void>::STATE_GROUP>(json);
             }
         }
     }
 
-    stateHandle = OFS_AppState<OpenFunscripterState>::Register(OpenFunscripterState::StateName, "OpenFunscripterState");
     const auto& ofsState = OpenFunscripterState::State(stateHandle);
-
-    preferences = std::make_unique<OFS_Preferences>();
     const auto& prefState = PreferenceState::State(preferences->StateHandle());
 
     if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMEPAD))
@@ -232,7 +233,6 @@ bool OpenFunscripter::Init(int argc, char* argv[])
     playerControls.Init(player.get(), prefState.forceHwDecoding);
     undoSystem = std::make_unique<UndoSystem>();
 
-    keys = std::make_unique<OFS_KeybindingSystem>();
     registerBindings();
 
     scriptTimeline.Init();
@@ -1429,7 +1429,7 @@ void OpenFunscripter::DragNDrop(const OFS_SDL_Event* ev) noexcept
 
     std::string dragNDropFile = ev->sdl.drop.data;
     closeWithoutSavingDialog([this, dragNDropFile]() {
-        openFile(dragNDropFile);
+        openFile(OFS::util::pathFromU8String(dragNDropFile));
     });
     // NOTE: currently there is just one DragNDrop handler
     // If another one would be added this SDL_free would be problematic
@@ -1796,7 +1796,7 @@ void OpenFunscripter::openFile(std::filesystem::path const& file) noexcept
             auto filePath = file;
             auto fileExtension = filePath.extension().string();
             LoadedProject = std::make_unique<OFS_Project>();
-            OFS_StateManager::Get()->ClearProjectAll();
+            OFS::StateManager::get()->clearStateGroup(OFS::ProjectState<void>::STATE_GROUP);
 
             if (fileExtension == OFS_Project::Extension) {
                 // It's a project

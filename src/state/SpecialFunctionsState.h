@@ -15,9 +15,9 @@ struct SpecialFunctionState
 
     SpecialFunctionType selectedFunction = SpecialFunctionType::RangeExtender;
 
-    static inline SpecialFunctionState& State(uint32_t stateHandle) noexcept
+    static inline SpecialFunctionState& State(OFS::StateHandle stateHandle) noexcept
     {
-        return OFS_AppState<SpecialFunctionState>(stateHandle).Get();
+        return OFS::AppState<SpecialFunctionState>(stateHandle).get();
     }
 };
 

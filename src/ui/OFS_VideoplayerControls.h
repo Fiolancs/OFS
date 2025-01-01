@@ -3,6 +3,8 @@
 #include "OFS_Videopreview.h"
 #include "Funscript/FunscriptHeatmap.h"
 
+#include "state/OFS_StateHandle.h"
+
 #include <imgui.h>
 #include <imgui_internal.h>
 
@@ -12,7 +14,7 @@ private:
 	float actualPlaybackSpeed = 1.f;
 	float lastPlayerPosition = 0.0f;
 
-	uint32_t chapterStateHandle = 0xFFFF'FFFF;
+	OFS::StateHandle chapterStateHandle = OFS::StateManager::INVALID_ID;
 
 	uint32_t measureStartTime = 0;
 	bool mute = false;
