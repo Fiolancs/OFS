@@ -97,7 +97,7 @@ bool OFS_ChapterManager::ExportClip(const Chapter& chapter, std::filesystem::pat
     std::format_to_n(startTimeChar, sizeof(startTimeChar), "{:f}", chapter.startTime);
     std::format_to_n(endTimeChar, sizeof(endTimeChar), "{:f}", chapter.endTime);
     
-    auto mediaPath = OFS::util::pathFromU8String(app->player->VideoPath());
+    auto mediaPath = OFS::util::pathFromU8String(app->player->videoPath());
 
     auto& projectState = app->LoadedProject->State();
 

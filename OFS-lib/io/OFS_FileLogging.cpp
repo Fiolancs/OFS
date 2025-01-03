@@ -1,6 +1,6 @@
 #include "OFS_FileLogging.h"
 
-#include "OFS_Profiling.h"
+#include "OFS_DebugBreak.h"
 #include "localization/OFS_Localization.h"
 #include "localization/OFS_StringsGenerated.h"
 
@@ -51,13 +51,11 @@ namespace
 
     inline static void appendToBuffer(auto& buffer, std::ranges::range auto&& message)
     {
-        OFS_PROFILE(__FUNCTION__);
         buffer.append_range(message);
     };
 
+    static bool gFileLoggerHasExited = false;
 }
-
- OFS::FileLogger OFS::FileLogger::instance = {};
 
 struct OFS::FileLogger::PImpl
 {
@@ -68,6 +66,11 @@ struct OFS::FileLogger::PImpl
 OFS::FileLogger::FileLogger(void) noexcept
     : pImpl{ std::make_unique<PImpl>(std::make_shared<OFS_LogThreadImpl>()) }
 {
+}
+
+OFS::FileLogger::~FileLogger(void) noexcept
+{
+   gFileLoggerHasExited = true;
 }
 
 bool OFS::FileLogger::init(std::string_view logFile)
@@ -96,13 +99,13 @@ void OFS::FileLogger::shutdown(void) noexcept
 
 OFS::FileLogger& OFS::FileLogger::get(void) noexcept
 {
+    static FileLogger instance;
     return instance;
 }
 
 void OFS::FileLogger::addListener(LogListener_t* const listener)
 {
     // TODO
-    
 }
 
 void OFS::FileLogger::flush(void) noexcept
@@ -121,7 +124,11 @@ void OFS::FileLogger::logToFile(LogLevel level, std::string_view msg, bool newLi
 
 void OFS::FileLogger::logToFile(std::string_view prefix, std::string_view msg, bool newLine)
 {
-    OFS_PROFILE(__FUNCTION__);
+    if (gFileLoggerHasExited) [[unlikely]]
+    {
+        OFS_DEBUGBREAK;
+        return;
+    }
 
     using std::literals::operator ""sv;
     auto const full = { prefix, msg, newLine ? "\n"sv : ""sv };

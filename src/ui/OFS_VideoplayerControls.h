@@ -8,6 +8,9 @@
 #include <imgui.h>
 #include <imgui_internal.h>
 
+class OFS::VideoPlayer;
+class VideoLoadedEvent;
+
 class OFS_VideoplayerControls
 {
 private:
@@ -23,13 +26,13 @@ private:
 	
 	static constexpr int32_t PreviewUpdateMs = 1000;
 	uint32_t lastPreviewUpdate = 0;
-	class OFS_Videoplayer* player = nullptr;
+	class OFS::VideoPlayer* player = nullptr;
 
 	bool DrawChapter(ImDrawList* drawList, const ImRect& frameBB, struct Chapter& chapter, ImDrawFlags drawFlags, float currentTime) noexcept;
 	bool DrawBookmark(ImDrawList* drawList, const ImRect& frameBB, struct Bookmark& bookmark) noexcept;
 	void DrawChapterWidget(ImDrawList* drawList, float currentTime) noexcept;
 
-	void VideoLoaded(const class VideoLoadedEvent* ev) noexcept;
+	void VideoLoaded(const VideoLoadedEvent* ev) noexcept;
 	bool DrawTimelineWidget(const char* label, float* position) noexcept;
 public:
 	static constexpr const char* ControlId = "###CONTROLS";
@@ -38,7 +41,7 @@ public:
 	std::unique_ptr<VideoPreview> videoPreview;
 	std::unique_ptr<FunscriptHeatmap> Heatmap;
 
-	void Init(class OFS_Videoplayer* player, bool hwAccel) noexcept;
+	void Init(OFS::VideoPlayer* player, bool hwAccel) noexcept;
 
 	inline void UpdateHeatmap(float totalDuration, const FunscriptArray& actions) noexcept
 	{

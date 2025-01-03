@@ -13,13 +13,16 @@ enum class VideoplayerType : uint8_t
 class VideoLoadedEvent : public OFS_Event<VideoLoadedEvent>
 {
 	public:
-	std::string videoPath;
+	std::u8string videoPath;
 	VideoplayerType playerType;
 
 	VideoLoadedEvent(const char* path, VideoplayerType type) noexcept
-		: videoPath(path), playerType(type) {}
+		: videoPath(path, path+strlen(path)), playerType(type) {}
 	VideoLoadedEvent(const std::string& path, VideoplayerType type) noexcept
-		: videoPath(path), playerType(type) {}	
+		: videoPath(path.begin(), path.end()), playerType(type) {}
+	VideoLoadedEvent(const std::u8string& path, VideoplayerType type) noexcept
+		: videoPath(path), playerType(type) {
+	}
 };
 
 class PlayPauseChangeEvent : public OFS_Event<PlayPauseChangeEvent>

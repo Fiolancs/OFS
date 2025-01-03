@@ -1,6 +1,7 @@
 #pragma once
 
 #include <mpv/client.h>
+#include <mpv/render.h>
 #include <mpv/render_gl.h>
 
 /*
@@ -33,9 +34,11 @@ typedef void (*mpv_detach_destroy_FUNC)(mpv_handle *ctx);
 typedef void (*mpv_destroy_FUNC)(mpv_handle *ctx);
 typedef void (*mpv_render_context_report_swap_FUNC)(mpv_render_context *ctx);
 typedef void (*mpv_terminate_destroy_FUNC)(mpv_handle *ctx);
-
+typedef char const* (*mpv_error_string_FUNC)(int);
 
 struct OFS_MpvLoader {
+#define DECLARE_FUNCTION(FN) static FN##_FUNC  FN##_REAL
+
     static mpv_create_FUNC mpv_create_REAL;
     static mpv_initialize_FUNC mpv_initialize_REAL;
     static mpv_wait_event_FUNC mpv_wait_event_REAL;
@@ -55,12 +58,15 @@ struct OFS_MpvLoader {
     static mpv_render_context_report_swap_FUNC mpv_render_context_report_swap_REAL;
     static mpv_terminate_destroy_FUNC mpv_terminate_destroy_REAL;
 
+    DECLARE_FUNCTION(mpv_error_string);
+
+#undef DECLARE_FUNCTION
     static bool Load() noexcept;
     static void Unload() noexcept;
 };
 
 #ifdef OFS_MPV_LOADER_MACROS
-#define mpv_create() OFS_MpvLoader::mpv_create_REAL()
+#define mpv_create OFS_MpvLoader::mpv_create_REAL
 #define mpv_initialize(ctx) OFS_MpvLoader::mpv_initialize_REAL(ctx)
 #define mpv_wait_event(ctx, timeout) OFS_MpvLoader::mpv_wait_event_REAL(ctx, timeout)
 #define mpv_observe_property(handle, reply_userdata, name, format) OFS_MpvLoader::mpv_observe_property_REAL(handle, reply_userdata, name, format)
@@ -71,13 +77,15 @@ struct OFS_MpvLoader {
 #define mpv_request_log_messages(ctx, min_level) OFS_MpvLoader::mpv_request_log_messages_REAL(ctx, min_level)
 #define mpv_command_async(ctx, reply_userdata, args) OFS_MpvLoader::mpv_command_async_REAL(ctx, reply_userdata, args)
 #define mpv_render_context_create(res, mpv, params) OFS_MpvLoader::mpv_render_context_create_REAL(res, mpv, params)
-#define mpv_set_wakeup_callback(ctx, cb, d) OFS_MpvLoader::mpv_set_wakeup_callback_REAL(ctx, cb, d)
 #define mpv_render_context_set_update_callback(ctx, callback, callback_ctx) OFS_MpvLoader::mpv_render_context_set_update_callback_REAL(ctx, callback, callback_ctx)
 #define mpv_set_property_async(ctx, reply_userdata, name, format, data) OFS_MpvLoader::mpv_set_property_async_REAL(ctx, reply_userdata, name, format, data)
 #define mpv_render_context_free(ctx) OFS_MpvLoader::mpv_render_context_free_REAL(ctx)
 #define mpv_destroy(ctx) OFS_MpvLoader::mpv_destroy_REAL(ctx)
 #define mpv_terminate_destroy(ctx) OFS_MpvLoader::mpv_terminate_destroy_REAL(ctx)
 #define mpv_render_context_report_swap(ctx) OFS_MpvLoader::mpv_render_context_report_swap_REAL(ctx)
+
+#define mpv_error_string OFS_MpvLoader::mpv_error_string_REAL
+#define mpv_set_wakeup_callback OFS_MpvLoader::mpv_set_wakeup_callback_REAL
 #endif // OFS_MPV_LOADER_NO_MACROS
 
 #ifdef __cplusplus

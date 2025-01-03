@@ -7,6 +7,12 @@
 #include <vector>
 #include <string_view>
 
+/*
+* TODO: It will have to be this way until one of the following 
+*  - Glaze officially supports CBOR and we skip the JSON <> CBOR conversion 
+*  - We find a portable library that directly converts a JSON string to CBOR 
+*  - We change libraries from Glaze to something like reflect-cpp but CBOR support is 
+*/
 
 std::vector<char> OFS::util::convertJSONtoCBOR(std::string_view jsonString)
 {

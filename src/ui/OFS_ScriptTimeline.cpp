@@ -99,7 +99,8 @@ void ScriptTimeline::Update() noexcept
 void ScriptTimeline::videoLoaded(const VideoLoadedEvent* ev) noexcept
 {
 	if(ev->playerType != VideoplayerType::Main) return;
-	videoPath = ev->videoPath;
+	// QQQ
+	videoPath = OFS::util::pathFromU8String(ev->videoPath).string();
 	auto& waveCache = WaveformState::StaticStateSlow();
 	auto samples = waveCache.GetSamples();
 	if(waveCache.Filename == videoPath && !samples.empty())
@@ -225,7 +226,7 @@ bool ScriptTimeline::handleTimelineClicks(const OverlayDrawingCtx& ctx) noexcept
 }
 
 void ScriptTimeline::ShowScriptPositions(
-	const OFS_Videoplayer* player,
+	const OFS::VideoPlayer* player,
 	BaseOverlay* overlay,
 	const std::vector<std::shared_ptr<Funscript>>& scripts,
 	int activeScriptIdx) noexcept

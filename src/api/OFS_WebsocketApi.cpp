@@ -171,7 +171,8 @@ OFS_WebsocketApi::OFS_WebsocketApi() noexcept
 		{
 			if(ClientsConnected() > 0 && ev->playerType == VideoplayerType::Main)
 			{
-				eventSerializationCtx->Push<WsMediaChange>(ev->videoPath);
+				// QQQ
+				eventSerializationCtx->Push<WsMediaChange>(std::string(ev->videoPath.begin(), ev->videoPath.end()));
 			}
 		}
 	));

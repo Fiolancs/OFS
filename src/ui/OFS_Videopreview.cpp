@@ -4,8 +4,8 @@
 
 VideoPreview::VideoPreview(bool hwAccel) noexcept
 {
-	player = std::make_unique<OFS_Videoplayer>(VideoplayerType::Preview);
-	player->Init(hwAccel);
+	player = std::make_unique<OFS::VideoPlayer>(OFS::VideoPlayerConfig{ .tryHardwareDecode = hwAccel, .highQuality = false });
+	player->init(/*hwAccel*/);
 }
 
 VideoPreview::~VideoPreview() noexcept
@@ -14,13 +14,13 @@ VideoPreview::~VideoPreview() noexcept
 
 void VideoPreview::Init() noexcept
 {
-	player->SetVolume(0.f);
+	player->setVolume(0.f);
 }
 
 void VideoPreview::Update(float delta) noexcept
 {
 	OFS_PROFILE(__FUNCTION__);
-	player->Update(delta);
+	player->update(/*delta*/);
 }
 
 void VideoPreview::SetPosition(float pos) noexcept
@@ -32,23 +32,27 @@ void VideoPreview::SetPosition(float pos) noexcept
 void VideoPreview::PreviewVideo(const std::string& path, float pos) noexcept
 {
 	OFS_PROFILE(__FUNCTION__);
-	player->OpenVideo(path);
-	player->SetVolume(0.f);
+	auto existing = player->videoPath();
+	if (std::filesystem::path(path).u8string() != player->videoPath())
+	{
+		player->openVideo(path);
+		player->setVolume(0.f);
+	}
 }
 
 void VideoPreview::Play() noexcept
 {
 	OFS_PROFILE(__FUNCTION__);
-	player->SetPaused(false);
+	player->setPause(false);
 }
 
 void VideoPreview::Pause() noexcept
 {
 	OFS_PROFILE(__FUNCTION__);
-	player->SetPaused(true);
+	player->setPause(true);
 }
 
 void VideoPreview::CloseVideo() noexcept
 {
-	player->CloseVideo();
+	player->closeVideo();
 }

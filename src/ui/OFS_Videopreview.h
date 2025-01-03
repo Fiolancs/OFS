@@ -8,7 +8,7 @@
 
 class VideoPreview {
 private:
-	std::unique_ptr<OFS_Videoplayer> player;
+	std::unique_ptr<OFS::VideoPlayer> player;
 public:
 	VideoPreview(bool hwAccel) noexcept;
 	~VideoPreview() noexcept;
@@ -22,5 +22,5 @@ public:
 	void Pause() noexcept;
 	void CloseVideo() noexcept;
 
-	inline uint32_t FrameTex() const noexcept { return player->FrameTexture(); }
+	inline uint32_t FrameTex() const noexcept { return player->getTexture(); }
 };

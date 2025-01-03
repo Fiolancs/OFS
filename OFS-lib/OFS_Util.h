@@ -119,6 +119,7 @@ namespace OFS::util
     constexpr std::string&  trim(std::string& str, std::string_view chars = " \t\n\r\v\f") noexcept;
 
     std::wstring utf8ToUtf16(std::string_view str) noexcept;
+    std::wstring utf8ToUtf16(std::u8string_view str) noexcept;
 
 
     // ====================================================================================

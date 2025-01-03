@@ -30,7 +30,7 @@ void OFS_VideoplayerControls::VideoLoaded(const VideoLoadedEvent* ev) noexcept
     videoPreview->PreviewVideo(OFS::util::pathFromU8String(ev->videoPath).string(), 0.f);
 }
 
-void OFS_VideoplayerControls::Init(OFS_Videoplayer* player, bool hwAccel) noexcept
+void OFS_VideoplayerControls::Init(OFS::VideoPlayer* player, bool hwAccel) noexcept
 {
     if(this->player) return;
     this->player = player;
@@ -519,7 +519,7 @@ void OFS_VideoplayerControls::DrawTimeline() noexcept
 
     {
         constexpr float speedCalcUpdateFrequency = 1.0f;
-        if (!player->IsPaused()) {
+        if (!player->isPaused()) {
             if ((SDL_GetTicks() - measureStartTime) / 1000.0f >= speedCalcUpdateFrequency) {
                 float duration = player->Duration();
                 float position = player->CurrentPercentPosition();
@@ -554,19 +554,19 @@ void OFS_VideoplayerControls::DrawTimeline() noexcept
     ImGui::SetColumnWidth(0, ImGui::GetItemRectSize().x + style.ItemSpacing.x);
 
     if (ImGui::Button("1x", ImVec2(0, 0))) {
-        player->SetSpeed(1.f);
+        player->setSpeed(1.f);
     }
     ImGui::SetColumnWidth(1, ImGui::GetItemRectSize().x + style.ItemSpacing.x);
     ImGui::NextColumn();
 
     if (ImGui::Button("-10%", ImVec2(0, 0))) {
-        player->AddSpeed(-0.10f);
+        player->addSpeed(-0.10f);
     }
     ImGui::SetColumnWidth(2, ImGui::GetItemRectSize().x + style.ItemSpacing.x);
     ImGui::NextColumn();
 
     if (ImGui::Button("+10%", ImVec2(0, 0))) {
-        player->AddSpeed(0.10f);
+        player->addSpeed(0.10f);
     }
     ImGui::SetColumnWidth(3, ImGui::GetItemRectSize().x + style.ItemSpacing.x);
     ImGui::NextColumn();
@@ -574,9 +574,9 @@ void OFS_VideoplayerControls::DrawTimeline() noexcept
     ImGui::SetNextItemWidth(-1.f);
     float currentSpeed = player->CurrentSpeed();
     if (ImGui::SliderFloat("##Speed", &currentSpeed, 
-        OFS_Videoplayer::MinPlaybackSpeed, OFS_Videoplayer::MaxPlaybackSpeed,
+        OFS::VideoPlayer::PLAYBACK_SPEED_MIN, OFS::VideoPlayer::PLAYBACK_SPEED_MAX,
         "%.3f", ImGuiSliderFlags_AlwaysClamp)) {
-        player->SetSpeed(currentSpeed);
+        player->setSpeed(currentSpeed);
     }
     OFS::Tooltip(TR(SPEED));
 
@@ -584,13 +584,13 @@ void OFS_VideoplayerControls::DrawTimeline() noexcept
 
     float position = player->CurrentPercentPosition();
     if (DrawTimelineWidget(TR_ID("TIMELINE", Tr::TIMELINE).c_str(), &position)) {
-        if (!player->IsPaused()) {
+        if (!player->isPaused()) {
             hasSeeked = true;
         }
         player->SetPositionPercent(position, true);
     }    
     if (ImGui::IsMouseReleased(ImGuiMouseButton_Left) && hasSeeked) {
-        player->SetPaused(false);
+        player->setPause(false);
         hasSeeked = false;
     }
 
@@ -613,7 +613,7 @@ void OFS_VideoplayerControls::DrawControls() noexcept
     // Playback controls
     ImGui::Columns(5, 0, false);
     if (ImGui::Button(ICON_STEP_BACKWARD /*"<"*/, ImVec2(-1, 0))) {
-        if (player->IsPaused()) {
+        if (player->isPaused()) {
             player->PreviousFrame();
         }
     }
@@ -623,8 +623,8 @@ void OFS_VideoplayerControls::DrawControls() noexcept
     }
     ImGui::NextColumn();
 
-    if (ImGui::Button((player->IsPaused()) ? ICON_PLAY : ICON_PAUSE, ImVec2(-1, 0))) {
-        player->TogglePlay();
+    if (ImGui::Button((player->isPaused()) ? ICON_PLAY : ICON_PAUSE, ImVec2(-1, 0))) {
+        player->togglePause();
     }
     ImGui::NextColumn();
 
@@ -634,7 +634,7 @@ void OFS_VideoplayerControls::DrawControls() noexcept
     ImGui::NextColumn();
 
     if (ImGui::Button(ICON_STEP_FORWARD /*">"*/, ImVec2(-1, 0))) {
-        if (player->IsPaused()) {
+        if (player->isPaused()) {
             player->NextFrame();
         }
     }
@@ -643,21 +643,22 @@ void OFS_VideoplayerControls::DrawControls() noexcept
     ImGui::Columns(2, 0, false);
     if (ImGui::Checkbox(mute ? ICON_VOLUME_OFF : ICON_VOLUME_UP, &mute)) {
         if (mute) {
-            player->Mute();
+            player->setMute(1);
         }
         else {
-            player->Unmute();
+            player->setMute(0);
         }
     }
     ImGui::SetColumnWidth(0, ImGui::GetItemRectSize().x + 10);
     ImGui::NextColumn();
     ImGui::SetNextItemWidth(-1);
-    float volume = player->Volume();
+    float volume = player->getVolume();
     if (ImGui::SliderFloat("##Volume", &volume, 0.0f, 1.0f)) {
         volume = Util::Clamp(volume, 0.0f, 1.f);
-        player->SetVolume(volume);
-        if (volume > 0.0f) {
+        player->setVolume(volume);
+        if (volume > 0.0f && mute) {
             mute = false;
+            player->setMute(0);
         }
     }
     ImGui::NextColumn();

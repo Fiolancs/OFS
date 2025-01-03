@@ -8,6 +8,7 @@
 
 static SDL_SharedObject* mpvHandle = nullptr;
 
+#define DECLARE_FUNCTION(FN) FN##_FUNC OFS_MpvLoader:: FN##_REAL = nullptr;
 mpv_create_FUNC OFS_MpvLoader::mpv_create_REAL = NULL;
 mpv_wait_event_FUNC OFS_MpvLoader::mpv_wait_event_REAL = NULL;
 mpv_observe_property_FUNC OFS_MpvLoader::mpv_observe_property_REAL = NULL;
@@ -26,11 +27,13 @@ mpv_render_context_free_FUNC OFS_MpvLoader::mpv_render_context_free_REAL = NULL;
 mpv_destroy_FUNC OFS_MpvLoader::mpv_destroy_REAL = NULL;
 mpv_render_context_report_swap_FUNC OFS_MpvLoader::mpv_render_context_report_swap_REAL = NULL;
 mpv_terminate_destroy_FUNC OFS_MpvLoader::mpv_terminate_destroy_REAL = NULL;
+DECLARE_FUNCTION(mpv_error_string);
+#undef DECLARE_FUNCTION
 
 #define LOAD_FUNCTION(name) \
     name##_REAL = (name##_FUNC)SDL_LoadFunction(mpvHandle, #name); \
     if (!name##_REAL) { \
-        LOGF_ERROR("Failed to load \"%s\"", #name); \
+        LOGF_ERROR("Failed to load \"{:s}\"", #name); \
         LOG_ERROR(SDL_GetError()); \
         return false; \
     } \
@@ -73,6 +76,7 @@ bool OFS_MpvLoader::Load() noexcept
     LOAD_FUNCTION(mpv_destroy);
     LOAD_FUNCTION(mpv_terminate_destroy);
     LOAD_FUNCTION(mpv_render_context_report_swap);
+    LOAD_FUNCTION(mpv_error_string);
 
     return true;
 }
@@ -102,4 +106,5 @@ void OFS_MpvLoader::Unload() noexcept
     SET_NULL(mpv_destroy);
     SET_NULL(mpv_terminate_destroy);
     SET_NULL(mpv_render_context_report_swap);
+    SET_NULL(mpv_error_string);
 }

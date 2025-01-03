@@ -3,12 +3,15 @@
 #include "Funscript/Funscript.h"
 #include "event/OFS_Event.h"
 
+#include "state/OFS_StateManager.h"
+
 #include <vector>
 #include <memory>
 #include <string>
 #include <cstdint>
 
-class ProjectLoadedEvent: public OFS_Event<ProjectLoadedEvent> {
+class ProjectLoadedEvent: public OFS_Event<ProjectLoadedEvent>
+{
 public:
     ProjectLoadedEvent() noexcept {}
 };

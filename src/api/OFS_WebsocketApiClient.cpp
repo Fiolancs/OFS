@@ -81,10 +81,12 @@ void OFS_WebsocketClient::UpdateAll() noexcept
         //sendMessage(jsonText);
     };
 
+    auto path = app->player->videoPath();
+
     serializeSend(std::move(WsProjectChange()));
-    serializeSend(std::move(WsMediaChange(app->player->VideoPath())));
+    serializeSend(std::move(WsMediaChange( std::string(path.begin(), path.end()) )));
     serializeSend(std::move(WsPlaybackSpeedChange(app->player->CurrentSpeed())));
-    serializeSend(std::move(WsPlayChange(!app->player->IsPaused())));
+    serializeSend(std::move(WsPlayChange(!app->player->isPaused())));
     serializeSend(std::move(WsDurationChange(app->player->Duration())));
     serializeSend(std::move(WsTimeChange(app->player->CurrentPlayerTime())));
 

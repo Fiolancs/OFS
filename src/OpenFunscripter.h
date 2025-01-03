@@ -145,7 +145,7 @@ public:
     ScriptSimulator simulator;
     OFS_BlockingTask blockingTask;
 
-    std::unique_ptr<OFS_Videoplayer> player;
+    std::unique_ptr<OFS::VideoPlayer> player;
     std::unique_ptr<OFS_VideoplayerWindow> playerWindow;
     std::unique_ptr<OFS_KeybindingSystem> keys;
     std::unique_ptr<SpecialFunctionsWindow> specialFunctions;

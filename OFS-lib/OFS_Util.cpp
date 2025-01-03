@@ -201,6 +201,11 @@ std::wstring OFS::util::utf8ToUtf16(std::string_view str) noexcept
     return wstr;
 }
 
+std::wstring OFS::util::utf8ToUtf16(std::u8string_view str) noexcept
+{
+    return utf8ToUtf16(std::string(str.begin(), str.end()));
+}
+
 bool OFS::util::savePNG(std::string const& path, void const* buffer, std::int32_t width, std::int32_t height, std::int32_t channels, bool flipVertical) noexcept
 {
     stbi_flip_vertically_on_write(flipVertical);

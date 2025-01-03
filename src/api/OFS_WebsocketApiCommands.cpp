@@ -68,13 +68,13 @@ void WsCommandBuffer::ProcessCommands() noexcept
 void WsPlayChangeCmd::Run() noexcept
 {
     auto app = OpenFunscripter::ptr;
-    app->player->SetPaused(!playing);
+    app->player->setPause(!playing);
 }
 
 void WsPlaybackSpeedChangeCmd::Run() noexcept
 {
     auto app = OpenFunscripter::ptr;
-    app->player->SetSpeed(speed);
+    app->player->setSpeed(speed);
 }
 
 void WsTimeChangeCmd::Run() noexcept

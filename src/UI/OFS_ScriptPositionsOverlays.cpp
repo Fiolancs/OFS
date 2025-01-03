@@ -9,7 +9,7 @@
 void FrameOverlay::DrawScriptPositionContent(const OverlayDrawingCtx& ctx) noexcept
 {
     auto app = OpenFunscripter::ptr;
-    float fps = enableFpsOverride ? fpsOverride : app->player->Fps();
+    float fps = enableFpsOverride ? fpsOverride : app->player->getFPS();
     float frameTime = enableFpsOverride ? (1.f / fpsOverride) : app->scripting->LogicalFrameTime();
     float visibleFrames = ctx.visibleTime / frameTime;
     constexpr float maxVisibleFrames = 400.f;
@@ -107,7 +107,7 @@ void FrameOverlay::DrawSettings() noexcept
 {
     if(ImGui::Checkbox(TR_ID("FPS_OVERRIDE_ENABLE", Tr::FPS_OVERRIDE).c_str(), &enableFpsOverride))
     {
-        fpsOverride = OpenFunscripter::ptr->player->Fps();
+        fpsOverride = OpenFunscripter::ptr->player->getFPS();
     }
     if(enableFpsOverride) {
         if(ImGui::InputFloat(TR_ID("FPS_OVERRIDE", Tr::FPS_OVERRIDE).c_str(), &fpsOverride, 1.f, 10.f))
@@ -127,7 +127,7 @@ TempoOverlay::TempoOverlay(ScriptTimeline* timeline) noexcept
 {
     stateHandle = OFS::ProjectState<TempoOverlayState>::registerState(TempoOverlayState::StateName, TempoOverlayState::StateName);
 }
-
+    
 void TempoOverlay::DrawSettings() noexcept
 {
     BaseOverlay::DrawSettings();

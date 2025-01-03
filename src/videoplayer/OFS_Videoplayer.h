@@ -1,81 +1,95 @@
 #pragma once
 #include "OFS_VideoplayerEvents.h"
 
+#include <memory>
 #include <string>
 #include <cstdint>
 #include <filesystem>
 
-
-class OFS_Videoplayer
+namespace OFS
 {
-    private:
-    // Implementation data
-    void* ctx = nullptr;
-    // A OpenGL 2D_TEXTURE expected to contain the current video frame.
-    std::uint32_t frameTexture = 0;
-    // The position which was last requested via any of the seeking functions.
-    float logicalPosition = 0.f;
-    // Helper for Mute/Unmute
-    float lastVolume = 0.f;
-    VideoplayerType playerType;
-    
+    struct VideoPlayerConfig
+    {
+        bool allowUserConfig   : 1 = false;
+        bool tryHardwareDecode : 1 = false; 
+        bool highQuality       : 1 = true; 
+    };
+
+    class VideoPlayer
+    {
     public:
-    OFS_Videoplayer(VideoplayerType playerType) noexcept;
-    ~OFS_Videoplayer() noexcept;
+        explicit VideoPlayer(VideoPlayerConfig const&);
+        ~VideoPlayer(void) noexcept;
 
-	static constexpr float MinPlaybackSpeed = 0.05f;
-	static constexpr float MaxPlaybackSpeed = 3.0f;
+        bool init(void) noexcept;
+        void shutdown(void) noexcept;
+        void update(void) noexcept;
 
-    bool Init(bool hwAccel) noexcept;
-    void OpenVideo(std::filesystem::path const& path) noexcept;
-    void SetSpeed(float speed) noexcept;
-	void AddSpeed(float speed) noexcept;
-    void SetVolume(float volume) noexcept;
-    
-    // All seeking functions must update logicalPosition
-    void SetPositionExact(float timeSeconds, bool pausesVideo = false) noexcept;
-    void SetPositionPercent(float percentPos, bool pausesVideo = false) noexcept;
-    void SeekRelative(float timeSeconds) noexcept;
-    void SeekFrames(int32_t offset) noexcept;
+        void openVideo(std::filesystem::path const& path) noexcept;
+        void closeVideo(void) noexcept;
+        void notifySwap(void) noexcept;
 
-    void SetPaused(bool paused) noexcept;
-    void TogglePlay() noexcept { SetPaused(!IsPaused()); }
-    void CycleSubtitles() noexcept;
-    void CloseVideo() noexcept;
-    void SaveFrameToImage(const std::string& directory) noexcept;
-    void NotifySwap() noexcept;
+        void setVolume(float volume) noexcept;
 
-    inline void Mute() noexcept {
-        lastVolume = Volume();
-        SetVolume(0.f);
-    }
-    inline void Unmute() noexcept {
-        SetVolume(lastVolume);
-    }
-    inline void SyncWithPlayerTime() noexcept { SetPositionExact(CurrentPlayerTime()); }
-    void Update(float delta) noexcept;
+        void setMute (bool) noexcept;
+        void setPause(bool) noexcept;
+        void setSpeed(float) noexcept;
+        void addSpeed(float) noexcept;
 
-    std::uint16_t VideoWidth() const noexcept;
-    std::uint16_t VideoHeight() const noexcept;
-    float FrameTime() const noexcept;
-    float CurrentSpeed() const noexcept;
-    float Volume() const noexcept;
-    double Duration() const noexcept;
-    bool IsPaused() const noexcept;
-    float Fps() const noexcept;
-    bool VideoLoaded() const noexcept;
-    void NextFrame() noexcept;
-    void PreviousFrame() noexcept;
+        void togglePause(void) noexcept { setPause(!isPaused()); }
 
-    // Uses the logical position which may be different from CurrentPlayerPosition()
-    float CurrentPercentPosition() const noexcept;
-    // Also uses the logical position
-    double CurrentTime() const noexcept;
+        float getFPS(void) const noexcept;
+        float getVolume(void) const noexcept;
+        std::uint32_t getTexture(void) const noexcept;
 
-    // The "actual" position reported by the player
-    double CurrentPlayerPosition() const noexcept; 
-    double CurrentPlayerTime() const noexcept { return CurrentPlayerPosition() * Duration(); }
+        bool isValid (void) const noexcept;
+        bool isMuted (void) const noexcept;
+        bool isPaused(void) const noexcept;
+        bool isVideoLoaded(void) const noexcept;
 
-    const char* VideoPath() const noexcept;
-    inline std::uint32_t FrameTexture() const noexcept { return frameTexture; }
-};
+        std::u8string videoPath(void) const noexcept;
+
+        explicit operator bool(void) const noexcept { return isValid(); }
+
+        inline static constexpr float PLAYBACK_SPEED_MIN = .05f;
+        inline static constexpr float PLAYBACK_SPEED_MAX = 10.f;
+        
+
+        // QQQ
+        // The following is copy pasted from the old implementation
+        // because we don't want to deal with them yet
+
+        // All seeking functions must update logicalPosition
+        void SetPositionExact(float timeSeconds, bool pausesVideo = false) noexcept;
+        void SetPositionPercent(float percentPos, bool pausesVideo = false) noexcept;
+        void SeekRelative(float timeSeconds) noexcept;
+        void SeekFrames(int32_t offset) noexcept;
+
+        void CycleSubtitles() noexcept;
+        void SaveFrameToImage(const std::string& directory) noexcept;
+
+        inline void SyncWithPlayerTime() noexcept { SetPositionExact(CurrentPlayerTime()); }
+
+        std::uint16_t VideoWidth() const noexcept;
+        std::uint16_t VideoHeight() const noexcept;
+        float FrameTime() const noexcept;
+        float CurrentSpeed() const noexcept;
+        double Duration() const noexcept;
+        void NextFrame() noexcept;
+        void PreviousFrame() noexcept;
+
+        // Uses the logical position which may be different from CurrentPlayerPosition()
+        float CurrentPercentPosition() const noexcept;
+        // Also uses the logical position
+        double CurrentTime() const noexcept;
+
+        // The "actual" position reported by the player
+        double CurrentPlayerPosition() const noexcept;
+        double CurrentPlayerTime() const noexcept { return CurrentPlayerPosition() * Duration(); }
+
+
+    private:
+        struct PImpl;
+        std::unique_ptr<PImpl> pImpl;
+    };
+}

@@ -37,15 +37,18 @@ namespace OFS
             return logToFile(makePrefix(level), std::vformat(fmt, std::make_format_args(args ...)));
         }
 
+        ~FileLogger(void) noexcept;
+
     private:
         static std::string makePrefix(LogLevel) noexcept;
 
         // Singleton
         FileLogger(void) noexcept;
+        FileLogger& operator = (FileLogger&&) = delete;
+        FileLogger& operator = (FileLogger const&) = delete;
 
         struct PImpl;
         std::unique_ptr<PImpl> pImpl;
-        static FileLogger instance;
     };
 }
 
@@ -61,12 +64,12 @@ namespace OFS
 #define LOGF_DEBUG(fmt, ...) OFS::FileLogger::get().logToFile(OFS::FileLogger::OFS_LOG_DEBUG, fmt, __VA_ARGS__)
 #define LOGF_ERROR(fmt, ...) OFS::FileLogger::get().logToFile(OFS::FileLogger::OFS_LOG_ERROR, fmt, __VA_ARGS__)
 #else
-#define LOG_INFO(msg)  OFS::FileLogger::get().logToFile(OFS::FileLogger::OFS_LOG_INFO,  msg)
+#define LOG_INFO(msg)
 #define LOG_WARN(msg)  OFS::FileLogger::get().logToFile(OFS::FileLogger::OFS_LOG_WARN,  msg)
 #define LOG_DEBUG(msg)
 #define LOG_ERROR(msg) OFS::FileLogger::get().logToFile(OFS::FileLogger::OFS_LOG_ERROR, msg)
 
-#define LOGF_INFO(fmt, ...)  OFS::FileLogger::get().logToFile(OFS::FileLogger::OFS_LOG_INFO,  fmt, __VA_ARGS__)
+#define LOGF_INFO(fmt, ...)
 #define LOGF_WARN(fmt, ...)  OFS::FileLogger::get().logToFile(OFS::FileLogger::OFS_LOG_WARN,  fmt, __VA_ARGS__)
 #define LOGF_DEBUG(fmt, ...)
 #define LOGF_ERROR(fmt, ...) OFS::FileLogger::get().logToFile(OFS::FileLogger::OFS_LOG_ERROR, fmt, __VA_ARGS__)

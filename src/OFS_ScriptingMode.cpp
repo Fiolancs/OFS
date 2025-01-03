@@ -165,7 +165,7 @@ void ScriptingMode::Redo() noexcept
 void ScriptingMode::AddEditAction(FunscriptAction action) noexcept
 {
     auto app = OpenFunscripter::ptr;
-    if (!app->player->IsPaused()) {
+    if (!app->player->isPaused()) {
         // apply offset
         auto& state = ScriptingModeState::State(stateHandle);
         action.atS += state.actionInsertDelayMs / 1000.f;
@@ -501,7 +501,7 @@ void RecordingMode::DrawModeSettings() noexcept
 
 
     ImGui::Spacing();
-    bool playing = !app->player->IsPaused();
+    bool playing = !app->player->isPaused();
     if (automaticRecording && playing && recordingActive != playing) {
         if (!twoAxesMode) {
             recordingAxisX = app->ActiveFunscript();

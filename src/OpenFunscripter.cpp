@@ -217,12 +217,16 @@ bool OpenFunscripter::Init(int argc, char* argv[])
     EV::Init();
     LoadedProject = std::make_unique<OFS_Project>();
 
-    player = std::make_unique<OFS_Videoplayer>(VideoplayerType::Main);
-    if (!player->Init(prefState.forceHwDecoding)) {
+    player = std::make_unique<OFS::VideoPlayer>(OFS::VideoPlayerConfig{ 
+        .allowUserConfig = true,
+        .tryHardwareDecode = prefState.forceHwDecoding, 
+        .highQuality = true 
+    });
+    if (!player->init()) {
         LOG_ERROR("Failed to initialize videoplayer.");
         return false;
     }
-    player->SetPaused(true);
+    player->setPause(true);
 
     playerWindow = std::make_unique<OFS_VideoplayerWindow>();
     if (!playerWindow->Init(player.get())) {
@@ -600,7 +604,7 @@ void OpenFunscripter::registerBindings()
         keys->RegisterAction(
             { "prev_frame",
                 [this]() {
-                    if (player->IsPaused()) {
+                    if (player->isPaused()) {
                         scripting->PreviousFrame();
                     }
                 },
@@ -614,7 +618,7 @@ void OpenFunscripter::registerBindings()
         keys->RegisterAction(
             { "next_frame",
                 [this]() {
-                    if (player->IsPaused()) {
+                    if (player->isPaused()) {
                         scripting->NextFrame();
                     }
                 },
@@ -1079,7 +1083,7 @@ void OpenFunscripter::registerBindings()
     {
         keys->RegisterAction(
             { "toggle_play",
-                [this]() { player->TogglePlay(); },
+                [this]() { player->togglePause(); },
                 false },
             Tr::ACTION_TOGGLE_PLAY, "Videoplayer",
             { { ImGuiKey_None, ImGuiKey_Space },
@@ -1088,7 +1092,7 @@ void OpenFunscripter::registerBindings()
         // PLAYBACK SPEED
         keys->RegisterAction(
             { "decrement_speed",
-                [this]() { player->AddSpeed(-0.10); },
+                [this]() { player->addSpeed(-0.10); },
                 false },
             Tr::ACTION_REDUCE_PLAYBACK_SPEED, "Videoplayer",
             {
@@ -1097,7 +1101,7 @@ void OpenFunscripter::registerBindings()
 
         keys->RegisterAction(
             { "increment_speed",
-                [this]() { player->AddSpeed(0.10); },
+                [this]() { player->addSpeed(0.10); },
                 false },
             Tr::ACTION_INCREASE_PLAYBACK_SPEED, "Videoplayer",
             {
@@ -1464,7 +1468,7 @@ void OpenFunscripter::update() noexcept
     const float delta = ImGui::GetIO().DeltaTime;
     keys->ProcessKeybindings();
     extensions->Update(delta);
-    player->Update(delta);
+    player->update(/*delta*/);
     playerControls.videoPreview->Update(delta);
     ControllerInput::UpdateControllers();
     scripting->Update();
@@ -1494,17 +1498,17 @@ void OpenFunscripter::autoBackup() noexcept
     lastBackup = std::chrono::steady_clock::now();
 
     auto backupDir = OFS::util::preferredPath("backup");
-    auto name = OFS::util::filename(OFS::util::pathFromU8String(player->VideoPath()));
+    auto name = OFS::util::filename(OFS::util::pathFromU8String(player->videoPath()));
     name = OFS::util::trim(name); // this needs to be trimmed because trailing spaces
 
     static auto backupStartPoint = std::chrono::zoned_time{ std::chrono::current_zone(), std::chrono::system_clock::now() };
     name = std::format("{:s}_{:%y%m%d_%H%M%S}", name, backupStartPoint);
 
-#ifdef _WIN32
-    backupDir /= OFS::util::utf8ToUtf16(name);
-#else
+//#ifdef _WIN32
+//   backupDir /= OFS::util::utf8ToUtf16(name);
+//#else
     backupDir /= name;
-#endif
+//#endif
     if (!OFS::util::createDirectories(backupDir)) {
         return;
     }
@@ -1564,7 +1568,7 @@ void OpenFunscripter::exitApp(bool force) noexcept
 void OpenFunscripter::setIdle(bool idle) noexcept
 {
     if (idle == IdleMode) return;
-    if (idle && !player->IsPaused()) return; // can't idle while player is playing
+    if (idle && !player->isPaused()) return; // can't idle while player is playing
     IdleMode = idle;
 }
 
@@ -1656,7 +1660,7 @@ void OpenFunscripter::Step() noexcept
                     addEditAction(0);
                 }
 
-                if (player->IsPaused()) {
+                if (player->isPaused()) {
                     ImGui::Spacing();
                     auto scriptAction = ActiveFunscript()->GetActionAtTime(player->CurrentTime(), scripting->LogicalFrameTime());
                     if (!scriptAction) {
@@ -1690,7 +1694,7 @@ void OpenFunscripter::Step() noexcept
     OFS::FileLogger::get().flush();
     OFS_ENDPROFILING();
     SDL_GL_SwapWindow(window);
-    player->NotifySwap();
+    player->notifySwap();
 }
 
 int OpenFunscripter::Run() noexcept
@@ -1832,7 +1836,7 @@ void OpenFunscripter::initProject() noexcept
         }
 
         if (OFS::util::fileExists(LoadedProject->MediaPath())) {
-            player->OpenVideo(LoadedProject->MediaPath());
+            player->openVideo(LoadedProject->MediaPath());
         }
         else {
             pickDifferentMedia();
@@ -1900,7 +1904,7 @@ bool OpenFunscripter::closeProject(bool closeWithUnsavedChanges) noexcept
     else {
         UpdateNewActiveScript(0);
         LoadedProject = std::make_unique<OFS_Project>();
-        player->CloseVideo();
+        player->closeVideo();
         playerControls.videoPreview->CloseVideo();
         updateTitle();
     }
@@ -1917,7 +1921,7 @@ void OpenFunscripter::pickDifferentMedia() noexcept
                 auto& projectState = LoadedProject->State();
                 if (!result.files.empty() && OFS::util::fileExists(result.files[0])) {
                     projectState.relativeMediaPath = LoadedProject->MakePathRelative(result.files[0]);
-                    player->OpenVideo(LoadedProject->MediaPath().string());
+                    player->openVideo(LoadedProject->MediaPath().string());
                 }
             },
             false);
@@ -2143,7 +2147,7 @@ void OpenFunscripter::ShowMainMenuBar() noexcept
     ImColor alertCol = ImGui::GetStyleColorVec4(ImGuiCol_MenuBarBg);
     std::chrono::duration<float> saveDuration;
     bool unsavedEdits = LoadedProject->HasUnsavedEdits();
-    if (player->VideoLoaded() && unsavedEdits) {
+    if (player->isVideoLoaded() && unsavedEdits) {
         saveDuration = std::chrono::system_clock::now() - ActiveFunscript()->EditTime();
         const float timeUnit = saveDuration.count() / 60.f;
         if (timeUnit >= 5.f) {
@@ -2618,7 +2622,7 @@ void OpenFunscripter::ShowMainMenuBar() noexcept
         if (IdleMode) {
             ImGui::TextUnformatted(ICON_LEAF);
         }
-        if (player->VideoLoaded() && unsavedEdits) {
+        if (player->isVideoLoaded() && unsavedEdits) {
             const float timeUnit = saveDuration.count() / 60.f;
             ImGui::SameLine(region.x - ImGui::GetFontSize() * 13.5f);
             ImGui::TextColored(ImGui::GetStyle().Colors[ImGuiCol_Text], TR(UNSAVED_CHANGES_FMT), (int)(timeUnit));
@@ -2785,12 +2789,12 @@ void OpenFunscripter::ControllerAxisPlaybackSpeed(const OFS_SDL_Event* ev) noexc
     auto app = OpenFunscripter::ptr;
     if (caxis.axis == SDL_GAMEPAD_AXIS_LEFT_TRIGGER) {
         float speed = 1.f - (caxis.value / (float)std::numeric_limits<int16_t>::max());
-        app->player->SetSpeed(speed);
+        app->player->setSpeed(speed);
         lastAxis = caxis.axis;
     }
     else if (caxis.axis == SDL_GAMEPAD_AXIS_RIGHT_TRIGGER) {
         float speed = 1.f + (caxis.value / (float)std::numeric_limits<int16_t>::max());
-        app->player->SetSpeed(speed);
+        app->player->setSpeed(speed);
         lastAxis = caxis.axis;
     }
 }

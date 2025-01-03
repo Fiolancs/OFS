@@ -39,7 +39,7 @@ public:
 	inline void ClearAudioWaveform() noexcept { ShowAudioWaveform = false; Wave.data.Clear(); }
 	inline void setStartSelection(float time) noexcept { startSelectionTime = time; }
 	inline float selectionStart() const noexcept { return startSelectionTime; }
-	void ShowScriptPositions(const OFS_Videoplayer* player, BaseOverlay* overlay, const std::vector<std::shared_ptr<Funscript>>& scripts, int activeScriptIdx) noexcept;
+	void ShowScriptPositions(const OFS::VideoPlayer* player, BaseOverlay* overlay, const std::vector<std::shared_ptr<Funscript>>& scripts, int activeScriptIdx) noexcept;
 
 	void Update() noexcept;
 
