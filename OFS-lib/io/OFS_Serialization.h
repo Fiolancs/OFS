@@ -7,57 +7,6 @@
 
 namespace OFS
 {
-    template<bool Value, typename T>
-    struct bool_value {
-        static constexpr bool value = Value;
-    };
-
-    template<typename T>
-    struct is_json_compatible: std::false_type {
-    };
-    template<>
-    struct is_json_compatible<std::string>: std::true_type {
-    };
-    template<>
-    struct is_json_compatible<double>: std::true_type {
-    };
-    template<>
-    struct is_json_compatible<float>: std::true_type {
-    };
-    template<>
-    struct is_json_compatible<size_t>: std::true_type {
-    };
-    template<>
-    struct is_json_compatible<int64_t>: std::true_type {
-    };
-    template<>
-    struct is_json_compatible<int32_t>: std::true_type {
-    };
-    template<>
-    struct is_json_compatible<int16_t>: std::true_type {
-    };
-    template<>
-    struct is_json_compatible<int8_t>: std::true_type {
-    };
-    // template<> // This is the same as size_t
-    // struct is_json_compatible<uint64_t>: std::true_type {
-    // };
-    template<>
-    struct is_json_compatible<uint32_t>: std::true_type {
-    };
-    template<>
-    struct is_json_compatible<uint16_t>: std::true_type {
-    };
-    template<>
-    struct is_json_compatible<uint8_t>: std::true_type {
-    };
-    template<>
-    struct is_json_compatible<bool>: std::true_type {
-    };
-    template<>
-    struct is_json_compatible<char>: std::true_type {
-    };
-
     // Enabling binary optimization breaks json support because nlohmann::json does not support
     // full round trip for nlohmann::json::binary_t when using the json serializer
     template<bool EnableBinaryOptimization>
