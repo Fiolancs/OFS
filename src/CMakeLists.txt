@@ -54,7 +54,7 @@ set(OPEN_FUNSCRIPTER_SOURCES
 
     "videoplayer/OFS_MpvLoader.cpp"
     "videoplayer/OFS_VideoplayerWindow.cpp"
-    "videoplayer/OFS_MpvVideoplayer.cpp"
+    "videoplayer/OFS_Videoplayer.cpp"
 )
 
 set(OPEN_FUNSCRIPTER_HEADERS

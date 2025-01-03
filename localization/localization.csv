@@ -58,9 +58,9 @@ KEY_MOD_CTRL,Ctrl,Ctrl
 KEY_MOD_ALT,Alt,Alt
 KEY_MOD_SHIFT,Shift,Shift
 KEY_ALREADY_IN_USE,Key is in use,Key is in use
-KEY_ALREADY_IN_USE_MSG,Key already bound for [%s],Key already bound for [%s]
+KEY_ALREADY_IN_USE_MSG,Key already bound for [{:s}],Key already bound for [{:s}]
 BUTTON_ALREADY_IN_USE,Button is in use,Button is in use
-BUTTON_ALREADY_IN_USE_MSG,Button already bound for [%s],Button already bound for [%s]
+BUTTON_ALREADY_IN_USE_MSG,Button already bound for [{:s}],Button already bound for [{:s}]
 DESCRIPTION,Description,Description
 KEYBOARD,Keyboard,Keyboard
 ACTIVE,Active,Active
@@ -104,8 +104,8 @@ SETTINGS,Settings,Settings
 SCALE,Scale,Scale
 COLOR,Color,Color
 ENABLE_WAVEFORM,Enable waveform,Enable waveform
-MIN_INT_FMT,Min: %d,Min: %d
-MAX_INT_FMT,Max: %d,Max: %d
+MIN_INT_FMT,Min: {:d},Min: {:d}
+MAX_INT_FMT,Max: {:d},Max: {:d}
 TCODE_TICKRATE,Tickrate (Hz),Tickrate (Hz)
 SPLINE,Spline,Spline
 SPLINE_TOOLTIP,Smooth motion instead of linear.,Smooth motion instead of linear.
@@ -167,8 +167,8 @@ DI_UP_DOWN_BIAS,Up/Down speed bias,Up/Down speed bias
 TOP,Top,Top
 BOTTOM,Bottom,Bottom
 NEXT_POINT,Next point,Next point
-NEXT_POINT_AT_FMT,Next point is at %d,Next point is at %d
-NEXT_POINT_IS_FMT,Next point is %s,Next point is %s
+NEXT_POINT_AT_FMT,Next point is at {:d},Next point is at {:d}
+NEXT_POINT_IS_FMT,Next point is {:s},Next point is {:s}
 INVERTED,inverted,inverted
 NOT_INVERTED,not inverted,not inverted
 FIXED_RANGE,Fixed range,Fixed range
@@ -305,7 +305,7 @@ QUICK_EXPORT,Quick export,Quick export
 QUICK_EXPORT_TOOLTIP,Exports all scripts as .funscript in their default paths.,Exports all scripts as .funscript in their default paths.
 EXPORT_ACTIVE_SCRIPT,Export active script,Export active script
 EXPORT_ALL,Export all,Export all
-AUTO_BACKUP_TIMER_FMT,Auto Backup in %d seconds,Auto Backup in %d seconds
+AUTO_BACKUP_TIMER_FMT,Auto Backup in {:d} seconds,Auto Backup in {:d} seconds
 AUTO_BACKUP,Auto Backup,Auto Backup
 OPEN_BACKUP_DIR,Open backup directory,Open backup directory
 CONFIGURE,Configure,Configure
@@ -343,7 +343,7 @@ BOOKMARKS,Bookmarks,Bookmarks
 EXPORT_CLIP,Export clip,Export clip
 NAME,Name,Name
 ADD_BOOKMARK,Add bookmark,Add bookmark
-CREATE_INTERVAL_FOR_FMT,"Create interval for ""%s""","Create interval for ""%s"""
+CREATE_INTERVAL_FOR_FMT,"Create interval for ""{:s}""","Create interval for ""{:s}"""
 GO_TO_MENU,Go to...,Go to...
 NO_BOOKMARKS,No bookmarks,No bookmarks
 ALWAYS_SHOW_LABELS,Always show labels,Always show labels
@@ -376,7 +376,7 @@ SHOW_WINDOW,Show window,Show window
 OPEN_DIRECTORY,Open directory,Open directory
 NAVIGATION,Navigation,Navigation
 SCRIPTING,Scripting,Scripting
-UNSAVED_CHANGES_FMT,unsaved changes %d minutes ago,unsaved changes %d minutes ago
+UNSAVED_CHANGES_FMT,unsaved changes {:d} minutes ago,unsaved changes {:d} minutes ago
 METADATA_EDITOR,Metadata editor,Metadata editor
 TITLE,Title,Title
 DURATION,Duration,Duration
