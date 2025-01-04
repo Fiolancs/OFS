@@ -25,6 +25,8 @@ set(SDL_DIRECTX OFF CACHE BOOL "" FORCE)
 set(SDL_RENDER_D3D OFF CACHE BOOL "" FORCE)
 set(SDL_VULKAN OFF CACHE BOOL "" FORCE)
 set(SDL_TEST_LIBRARY OFF CACHE BOOL "" FORCE)
+set(SDL_AVX2 ${OFS_AVX2})
+set(SDL_AVX512F ${OFS_AVX2})
 add_subdirectory("SDL/")
 
 # ===============
@@ -142,9 +144,7 @@ target_compile_features(imgui PUBLIC cxx_std_20)
 # === glaze ===
 # =============
 set(glaze_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-if(NOT OFS_AVX) 
-	set(glaze_ENABLE_AVX2 OFF CACHE BOOL "" FORCE)
-endif()
+set(glaze_ENABLE_AVX2 ${OFS_AVX2})
 add_subdirectory("glaze/")
 
 # ==========
@@ -170,7 +170,7 @@ set(tiny_SRC "tinyfiledialogs/tinyfiledialogs.c")
 set(tiny_HEADER "tinyfiledialogs/tinyfiledialogs.h")
 add_library(tinyfiledialogs STATIC ${tiny_SRC} ${tiny_HEADER})
 target_include_directories(tinyfiledialogs PUBLIC "tinyfiledialogs/")
-set_source_files_properties(tiny_SRC PROPERTIES LANGUAGE CXX )
+set_source_files_properties(tiny_SRC PROPERTIES LANGUAGE CXX)
 
 # =============
 # === tracy ===
@@ -209,6 +209,10 @@ target_compile_definitions(civetweb PRIVATE "NO_SSL=1"
 # ==============
 set(SCN_ENABLE_TESTS OFF CACHE BOOL "" FORCE)
 set(SCN_ENABLE_EXTRAS OFF CACHE BOOL "" FORCE)
+set(BUILD_TESTING OFF)
+if(UNIX AND NOT APPLE)
+	set(SCN_USE_HASWELL_ARCH ${OFS_AVX2} CACHE BOOL "")
+endif()
 add_subdirectory("libscn/")
 
 # ============

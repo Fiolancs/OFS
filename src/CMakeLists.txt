@@ -166,7 +166,11 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
 if(WIN32)
     # download mpv binaries
     if (NOT EXISTS "${CMAKE_BINARY_DIR}/libmpv-2.dll")
-        file(DOWNLOAD "https://sourceforge.net/projects/mpv-player-windows/files/libmpv/mpv-dev-x86_64-v3-20241215-git-e52f975.7z/download" "mpv-dev.7z" SHOW_PROGRESS)
+        if (OFS_AVX2)
+            file(DOWNLOAD "https://sourceforge.net/projects/mpv-player-windows/files/libmpv/mpv-dev-x86_64-v3-20241229-git-83bb498.7z/download" "mpv-dev.7z" SHOW_PROGRESS)
+        else()
+            file(DOWNLOAD "https://sourceforge.net/projects/mpv-player-windows/files/libmpv/mpv-dev-x86_64-20241229-git-83bb498.7z/download" "mpv-dev.7z" SHOW_PROGRESS)
+        endif()
         file(ARCHIVE_EXTRACT INPUT "mpv-dev.7z" DESTINATION "${CMAKE_BINARY_DIR}" PATTERNS "libmpv-2.dll")
     endif()
 
@@ -184,6 +188,10 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 
 # c++23
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_23)
+
+if(CMAKE_BUILD_TYPE MATCHES "Release" OR CMAKE_BUILD_TYPE MATCHES "RelWithDebInfo") 
+    set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+endif()
 
 if(WIN32)
     target_compile_definitions(${PROJECT_NAME} PUBLIC UNICODE _UNICODE)

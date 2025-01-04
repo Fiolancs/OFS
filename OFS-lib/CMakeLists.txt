@@ -107,7 +107,8 @@ target_compile_definitions(${PROJECT_NAME} PUBLIC
 )
 
 if(OFS_PROFILE)
-    target_compile_definitions(${PROJECT_NAME} PUBLIC OFS_PROFILE_ENABLED)
+    target_compile_definitions(${PROJECT_NAME} PUBLIC OFS_PROFILE_ENABLED) 
+    target_compile_definitions(${PROJECT_NAME} PUBLIC TRACY_ENABLE)
     message("== ${PROJECT_NAME} - Profiling enabled.")
 endif()
 

@@ -12,7 +12,7 @@ The project is based on OpenGL, SDL3, ImGui, libmpv, & all these other great [li
 Known linux dependencies to just compile are `build-essential libmpv-dev libglvnd-dev`.  
 
 ### Windows libmpv binaries used
-Currently using: [mpv-dev-x86_64-v3-20241215-git-56e24d5.7z](https://sourceforge.net/projects/mpv-player-windows/files/libmpv/)
+Currently using: [mpv-dev-x86_64-v3-20241229-git-56e24d5.7z](https://sourceforge.net/projects/mpv-player-windows/files/libmpv/)
 
 ### Platforms
 Tested on Windows. 
