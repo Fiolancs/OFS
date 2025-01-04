@@ -10,6 +10,8 @@ namespace OFS
 {
     struct VideoPlayerConfig
     {
+        std::uint32_t width  = 0; // set to force width. if only one is set, will respect video aspect ratio
+        std::uint32_t height = 0; // set to force height. if only one is set, will respect video aspect ratio
         bool allowUserConfig   : 1 = false;
         bool tryHardwareDecode : 1 = false; 
         bool highQuality       : 1 = true; 

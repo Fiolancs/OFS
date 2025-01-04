@@ -147,11 +147,11 @@ std::size_t OFS::util::formatTime(std::span<char> fixedBuffer, std::chrono::mill
     FUN_ASSERT(fixedBuffer.size(), "Buffer cannot be empty.");
     return std::format_to_n(fixedBuffer.data(), fixedBuffer.size(), "{:%T}", time).size;
 }
-std::size_t OFS::util::formatTime(std::span<char> fixedBuffer, float time, bool withMs)
+std::size_t OFS::util::formatTime(std::span<char> fixedBuffer, double time, bool withMs)
 {
     OFS_PROFILE(__FUNCTION__);
 
-    std::chrono::duration<float> dur(time);
+    std::chrono::duration<double> dur(time);
 
     if (withMs)
         return formatTime(fixedBuffer, std::chrono::round<std::chrono::milliseconds>(dur));

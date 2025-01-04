@@ -110,7 +110,7 @@ namespace OFS::util
 
     std::size_t formatTime(std::span<char> fixedBuffer, std::chrono::seconds time);
     std::size_t formatTime(std::span<char> fixedBuffer, std::chrono::milliseconds time);
-    std::size_t formatTime(std::span<char> fixedBuffer, float time, bool withMs);
+    std::size_t formatTime(std::span<char> fixedBuffer, double timeInSeconds, bool withMs);
 
     std::string formatBytes(std::size_t bytes) noexcept;
 

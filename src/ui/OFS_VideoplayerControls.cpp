@@ -36,7 +36,7 @@ void OFS_VideoplayerControls::Init(OFS::VideoPlayer* player, bool hwAccel) noexc
     this->player = player;
     chapterStateHandle = OFS::ProjectState<ChapterState>::registerState(ChapterState::StateName, ChapterState::StateName);
     Heatmap = std::make_unique<FunscriptHeatmap>();
-    videoPreview = std::make_unique<VideoPreview>(hwAccel);
+    videoPreview = std::make_unique<VideoPreview>(hwAccel, std::uint32_t(360)); // make 360p preview
     videoPreview->Init();
 
     EV::Queue().appendListener(VideoLoadedEvent::EventType,
@@ -119,7 +119,7 @@ bool OFS_VideoplayerControls::DrawTimelineWidget(const char* label, float* posit
             dragging = true;
         }
 
-        if(ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal))
+        if(ImGui::IsItemHovered(ImGuiHoveredFlags_DelayShort))
         {
             if (SDL_GetTicks() - lastPreviewUpdate >= PreviewUpdateMs) {
                 videoPreview->Play();
@@ -653,8 +653,8 @@ void OFS_VideoplayerControls::DrawControls() noexcept
     ImGui::NextColumn();
     ImGui::SetNextItemWidth(-1);
     float volume = player->getVolume();
-    if (ImGui::SliderFloat("##Volume", &volume, 0.0f, 1.0f)) {
-        volume = Util::Clamp(volume, 0.0f, 1.f);
+    if (ImGui::SliderFloat("##Volume", &volume, 0.0f, 100.0f)) {
+        volume = Util::Clamp(volume, 0.0f, 100.f);
         player->setVolume(volume);
         if (volume > 0.0f && mute) {
             mute = false;

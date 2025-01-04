@@ -10,7 +10,7 @@ class VideoPreview {
 private:
 	std::unique_ptr<OFS::VideoPlayer> player;
 public:
-	VideoPreview(bool hwAccel) noexcept;
+	VideoPreview(bool hwAccel, std::uint32_t heightOverride = 0) noexcept;
 	~VideoPreview() noexcept;
 
 	void Init() noexcept;

@@ -2,9 +2,11 @@
 
 #include "OFS_Profiling.h"
 
-VideoPreview::VideoPreview(bool hwAccel) noexcept
+#include <cstdint>
+
+VideoPreview::VideoPreview(bool hwAccel, std::uint32_t heightOverride) noexcept
 {
-	player = std::make_unique<OFS::VideoPlayer>(OFS::VideoPlayerConfig{ .tryHardwareDecode = hwAccel, .highQuality = false });
+	player = std::make_unique<OFS::VideoPlayer>(OFS::VideoPlayerConfig{ .height = heightOverride, .tryHardwareDecode = hwAccel, .highQuality = false });
 	player->init(/*hwAccel*/);
 }
 
