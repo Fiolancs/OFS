@@ -34,3 +34,9 @@
 [submodule "3rdParty/thread-pool"]
 	path = 3rdParty/thread-pool
 	url = https://github.com/bshoshany/thread-pool.git
+[submodule "3rdParty/sol2"]
+	path = 3rdParty/sol2
+	url = https://github.com/ThePhD/sol2.git
+[submodule "3rdParty/lua"]
+	path = 3rdParty/lua
+	url = https://github.com/lua/lua.git
