@@ -80,7 +80,7 @@ void OFS::util::openFileDialog(std::string_view title, std::filesystem::path con
             wfilters.emplace_back(OFS::util::utf8ToUtf16(filter));
             wc_str.push_back(wfilters.back().c_str());
         }
-        auto result = tinyfd_utf16to8(tinyfd_openFileDialogW(wtitle.c_str(), data->path.c_str(), wc_str.size(), wc_str.data(), wfilterText.empty() ? nullptr : wfilterText.c_str(), data->multiple));
+        auto result = tinyfd_openFileDialogW(wtitle.c_str(), data->path.c_str(), wc_str.size(), wc_str.data(), wfilterText.empty() ? nullptr : wfilterText.c_str(), data->multiple);
 #elif __APPLE__
         auto result = tinyfd_openFileDialog(data->title.c_str(), data->path.c_str(), 0, nullptr, data->filterText.empty() ? nullptr : data->filterText.c_str(), data->multiple);
 #else
@@ -91,9 +91,9 @@ void OFS::util::openFileDialog(std::string_view title, std::filesystem::path con
         {
             if (data->multiple)
             {
-                for (auto file : std::views::split(std::string_view(result), '|'))
+                for (auto file : std::views::split(std::basic_string_view(result), '|'))
                 {
-                    dialogResult->files.emplace_back(OFS::util::pathFromU8String(std::string_view(file)));
+                    dialogResult->files.emplace_back(std::basic_string_view(file));
                 }
             }
             else
