@@ -57,15 +57,15 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     "${CMAKE_CURRENT_BINARY_DIR}"
 )
 
-add_custom_command(OUTPUT "OFS_StringsGenerated.cpp" "OFS_StringsGenerated.h"
-                   COMMAND gen_localization ARGS "${CMAKE_SOURCE_DIR}/localization/localization.csv"
+add_custom_command(OUTPUT "${PROJECT_SOURCE_DIR}/localization/OFS_StringsGenerated.cpp" "${PROJECT_SOURCE_DIR}/localization/OFS_StringsGenerated.h"
+                   COMMAND gen_localization ARGS "${CMAKE_SOURCE_DIR}/localization/localization.csv" "${PROJECT_SOURCE_DIR}/localization/"
                    MAIN_DEPENDENCY "${CMAKE_SOURCE_DIR}/localization/localization.csv"
                    DEPENDS gen_localization
                    VERBATIM)
 
 target_link_libraries(${PROJECT_NAME} PUBLIC
     dr_libs
-    eventpp
+    eventpp 
     glaze::glaze
     nlohmann_json
     scn::scn

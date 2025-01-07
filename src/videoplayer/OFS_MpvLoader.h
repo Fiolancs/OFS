@@ -66,26 +66,7 @@ struct OFS_MpvLoader {
 };
 
 #ifdef OFS_MPV_LOADER_MACROS
-#define mpv_create OFS_MpvLoader::mpv_create_REAL
-#define mpv_initialize(ctx) OFS_MpvLoader::mpv_initialize_REAL(ctx)
-#define mpv_wait_event(ctx, timeout) OFS_MpvLoader::mpv_wait_event_REAL(ctx, timeout)
-#define mpv_observe_property(handle, reply_userdata, name, format) OFS_MpvLoader::mpv_observe_property_REAL(handle, reply_userdata, name, format)
-#define mpv_render_context_update(ctx) OFS_MpvLoader::mpv_render_context_update_REAL(ctx)
-#define mpv_render_context_render(ctx, params) OFS_MpvLoader::mpv_render_context_render_REAL(ctx, params)
-#define mpv_set_option_string(ctx, name, data) OFS_MpvLoader::mpv_set_option_string_REAL(ctx, name, data)
-#define mpv_set_property_string(ctx, name, data) OFS_MpvLoader::mpv_set_property_string_REAL(ctx, name, data)
-#define mpv_request_log_messages(ctx, min_level) OFS_MpvLoader::mpv_request_log_messages_REAL(ctx, min_level)
-#define mpv_command_async(ctx, reply_userdata, args) OFS_MpvLoader::mpv_command_async_REAL(ctx, reply_userdata, args)
-#define mpv_render_context_create(res, mpv, params) OFS_MpvLoader::mpv_render_context_create_REAL(res, mpv, params)
-#define mpv_render_context_set_update_callback(ctx, callback, callback_ctx) OFS_MpvLoader::mpv_render_context_set_update_callback_REAL(ctx, callback, callback_ctx)
-#define mpv_set_property_async(ctx, reply_userdata, name, format, data) OFS_MpvLoader::mpv_set_property_async_REAL(ctx, reply_userdata, name, format, data)
-#define mpv_render_context_free(ctx) OFS_MpvLoader::mpv_render_context_free_REAL(ctx)
-#define mpv_destroy(ctx) OFS_MpvLoader::mpv_destroy_REAL(ctx)
-#define mpv_terminate_destroy(ctx) OFS_MpvLoader::mpv_terminate_destroy_REAL(ctx)
-#define mpv_render_context_report_swap(ctx) OFS_MpvLoader::mpv_render_context_report_swap_REAL(ctx)
-
-#define mpv_error_string OFS_MpvLoader::mpv_error_string_REAL
-#define mpv_set_wakeup_callback OFS_MpvLoader::mpv_set_wakeup_callback_REAL
+#include "OFS_MpvMacros.h"
 #endif // OFS_MPV_LOADER_NO_MACROS
 
 #ifdef __cplusplus

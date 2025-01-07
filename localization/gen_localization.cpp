@@ -1,10 +1,11 @@
 #include <glaze/glaze.hpp>
 
+#include <print>
 #include <vector>
 #include <cstdio>
 #include <string>
-#include <cstring>
 #include <cstdint>
+#include <utility>
 #include <string_view>
 
 /*
@@ -79,71 +80,50 @@ constexpr std::string_view SrcMappingFooter = R"(
 static void write_src_file(FILE* src, LanguageDoc const& doc) noexcept
 {
     // write the array
-    fwrite(SrcArrayHead.data(), sizeof(char), SrcArrayHead.size(), src);
-    fwrite("R\"(", sizeof(char), sizeof("R\"(") - 1, src);
-    fwrite(doc.Default[0].data(), sizeof(doc.Default[0][0]), doc.Default[0].size(), src);
-    fwrite(")\",\n\t", sizeof(char), sizeof(")\",\n\t") - 1, src);
+    std::print(src, "{} R\"({})\",\n\t", SrcArrayHead, doc.Default[0]);
 
     for (size_t n = 1; n < doc.GetRowCount(); ++n)
     {
-        fwrite("R\"(", sizeof(char), sizeof("R\"(") - 1, src);
-        fwrite(doc.Default[n].data(), sizeof(char), doc.Default[n].size(), src);
-        fwrite(")\",\n\t", 1, sizeof(")\",\n\t") - 1, src);
+        std::print(src, "R\"({})\",\n\t", doc.Default[n]);
     }
-    fwrite(SrcArrayFooter.data(), 1, SrcArrayFooter.size(), src);
 
     // write the key to enum hashmap
-    fwrite(SrcMappingHead.data(), 1, SrcMappingHead.size(), src);
-    fwrite("\t{\"", 1, sizeof("\t{\"")-1, src);
-    fwrite(doc.Key[0].data(), sizeof(doc.Key[0][0]), doc.Key[0].size(), src);
-    fwrite("\", Tr::", sizeof(char), sizeof("\", Tr::") - 1, src);
-    fwrite(doc.Key[0].data(), sizeof(doc.Key[0][0]), doc.Key[0].size(), src);
-    fwrite("},\n", sizeof(char), sizeof("},\n") - 1, src);
+    std::print(src, "{0}{1}\t{{\"{2}\", Tr::{2}}},\n", SrcArrayFooter, SrcMappingHead, doc.Key[0]);
+
     for (size_t n = 1; n < doc.GetRowCount(); ++n)
     {
-        fwrite("\t{\"", sizeof(char), sizeof("\t{\"")-1, src);
-        fwrite(doc.Key[0].data(), sizeof(doc.Key[0][0]), doc.Key[0].size(), src);
-        fwrite("\", Tr::", 1, sizeof("\", Tr::")-1, src);
-        fwrite(doc.Key[0].data(), sizeof(doc.Key[0][0]), doc.Key[0].size(), src);
-        fwrite("},\n", sizeof(char), sizeof("},\n")-1, src);
+        std::print(src, "\t{{\"{0}\", Tr::{0}}},\n", doc.Key[n]);
     }
-    fwrite(SrcMappingFooter.data(), 1, SrcMappingFooter.size(), src);
-    fclose(src);
+    std::print(src, "{}", SrcMappingFooter);
+    std::fclose(src);
 }
 
 static void write_header_enum(FILE* header, LanguageDoc const& doc) noexcept
 {
-    fwrite(HeaderHead.data(), 1, HeaderHead.size(), header);
-
-    fwrite(doc.Key[0].data(), sizeof(doc.Key[0][0]), doc.Key[0].size(), header);
-
+    std::print(header, "{}{}", HeaderHead, doc.Key[0]);
     for(size_t n=1; n < doc.GetRowCount(); ++n)
     {
-        fwrite(",\n\t", 1, sizeof(",\n\t") - 1, header);
-        fwrite(doc.Key[n].data(), sizeof(doc.Key[0][0]), doc.Key[n].size(), header);
+        std::print(header, ",\n\t{}", doc.Key[n]);
     }
 
-    fwrite(",\n\t", 1, sizeof(",\n\t") - 1, header);
-    fwrite("MAX_STRING_COUNT", 1, sizeof("MAX_STRING_COUNT")-1, header);
-
-    fwrite(HeaderFooter.data(), 1, HeaderFooter.size(), header);
-    fclose(header);
+    std::print(header, ",\n\tMAX_STRING_COUNT{}", HeaderFooter);
+    std::fclose(header);
 }
 
 int main(int argc, char* argv[])
 {
-    if(argc < 2)
+    if(argc < 3)
     {
-        printf("Please provide a csv file.\n");
+        std::println("Usage:\n{} [csv file] [output dir]", argv[0]);
         return -1;
     }
 
     auto csvFile = argv[1];
-    auto header = fopen("OFS_StringsGenerated.h", "wb");
-    auto src = fopen("OFS_StringsGenerated.cpp", "wb");
+    auto header = fopen((std::string(argv[2]) + "OFS_StringsGenerated.h").c_str(), "wb");
+    auto src = fopen((std::string(argv[2]) + "OFS_StringsGenerated.cpp").c_str(), "wb");
     if(header == nullptr || src == nullptr)
     {
-        printf("Failed to create source files.\n");
+        std::println("Failed to create source files.");
         return -1;
     }
 
@@ -152,17 +132,17 @@ int main(int argc, char* argv[])
         LanguageDoc doc{};
         if (auto err = glz::read_file_csv<glz::colwise>(doc, csvFile, std::string{}); err)
         {
-            std::printf("Error reading csv file: %.*s, code %u\n", static_cast<int>(err.custom_error_message.size()), err.custom_error_message.data(), err.ec);
+            std::print("Error reading csv file: {}, code {}\n", err.custom_error_message, std::to_underlying(err.ec));
             return -1;
         }
         
-        std::printf("lines read %lld", doc.GetRowCount());
+        std::print("lines read {}", doc.GetRowCount());
         write_header_enum(header, doc);
         write_src_file(src, doc);
     }
     catch(const std::exception& e)
     {
-        printf("Error: %s\n", e.what());
+        std::println("Error: {}", e.what());
     }
 
     return 0;

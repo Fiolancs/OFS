@@ -1,0 +1,59 @@
+#pragma once
+// file auto generated with the following command
+// grep ^MPV_EXPORT client.h render.h render_gl.h -h | sed 's/(.*//;s/^.*mpv/mpv/;s/.*/#define \0 OFS_MpvLoader::\0_REAL/'
+
+#ifdef OFS_MPV_LOADER_MACROS
+#define mpv_client_api_version OFS_MpvLoader::mpv_client_api_version_REAL
+#define mpv_error_string OFS_MpvLoader::mpv_error_string_REAL
+#define mpv_free OFS_MpvLoader::mpv_free_REAL
+#define mpv_client_name OFS_MpvLoader::mpv_client_name_REAL
+#define mpv_client_id OFS_MpvLoader::mpv_client_id_REAL
+#define mpv_create OFS_MpvLoader::mpv_create_REAL
+#define mpv_initialize OFS_MpvLoader::mpv_initialize_REAL
+#define mpv_destroy OFS_MpvLoader::mpv_destroy_REAL
+#define mpv_terminate_destroy OFS_MpvLoader::mpv_terminate_destroy_REAL
+#define mpv_create_client OFS_MpvLoader::mpv_create_client_REAL
+#define mpv_create_weak_client OFS_MpvLoader::mpv_create_weak_client_REAL
+#define mpv_load_config_file OFS_MpvLoader::mpv_load_config_file_REAL
+#define mpv_get_time_ns OFS_MpvLoader::mpv_get_time_ns_REAL
+#define mpv_get_time_us OFS_MpvLoader::mpv_get_time_us_REAL
+#define mpv_free_node_contents OFS_MpvLoader::mpv_free_node_contents_REAL
+#define mpv_set_option OFS_MpvLoader::mpv_set_option_REAL
+#define mpv_set_option_string OFS_MpvLoader::mpv_set_option_string_REAL
+#define mpv_command OFS_MpvLoader::mpv_command_REAL
+#define mpv_command_node OFS_MpvLoader::mpv_command_node_REAL
+#define mpv_command_ret OFS_MpvLoader::mpv_command_ret_REAL
+#define mpv_command_string OFS_MpvLoader::mpv_command_string_REAL
+#define mpv_command_async OFS_MpvLoader::mpv_command_async_REAL
+#define mpv_command_node_async OFS_MpvLoader::mpv_command_node_async_REAL
+#define mpv_abort_async_command OFS_MpvLoader::mpv_abort_async_command_REAL
+#define mpv_set_property OFS_MpvLoader::mpv_set_property_REAL
+#define mpv_set_property_string OFS_MpvLoader::mpv_set_property_string_REAL
+#define mpv_del_property OFS_MpvLoader::mpv_del_property_REAL
+#define mpv_set_property_async OFS_MpvLoader::mpv_set_property_async_REAL
+#define mpv_get_property OFS_MpvLoader::mpv_get_property_REAL
+#define mpv_get_property_string OFS_MpvLoader::mpv_get_property_string_REAL
+#define mpv_get_property_osd_string OFS_MpvLoader::mpv_get_property_osd_string_REAL
+#define mpv_get_property_async OFS_MpvLoader::mpv_get_property_async_REAL
+#define mpv_observe_property OFS_MpvLoader::mpv_observe_property_REAL
+#define mpv_unobserve_property OFS_MpvLoader::mpv_unobserve_property_REAL
+#define mpv_event_name OFS_MpvLoader::mpv_event_name_REAL
+#define mpv_event_to_node OFS_MpvLoader::mpv_event_to_node_REAL
+#define mpv_request_event OFS_MpvLoader::mpv_request_event_REAL
+#define mpv_request_log_messages OFS_MpvLoader::mpv_request_log_messages_REAL
+#define mpv_wait_event OFS_MpvLoader::mpv_wait_event_REAL
+#define mpv_wakeup OFS_MpvLoader::mpv_wakeup_REAL
+#define mpv_set_wakeup_callback OFS_MpvLoader::mpv_set_wakeup_callback_REAL
+#define mpv_wait_async_requests OFS_MpvLoader::mpv_wait_async_requests_REAL
+#define mpv_hook_add OFS_MpvLoader::mpv_hook_add_REAL
+#define mpv_hook_continue OFS_MpvLoader::mpv_hook_continue_REAL
+#define mpv_get_wakeup_pipe OFS_MpvLoader::mpv_get_wakeup_pipe_REAL
+#define mpv_render_context_create OFS_MpvLoader::mpv_render_context_create_REAL
+#define mpv_render_context_set_parameter OFS_MpvLoader::mpv_render_context_set_parameter_REAL
+#define mpv_render_context_get_info OFS_MpvLoader::mpv_render_context_get_info_REAL
+#define mpv_render_context_set_update_callback OFS_MpvLoader::mpv_render_context_set_update_callback_REAL
+#define mpv_render_context_update OFS_MpvLoader::mpv_render_context_update_REAL
+#define mpv_render_context_render OFS_MpvLoader::mpv_render_context_render_REAL
+#define mpv_render_context_report_swap OFS_MpvLoader::mpv_render_context_report_swap_REAL
+#define mpv_render_context_free OFS_MpvLoader::mpv_render_context_free_REAL
+#endif 
