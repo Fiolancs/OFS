@@ -1,8 +1,8 @@
 # OpenFunscripter
 Can be used to create `.funscript` files. (NSFW)  
-The project is based on OpenGL, SDL3, ImGui, libmpv, & all these other great [libraries](https://github.com/OpenFunscripter/OpenFunscripter/tree/master/3rdParty).
+The project is based on OpenGL, SDL3, ImGui, libmpv, & all these other great [libraries](/3rdParty/).
 
-![OpenFunscripter Screenshot](https://github.com/OpenFunscripter/OpenFunscripter/blob/1b4f096be8c2f6c75ceed7787a300a86a13fb167/OpenFunscripter.jpg)
+![OpenFunscripter Screenshot](/docs/images/OpenFunscripter.jpg)
 
 ### Build
 1. Clone the repository 

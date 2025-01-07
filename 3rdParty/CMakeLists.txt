@@ -137,7 +137,10 @@ target_include_directories(imgui PUBLIC "SDL/include/")
 target_compile_definitions(imgui PUBLIC "IMGUI_USE_STB_SPRINTF")
 target_compile_definitions(imgui PUBLIC "IMGUI_DEFINE_MATH_OPERATORS")
 target_compile_definitions(imgui PUBLIC "IMGUI_DISABLE_OBSOLETE_FUNCTIONS=1")
-target_compile_definitions(imgui PUBLIC "IMGUI_DISABLE_OBSOLETE_KEYIO=1")
+if(CMAKE_BUILD_TYPE MATCHES "Release" OR CMAKE_BUILD_TYPE MATCHES "MinSizeRel")
+	target_compile_definitions(imgui PUBLIC "IMGUI_DISABLE_DEBUG_TOOLS")
+	target_compile_definitions(imgui PUBLIC "IMGUI_DISABLE_DEMO_WINDOWS")
+endif()
 target_compile_features(imgui PUBLIC cxx_std_20)
 
 # =============
