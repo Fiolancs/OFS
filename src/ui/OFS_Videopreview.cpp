@@ -6,7 +6,8 @@
 
 VideoPreview::VideoPreview(bool hwAccel, std::uint32_t heightOverride) noexcept
 {
-	player = std::make_unique<OFS::VideoPlayer>(OFS::VideoPlayerConfig{ .height = heightOverride, .tryHardwareDecode = hwAccel, .highQuality = false });
+	player = std::make_unique<OFS::VideoPlayer>(OFS::VideoPlayerConfig{ 
+		.height = heightOverride, .tryHardwareDecode = hwAccel, .lowQuality = true });
 	player->init(/*hwAccel*/);
 }
 

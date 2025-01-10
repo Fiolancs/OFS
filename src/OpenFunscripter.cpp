@@ -220,7 +220,7 @@ bool OpenFunscripter::Init(int argc, char* argv[])
     player = std::make_unique<OFS::VideoPlayer>(OFS::VideoPlayerConfig{ 
         .allowUserConfig = true,
         .tryHardwareDecode = prefState.forceHwDecoding, 
-        .highQuality = true 
+        .lowQuality = false 
     });
     if (!player->init()) {
         LOG_ERROR("Failed to initialize videoplayer.");

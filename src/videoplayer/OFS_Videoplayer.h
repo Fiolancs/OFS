@@ -14,7 +14,7 @@ namespace OFS
         std::uint32_t height = 0; // set to force height. if only one is set, will respect video aspect ratio
         bool allowUserConfig   : 1 = false;
         bool tryHardwareDecode : 1 = false; 
-        bool highQuality       : 1 = true; 
+        bool lowQuality        : 1 = false; 
     };
 
     class VideoPlayer

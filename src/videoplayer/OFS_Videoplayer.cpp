@@ -341,8 +341,11 @@ OFS::VideoPlayer::VideoPlayer(VideoPlayerConfig const& cfg)
     if (int error = mpv_set_property_string(pImpl->get(), "profile", "libmpv"); PImpl::isMpvError(error))
         LOG_WARN("Failed to set mpv: profile=libmpv");
 
-    if (int error = mpv_set_property_string(pImpl->get(), "profile", cfg.highQuality ? "high-quality" : "fast"); PImpl::isMpvError(error))
-        LOGF_WARN("Failed to set mpv: profile={:s}", cfg.highQuality ? "high-quality" : "fast");
+    if (cfg.lowQuality)
+    {
+        if (int error = mpv_set_property_string(pImpl->get(), "profile", "fast"); PImpl::isMpvError(error))
+            LOG_WARN("Failed to set mpv: profile=fast");
+    }
 
     if (cfg.allowUserConfig)
     {
