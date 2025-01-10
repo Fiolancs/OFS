@@ -97,7 +97,7 @@ bool OpenFunscripter::imguiSetup() noexcept
         static auto OriginalSDL2_GetClipboardFunc = platformIO.Platform_GetClipboardTextFn;
         platformIO.Platform_GetClipboardTextFn = [](ImGuiContext* d) noexcept -> const char* {
             auto clipboard = OriginalSDL2_GetClipboardFunc(d);
-            OFS_DynFontAtlas::AddText(clipboard);
+            OFS_DynFontAtlas::Addu8Text(clipboard);
             return clipboard;
         };
     }
@@ -303,7 +303,7 @@ bool OpenFunscripter::Init(int argc, char* argv[])
 
     // Load potentially missing glyphs of recent files
     for (auto& recentFile : ofsState.recentFiles) {
-        OFS_DynFontAtlas::AddText(recentFile.name.c_str());
+        OFS_DynFontAtlas::Addu8Text(recentFile.name);
     }
 
     SDL_ShowWindow(window);
@@ -1335,7 +1335,7 @@ void OpenFunscripter::processEvents() noexcept
                 break;
             }
             case SDL_EVENT_TEXT_INPUT: {
-                OFS_DynFontAtlas::AddText(event.text.text);
+                OFS_DynFontAtlas::Addu8Text(event.text.text);
                 break;
             }
         }

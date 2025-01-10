@@ -2,8 +2,10 @@
 #include <imgui.h>
 
 #include <string>
+#include <string_view>
 
-struct OFS_DynFontAtlas {
+struct OFS_DynFontAtlas
+{
     ImFontGlyphRangesBuilder builder;
     ImVector<ImU32> LastUsedChars;
     ImVector<ImWchar> UsedRanges;
@@ -37,16 +39,8 @@ struct OFS_DynFontAtlas {
     // all dynamic which is to be rendered text has to be passed to this function to ensure the glyphs are loaded
     // dynamic text is anything the user inputs but also paths from the file picker dialog or other data from outside
     // text which is known at compile time should be added in the OFS_DynFontAtlas constructor
-    inline static void AddText(const std::string& displayedText) noexcept
-    {
-        if (displayedText.empty()) return;
-        AddText(displayedText.c_str());
-    }
-    inline static void AddText(const char* displayedText) noexcept
-    {
-        ptr->builder.AddText(displayedText);
-        ptr->checkIfRebuildNeeded = true;
-    }
+    static void AddText(std::u8string_view displayedText) noexcept;
+    static void Addu8Text(std::string_view displayedText) noexcept; // we are 100% sure the text is already u8
     static void AddTranslationText() noexcept;
 
     inline static bool NeedsRebuild() noexcept { return ptr->checkIfRebuildNeeded || ptr->forceRebuild; }

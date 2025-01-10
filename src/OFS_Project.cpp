@@ -86,18 +86,18 @@ void OFS_Project::loadNecessaryGlyphs() noexcept
     // This should be called after loading or importing.
     auto& projectState = State();
     auto& metadata = projectState.metadata;
-    OFS_DynFontAtlas::AddText(metadata.type);
-    OFS_DynFontAtlas::AddText(metadata.title);
-    OFS_DynFontAtlas::AddText(metadata.creator);
-    OFS_DynFontAtlas::AddText(metadata.script_url);
-    OFS_DynFontAtlas::AddText(metadata.video_url);
-    for (auto& tag : metadata.tags) OFS_DynFontAtlas::AddText(tag);
-    for (auto& performer : metadata.performers) OFS_DynFontAtlas::AddText(performer);
-    OFS_DynFontAtlas::AddText(metadata.description);
-    OFS_DynFontAtlas::AddText(metadata.license);
-    OFS_DynFontAtlas::AddText(metadata.notes);
-    for (auto& script : Funscripts) OFS_DynFontAtlas::AddText(script->Title().c_str());
-    OFS_DynFontAtlas::AddText(lastPath.string());
+    OFS_DynFontAtlas::Addu8Text(metadata.type);
+    OFS_DynFontAtlas::Addu8Text(metadata.title);
+    OFS_DynFontAtlas::Addu8Text(metadata.creator);
+    OFS_DynFontAtlas::Addu8Text(metadata.script_url);
+    OFS_DynFontAtlas::Addu8Text(metadata.video_url);
+    for (auto& tag : metadata.tags) OFS_DynFontAtlas::Addu8Text(tag);
+    for (auto& performer : metadata.performers) OFS_DynFontAtlas::Addu8Text(performer);
+    OFS_DynFontAtlas::Addu8Text(metadata.description);
+    OFS_DynFontAtlas::Addu8Text(metadata.license);
+    OFS_DynFontAtlas::Addu8Text(metadata.notes);
+    for (auto& script : Funscripts) OFS_DynFontAtlas::Addu8Text(script->Title().c_str());
+    OFS_DynFontAtlas::AddText(lastPath.u8string());
 }
 
 bool OFS_Project::Load(std::filesystem::path const& path) noexcept

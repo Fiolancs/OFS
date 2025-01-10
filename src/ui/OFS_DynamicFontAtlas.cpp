@@ -12,6 +12,7 @@
 
 #include <vector>
 #include <string>
+#include <string_view>
 
 
 OFS_DynFontAtlas* OFS_DynFontAtlas::ptr = nullptr;
@@ -62,6 +63,19 @@ OFS_DynFontAtlas::OFS_DynFontAtlas() noexcept
     }
 
     LastUsedChars.resize(builder.UsedChars.Size);
+}
+
+void OFS_DynFontAtlas::AddText(std::u8string_view displayedText) noexcept
+{
+    if (displayedText.empty()) return;
+    Addu8Text(std::string{ displayedText.begin(), displayedText.end() });
+}
+
+void OFS_DynFontAtlas::Addu8Text(std::string_view displayedText) noexcept
+{
+    if (displayedText.empty()) return;
+    ptr->builder.AddText(displayedText.data(), displayedText.data() + displayedText.size());
+    ptr->checkIfRebuildNeeded = true;
 }
 
 void OFS_DynFontAtlas::AddTranslationText() noexcept

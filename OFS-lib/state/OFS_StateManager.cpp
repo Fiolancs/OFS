@@ -1,9 +1,13 @@
 #include "OFS_StateManager.h"
+#include "io/OFS_FileLogging.h"
 
 #include <glaze/glaze.hpp>
 
-#include <chrono>
+#include <map>
 #include <string>
+#include <vector>
+#include <utility>
+#include <string_view>
 
 
 OFS::StateManager* OFS::StateManager::get(void) noexcept
@@ -54,6 +58,10 @@ bool OFS::StateManager::deserializeStateGroup(StateGroup& group, std::string& js
         {
             std::string partialJson{ it->second.str };
             state.deserializeJson(state.value, partialJson);
+        }
+        else [[unlikely]]
+        {
+            LOGF_DEBUG("Attempted to load state {:s} but it hasn't been registered yet.", state.name);
         }
     }
     return true;

@@ -99,7 +99,7 @@ namespace OFS
 
 
 template<typename T, std::size_t STATE_GROUP>
-inline OFS::StateHandle OFS::StateManager::registerState(std::string_view stateName, std::string_view typeName)
+inline OFS::StateHandle OFS::StateManager::registerState(std::string_view stateName, std::string_view /*typeName*/)
 {
     if (stateGroups.size() <= STATE_GROUP)
         stateGroups.resize(STATE_GROUP + 1);
