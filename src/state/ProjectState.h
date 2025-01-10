@@ -1,4 +1,5 @@
 #pragma once
+#include "io/OFS_SerializeHelper.h"
 
 #include "Funscript/Funscript.h"
 #include "state/OFS_StateHandle.h"

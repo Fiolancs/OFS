@@ -56,7 +56,7 @@ bool OFS::StateManager::deserializeStateGroup(StateGroup& group, std::string& js
     {
         if (auto const it = partial.find(state.name); partial.end() != it)
         {
-            std::string partialJson{ it->second.str };
+            std::string partialJson{ it->second.str.begin(), it->second.str.end() };
             state.deserializeJson(state.value, partialJson);
         }
         else [[unlikely]]

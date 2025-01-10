@@ -2,6 +2,8 @@
 #include "state/OFS_StateHandle.h"
 #include "io/OFS_BinarySerialization.h"
 
+#include "io/OFS_SerializeHelper.h"
+
 //#include <stb/sdefl.h>
 //#include <stb/sinfl.h>
 

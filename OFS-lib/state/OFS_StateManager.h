@@ -23,11 +23,11 @@ namespace OFS
         auto *value = std::any_cast<T>(std::addressof(state));
         if (nullptr == value) [[unlikely]]
         {
-            FUN_ASSERT(false, "State serialization failed. Serialize function state type mismatch.");
+            FUN_ASSERT(false, "State serialization failed. Type mismatch.");
             return;
         }
 
-        if (auto const err = glz::write_json(*value, json); err)
+        if (auto const err = glz::write_json(glz::obj{ "State", value }, json); err)
             [[unlikely]]
             FUN_ASSERT(false, err.custom_error_message);
     }
@@ -37,13 +37,21 @@ namespace OFS
     {
         if (nullptr == std::any_cast<T>(std::addressof(state))) [[unlikely]]
         {
-            FUN_ASSERT(false, "State serialization failed. deserialize function state type mismatch.");
+            FUN_ASSERT(false, "State deserialization failed. Type mismatch.");
             state.emplace<T>();
             return;
         }
 
-        if (auto const err = glz::read<glz::opts{ .error_on_unknown_keys = false }>(state.emplace<T>(), json); err)
-            [[unlikely]] FUN_ASSERT(false, "State serialization failed.");
+        auto& value = state.emplace<T>();
+        std::map<std::string_view, glz::raw_json_view> proxy{};
+        if (auto const err = glz::read_json(proxy, json); !err)
+        {
+            if (auto stateJson = proxy.find("State"); stateJson != proxy.end())
+            {
+                if (auto const err = glz::read<glz::opts{ .error_on_unknown_keys = false }>(value, stateJson->second.str); err)
+                    [[unlikely]] FUN_ASSERT(false, "State deserialization failed.");
+            }
+        }
     }
 
     struct StateMeta
