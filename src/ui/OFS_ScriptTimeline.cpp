@@ -53,7 +53,7 @@ void ScriptTimeline::FfmpegAudioProcessingFinished(const WaveformProcessingFinis
 	ShowAudioWaveform = true;
 	// Update cache
 	auto& waveCache = WaveformState::StaticStateSlow();
-	waveCache.Filename = videoPath;
+	waveCache.Filename = videoPath.string();
 	waveCache.SetSamples(Wave.data.Samples());
 	LOG_INFO("Audio processing complete.");
 }
@@ -99,8 +99,7 @@ void ScriptTimeline::Update() noexcept
 void ScriptTimeline::videoLoaded(const VideoLoadedEvent* ev) noexcept
 {
 	if(ev->playerType != VideoplayerType::Main) return;
-	// QQQ
-	videoPath = OFS::util::pathFromU8String(ev->videoPath).string();
+	videoPath = OFS::util::pathFromU8String(ev->videoPath);
 	auto& waveCache = WaveformState::StaticStateSlow();
 	auto samples = waveCache.GetSamples();
 	if(waveCache.Filename == videoPath && !samples.empty())
@@ -471,7 +470,7 @@ void ScriptTimeline::ShowScriptPositions(
 				}
 				
 				outputPath = outputPath / "audio.flac";
-				bool succ = ctx.Wave.data.GenerateAndLoadFlac(ffmpegPath.string(), ctx.videoPath, outputPath.string());
+				bool succ = ctx.Wave.data.GenerateAndLoadFlac(ffmpegPath, ctx.videoPath, outputPath.string());
 				EV::Enqueue<WaveformProcessingFinishedEvent>();
 				return 0;
 			};

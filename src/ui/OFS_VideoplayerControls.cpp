@@ -17,7 +17,10 @@
 #include <imgui.h>
 #include <misc/cpp/imgui_stdlib.h>
 #include <SDL3/SDL_timer.h>
+
+#include <cmath>
 #include <format>
+#include <limits>
 #include <vector>
 
 
@@ -26,8 +29,7 @@ void OFS_VideoplayerControls::VideoLoaded(const VideoLoadedEvent* ev) noexcept
     OFS_PROFILE(__FUNCTION__);
     if(ev->playerType != VideoplayerType::Main) return;
 
-    // QQQ
-    videoPreview->PreviewVideo(OFS::util::pathFromU8String(ev->videoPath).string(), 0.f);
+    videoPreview->PreviewVideo(OFS::util::pathFromU8String(ev->videoPath), 0.f);
 }
 
 void OFS_VideoplayerControls::Init(OFS::VideoPlayer* player, bool hwAccel) noexcept
@@ -150,31 +152,20 @@ bool OFS_VideoplayerControls::DrawTimelineWidget(const char* label, float* posit
         videoPreview->Pause();
     }
 
-    if (dragging && ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
-        auto mouseDelta = ImGui::GetMouseDragDelta(ImGuiMouseButton_Left);
-        // FIXME: this can be done easier by just using the mouse position
-        if (mouseDelta.x != 0.f) {
-            if(mouse.x >= frameBB.Min.x && mouse.x <= frameBB.Max.x)
-            {
-                float startDragRelPos = (((mouse.x - mouseDelta.x) - frameBB.Min.x) / frameBB.GetWidth());
-                float dragPosDelta = relTimelinePos - startDragRelPos;
-                *position += dragPosDelta;
-                change = true;
-            }
-            else if(mouse.x >= frameBB.Min.x)
-            {
-                *position = 1.f;
-                change = true;
-            }
-            else if(mouse.x <= frameBB.Max.x)
-            {
-                *position = 0.f;
-                change = true;
-            }
-            ImGui::ResetMouseDragDelta(ImGuiMouseButton_Left);
+    if (dragging && ImGui::IsMouseDown(ImGuiMouseButton_Left))
+    {
+        auto const mousePos = ImGui::GetMousePos();
+        auto const delta = (mousePos.x - frameBB.Min.x) / (frameBB.Max.x - frameBB.Min.x);
+
+        if (std::fabs(delta - *position) > std::numeric_limits<float>::epsilon())
+        {
+            *position = delta;
+            change = true;
         }
+
     }
-    else {
+    else
+    {
         dragging = false;
     }
 
@@ -251,12 +242,12 @@ bool OFS_VideoplayerControls::DrawChapter(ImDrawList* drawList, const ImRect& fr
         if(ImGui::IsMouseClicked(ImGuiMouseButton_Left))
         {
             // When at the startTime go to endTime
-            if(std::abs(currentTime - chapter.startTime) <= 0.01f)
+            if(std::fabs(currentTime - chapter.startTime) <= 0.01f)
             {
                 player->SetPositionExact(chapter.endTime);
             }
             // When at the endTime go to startTime
-            else if(std::abs(currentTime - chapter.endTime) <= 0.01f)
+            else if(std::fabs(currentTime - chapter.endTime) <= 0.01f)
             {
                 player->SetPositionExact(chapter.startTime);
             }
@@ -289,8 +280,8 @@ bool OFS_VideoplayerControls::DrawChapter(ImDrawList* drawList, const ImRect& fr
     if(ImGui::BeginPopup("ChapterContextMenu"))
     {
         contextMenuOpen = true;
-        char timeBuf1[16];
-        char timeBuf2[16];
+        char timeBuf1[16]{};
+        char timeBuf2[16]{};
         OFS::util::formatTime(timeBuf1, chapter.startTime, true);
         OFS::util::formatTime(timeBuf2, chapter.endTime, true);
 

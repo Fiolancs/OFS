@@ -32,11 +32,11 @@ void VideoPreview::SetPosition(float pos) noexcept
 	player->SetPositionPercent(pos);
 }
 
-void VideoPreview::PreviewVideo(const std::string& path, float pos) noexcept
+void VideoPreview::PreviewVideo(const std::filesystem::path& path, float pos) noexcept
 {
 	OFS_PROFILE(__FUNCTION__);
 	auto existing = player->videoPath();
-	if (std::filesystem::path(path).u8string() != player->videoPath())
+	if (path.u8string() != player->videoPath())
 	{
 		player->openVideo(path);
 		player->setVolume(0.f);

@@ -186,7 +186,7 @@ bool OFS::VideoPlayer::init(void) noexcept
             mpv_render_context_set_update_callback(pImpl->renderCtx, &PImpl::mpvRenderCallback, pImpl.get());
         }
         else
-            LOG_ERROR("Failed to initialize mpv render contex");
+            LOG_ERROR("Failed to initialize mpv render context");
     }
 
     return isValid();

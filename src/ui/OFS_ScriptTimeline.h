@@ -14,7 +14,7 @@
 #include <memory>
 #include <string>
 #include <cstdint>
-
+#include <filesystem>
 
 class BaseOverlay;
 
@@ -56,7 +56,7 @@ private:
 	void updateSelection(const OverlayDrawingCtx& ctx, bool clear) noexcept;
 	void FfmpegAudioProcessingFinished(const WaveformProcessingFinishedEvent* ev) noexcept;
 
-	std::string videoPath;
+	std::filesystem::path videoPath;
 	std::uint32_t visibleTimeUpdate = 0;
 	float nextVisisbleTime = 5.f;
 	float previousVisibleTime = 5.f;

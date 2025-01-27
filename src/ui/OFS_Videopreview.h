@@ -1,9 +1,9 @@
 #pragma once
 #include "videoplayer/OFS_Videoplayer.h"
 
-#include <cstdint>
-#include <string>
 #include <memory>
+#include <cstdint>
+#include <filesystem>
 
 
 class VideoPreview {
@@ -17,7 +17,7 @@ public:
 	void Update(float delta) noexcept;
 
 	void SetPosition(float pos) noexcept;
-	void PreviewVideo(const std::string& path, float pos) noexcept;
+	void PreviewVideo(const std::filesystem::path& path, float pos) noexcept;
 	void Play() noexcept;
 	void Pause() noexcept;
 	void CloseVideo() noexcept;

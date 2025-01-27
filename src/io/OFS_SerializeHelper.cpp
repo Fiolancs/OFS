@@ -1,6 +1,7 @@
 #define  OFS_SERIALIZATION_HELPER_CPP_INCLUDE
 #include "OFS_SerializeHelper.h"
 #include "OFS_VectorSet.h"
+#include "OFS_Util.h"
 
 #include "state/states/BaseOverlayState.h"
 #include "state/states/ChapterState.h"
@@ -15,9 +16,13 @@
 #include <glaze/glaze.hpp>
 #include <imgui.h>
 
+#include <map>
 #include <vector>
 #include <variant>
 #include <utility>
+#include <cstdint>
+#include <filesystem>
+#include <string_view>
 
 
 // std::filesystem::path to always read and write u8strings

@@ -89,7 +89,7 @@ bool OpenFunscripter::imguiSetup() noexcept
 
     // Setup Platform/Renderer bindings
     ImGui_ImplSDL3_InitForOpenGL(window, glContext);
-    LOGF_DEBUG("init imgui with glsl: %s", GlslVersion);
+    LOGF_DEBUG("init imgui with glsl: {:s}", GlslVersion);
     ImGui_ImplOpenGL3_Init(GlslVersion);
 
     // hook into paste for the dynamic atlas
@@ -174,13 +174,6 @@ bool OpenFunscripter::Init(int argc, char* argv[])
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
-
-    // antialiasing
-    // this caused problems in my linux testing
-#ifdef WIN32
-    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
-    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 2);
-#endif
 
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
     SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
