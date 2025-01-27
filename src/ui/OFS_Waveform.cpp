@@ -5,106 +5,144 @@
 #include "OFS_Util.h"
 #include "OFS_Profiling.h"
 
-#define DR_FLAC_IMPLEMENTATION
-#include <dr_flac.h>
+#include <scn/scan.h>
+#include <SDL3/SDL_timer.h>
+#include <SDL3/SDL_stdinc.h>
+#include <SDL3/SDL_process.h>
+#include <SDL3/SDL_iostream.h>
+#include <SDL3/SDL_properties.h>
 
-//#include "subprocess.h"
+#include <span>
+#include <vector>
+#include <string>
+#include <cstdint>
+#include <cstdlib>
+#include <cstring>
+#include <filesystem>
+#include <string_view>
 
-bool OFS_Waveform::LoadFlac(const std::string& output) noexcept
+
+namespace
 {
-	drflac* flac = drflac_open_file(output.c_str(), NULL);
-	if (!flac) return false;
+	void loadPCM(std::span<std::int16_t> rawAudio, std::vector<float>& samples, float& minSample, float& maxSample)
+	{
+		constexpr unsigned SamplesPerLine = 300;
+		auto const sampleCount = static_cast<unsigned>(rawAudio.size());
+		float avgSample = 0.f;
 
-	std::vector<drflac_int16> ChunkSamples; ChunkSamples.resize(48000);
-	constexpr int SamplesPerLine = 300; 
+		for (unsigned sampleIdx = 0; sampleIdx < sampleCount; sampleIdx += SamplesPerLine)
+		{
+			auto const samplesInThisLine = std::min(SamplesPerLine, sampleCount - sampleIdx);
 
-	float minSample = 0.f;
-	float maxSample = 0.f;
-
-	uint32_t sampleCount = 0;
-	float avgSample = 0.f;
-	Clear();
-	samples.reserve(flac->totalPCMFrameCount / SamplesPerLine);
-	while ((sampleCount = drflac_read_pcm_frames_s16(flac, ChunkSamples.size(), ChunkSamples.data())) > 0) {
-		for (int sampleIdx = 0; sampleIdx < sampleCount; sampleIdx += SamplesPerLine) {
-			int samplesInThisLine = std::min(SamplesPerLine, (int)sampleCount - sampleIdx);
-			for (int i = 0; i < samplesInThisLine; i += 1) {
-				drflac_int16 sample = ChunkSamples[sampleIdx + i];
-				sample = std::abs(sample);
-				auto floatSample = sample / 32768.f;
-				avgSample += floatSample;
+			for (unsigned n = 0; n < samplesInThisLine; ++n)
+			{
+				avgSample += std::abs(rawAudio[sampleIdx + n]) / 32768.f;
 			}
+
 			avgSample /= (float)SamplesPerLine;
-			minSample = Util::Min(minSample, avgSample);
-			maxSample = Util::Max(maxSample, avgSample);
-			samples.emplace_back(avgSample);
+			samples.push_back(avgSample);
+			minSample = std::min(minSample, avgSample);
+			maxSample = std::max(maxSample, avgSample);
 			avgSample = 0.f;
 		}
 	}
-	drflac_close(flac);
-	samples.shrink_to_fit();
-
-	if(std::abs(minSample) > std::abs(maxSample)) {
-		maxSample = std::abs(minSample);
-	}
-	else {
-		minSample = -maxSample;
-	}
-
-	for(auto& sample : samples) {
-		sample = Util::MapRange(sample, minSample, maxSample, -1.f, 1.f);
-	}
-
-	return true;
 }
 
-bool OFS_Waveform::GenerateAndLoadFlac(const std::string& ffmpegPath, const std::string& videoPath, const std::string& output) noexcept
+bool OFS_Waveform::GenerateAndLoadFlac(std::filesystem::path const& ffmpegPath, std::filesystem::path const& videoPath, const std::string& output) noexcept
 {
-	// QQQ 
-	//generating = true;
-	//
-	//std::array<const char*, 11> args =
-	//{
-	//	ffmpegPath.c_str(),
-	//	"-y",
-	//	"-loglevel",
-	//	"quiet",
-	//	"-i", videoPath.c_str(),
-	//	"-vn",
-	//	"-ac", "1",
-	//	output.c_str(),
-	//	nullptr
-	//};
-	//struct subprocess_s proc;
-	//if(subprocess_create(args.data(), subprocess_option_no_window, &proc) != 0) {
-	//	generating = false; 
-	//	return false; 
-	//}
-	//
-	//if(proc.stdout_file) 
-	//{
-	//	fclose(proc.stdout_file);
-	//	proc.stdout_file = nullptr;
-	//}
-	//
-	//if(proc.stderr_file) 
-	//{
-	//	fclose(proc.stderr_file);
-	//	proc.stderr_file = nullptr;
-	//}
-	//
-	//int return_code;
-	//subprocess_join(&proc, &return_code);
-	//subprocess_destroy(&proc);
-	//
-	//if (!LoadFlac(output)) {
-	//	generating = false;
-	//	return false;
-	//}
-	//
-	//generating = false;
-	//return true;
-	return false;
+	auto const props = SDL_CreateProperties();
+
+	std::u8string videoU8StringPath  = videoPath.u8string();
+	std::string   videoStringPath(videoU8StringPath.begin(), videoU8StringPath.end());
+
+	std::u8string ffmpegU8StringPath = ffmpegPath.u8string();
+	std::string   ffmpegStringPath(ffmpegU8StringPath.begin(), ffmpegU8StringPath.end());
+
+	char const* ffmpegArgs[] = {
+		ffmpegStringPath.c_str(), "-hide_banner", "-nostats", "-nostdin",
+		"-i", videoStringPath.c_str(), "-vn",
+		"-ac", "1",
+		"-f", "s16le",
+		"-c:a", "pcm_s16le",
+		"pipe:1",
+		nullptr
+	};
+
+	SDL_SetPointerProperty(props, SDL_PROP_PROCESS_CREATE_ARGS_POINTER, ffmpegArgs);
+	SDL_SetNumberProperty(props, SDL_PROP_PROCESS_CREATE_STDOUT_NUMBER, SDL_PROCESS_STDIO_APP);
+	SDL_SetNumberProperty(props, SDL_PROP_PROCESS_CREATE_STDERR_NUMBER, SDL_PROCESS_STDIO_APP);
+	SDL_SetBooleanProperty(props, SDL_PROP_PROCESS_CREATE_BACKGROUND_BOOLEAN, true);
+
+	if (auto const ffmpegProcess = SDL_CreateProcessWithProperties(props); ffmpegProcess)
+	{
+		generating = true;
+
+		auto const processProps = SDL_GetProcessProperties(ffmpegProcess);
+		auto const pipeStdout   = (SDL_IOStream*) SDL_GetPointerProperty(processProps, SDL_PROP_PROCESS_STDOUT_POINTER, nullptr);
+		auto const pipeStderr   = (SDL_IOStream*) SDL_GetPointerProperty(processProps, SDL_PROP_PROCESS_STDERR_POINTER, nullptr);
+
+		std::size_t outMessageSize{};
+		std::vector<std::int16_t> audioData(48000, 0);
+		std::vector<float> audioSamples{};
+
+		float minSample{}, maxSample{};
+		std::size_t readSize {};
+		for (;;)
+		{
+			if (auto const read = SDL_ReadIO(pipeStdout, audioData.data(), audioData.size() - readSize); read)
+			{
+				readSize += read;
+				if (readSize == audioData.size())
+				{
+					loadPCM(audioData, audioSamples, minSample, maxSample);
+					readSize = 0;
+				}
+			}
+			else if (SDL_GetIOStatus(pipeStdout) == SDL_IO_STATUS_NOT_READY)
+			{
+				SDL_DelayNS(100);
+			}
+			else
+				break;
+		}
+
+		if (readSize)
+		{
+			loadPCM(std::span(audioData.data(), readSize), audioSamples, minSample, maxSample);
+		}
+		auto outLogs = SDL_LoadFile_IO(pipeStderr, &outMessageSize, false);
+
+		SDL_WaitProcess(ffmpegProcess, true, nullptr);
+		SDL_DestroyProcess(ffmpegProcess);
+
+		if (std::abs(minSample) > std::abs(maxSample)) 
+			maxSample = std::abs(minSample);
+		else
+			minSample = -maxSample;
+
+		for (auto& sample : audioSamples)
+		{
+			sample = ((sample - minSample) / (maxSample - minSample)) * 2.f - 1.f;
+		}
+
+		if (outMessageSize)
+		{
+			std::string_view metadata((char const*)outLogs, outMessageSize);
+			metadata = metadata.substr(metadata.find("Output #0"));
+			metadata = metadata.substr(metadata.find("Stream #0:0(und): Audio: pcm_s16le,"));
+
+			if (auto result = scn::scan<unsigned>(metadata, "Stream #0:0(und): Audio: pcm_s16le, {} Hz"))
+			{
+				//unsigned samplingRate = result->value();
+			}
+		}
+
+		SDL_free(outLogs);
+	}
+
+	SDL_DestroyProperties(props);
+	generating = false;
+	return true;
 }
 
 void OFS_WaveformLOD::Init() noexcept

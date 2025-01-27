@@ -22,9 +22,10 @@ struct WaveformState
 
     std::vector<float> GetSamples() noexcept
     {
+        if(UncompressedSize == 0) 
+            return {};
+
         // QQQ
-        //if(UncompressedSize == 0) 
-        //    return {};
         //std::vector<uint8_t> decompressed;
         //decompressed.resize(UncompressedSize);
         //
@@ -44,12 +45,12 @@ struct WaveformState
 
     void SetSamples(const std::vector<float>& samples)
     {
+        std::vector<uint16_t> u16Samples;
+        u16Samples.reserve(samples.size());
+        for(auto sample : samples)
+            u16Samples.emplace_back((uint16_t)(sample * (float)std::numeric_limits<uint16_t>::max()));
+        
         // QQQ
-        //std::vector<uint16_t> u16Samples;
-        //u16Samples.reserve(samples.size());
-        //for(auto sample : samples)
-        //    u16Samples.emplace_back((uint16_t)(sample * (float)std::numeric_limits<uint16_t>::max()));
-        //
         //BinSamples.clear();
         //auto size = OFS_Binary::Serialize(BinSamples, u16Samples);
         //BinSamples.resize(size);

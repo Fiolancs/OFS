@@ -4,10 +4,11 @@
 
 #include <imgui.h>
 
+#include <span>
 #include <vector>
-#include <string>
 #include <memory>
-
+#include <string>
+#include <filesystem>
 
 // helper class to render audio waves
 class OFS_Waveform
@@ -17,8 +18,7 @@ class OFS_Waveform
 public:
 
 	inline bool BusyGenerating() noexcept { return generating; }
-	bool GenerateAndLoadFlac(const std::string& ffmpegPath, const std::string& videoPath, const std::string& output) noexcept;
-	bool LoadFlac(const std::string& path) noexcept;
+	bool GenerateAndLoadFlac(std::filesystem::path const& ffmpegPath, std::filesystem::path const& videoPath, const std::string& output) noexcept;
 
 	inline void Clear() noexcept {
 		samples.clear();
