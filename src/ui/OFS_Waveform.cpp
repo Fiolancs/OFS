@@ -13,11 +13,12 @@
 #include <SDL3/SDL_properties.h>
 
 #include <span>
-#include <vector>
 #include <string>
+#include <vector>
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
+#include <utility>
 #include <filesystem>
 #include <string_view>
 
@@ -26,7 +27,7 @@ namespace
 {
 	void loadPCM(std::span<std::int16_t> rawAudio, std::vector<float>& samples, float& minSample, float& maxSample)
 	{
-		constexpr unsigned SamplesPerLine = 300;
+		constexpr unsigned SamplesPerLine = 100;
 		auto const sampleCount = static_cast<unsigned>(rawAudio.size());
 		float avgSample = 0.f;
 
@@ -50,13 +51,11 @@ namespace
 
 bool OFS_Waveform::GenerateAndLoadFlac(std::filesystem::path const& ffmpegPath, std::filesystem::path const& videoPath, const std::string& output) noexcept
 {
-	auto const props = SDL_CreateProperties();
+	auto const videoU8StringPath = videoPath.u8string();
+	auto videoStringPath = std::string(videoU8StringPath.begin(), videoU8StringPath.end());
 
-	std::u8string videoU8StringPath  = videoPath.u8string();
-	std::string   videoStringPath(videoU8StringPath.begin(), videoU8StringPath.end());
-
-	std::u8string ffmpegU8StringPath = ffmpegPath.u8string();
-	std::string   ffmpegStringPath(ffmpegU8StringPath.begin(), ffmpegU8StringPath.end());
+	auto const ffmpegU8StringPath = ffmpegPath.u8string();
+	auto ffmpegStringPath = std::string(ffmpegU8StringPath.begin(), ffmpegU8StringPath.end());
 
 	char const* ffmpegArgs[] = {
 		ffmpegStringPath.c_str(), "-hide_banner", "-nostats", "-nostdin",
@@ -68,6 +67,7 @@ bool OFS_Waveform::GenerateAndLoadFlac(std::filesystem::path const& ffmpegPath, 
 		nullptr
 	};
 
+	auto const props = SDL_CreateProperties();
 	SDL_SetPointerProperty(props, SDL_PROP_PROCESS_CREATE_ARGS_POINTER, ffmpegArgs);
 	SDL_SetNumberProperty(props, SDL_PROP_PROCESS_CREATE_STDOUT_NUMBER, SDL_PROCESS_STDIO_APP);
 	SDL_SetNumberProperty(props, SDL_PROP_PROCESS_CREATE_STDERR_NUMBER, SDL_PROCESS_STDIO_APP);
@@ -89,7 +89,7 @@ bool OFS_Waveform::GenerateAndLoadFlac(std::filesystem::path const& ffmpegPath, 
 		std::size_t readSize {};
 		for (;;)
 		{
-			if (auto const read = SDL_ReadIO(pipeStdout, audioData.data(), audioData.size() - readSize); read)
+			if (auto const read = SDL_ReadIO(pipeStdout, audioData.data() + readSize, audioData.size() - readSize); read)
 			{
 				readSize += read;
 				if (readSize == audioData.size())
@@ -115,14 +115,13 @@ bool OFS_Waveform::GenerateAndLoadFlac(std::filesystem::path const& ffmpegPath, 
 		SDL_WaitProcess(ffmpegProcess, true, nullptr);
 		SDL_DestroyProcess(ffmpegProcess);
 
-		if (std::abs(minSample) > std::abs(maxSample)) 
-			maxSample = std::abs(minSample);
-		else
-			minSample = -maxSample;
+		maxSample = std::max(std::abs(maxSample), std::abs(minSample));
+		minSample = -maxSample;
 
+		auto const sampleRange = maxSample - minSample;
 		for (auto& sample : audioSamples)
 		{
-			sample = ((sample - minSample) / (maxSample - minSample)) * 2.f - 1.f;
+			sample = ((sample - minSample) / sampleRange) * 2.f - 1.f;
 		}
 
 		if (outMessageSize)
@@ -135,6 +134,10 @@ bool OFS_Waveform::GenerateAndLoadFlac(std::filesystem::path const& ffmpegPath, 
 			{
 				//unsigned samplingRate = result->value();
 			}
+		}
+
+		{
+			samples = std::move(audioSamples);
 		}
 
 		SDL_free(outLogs);
